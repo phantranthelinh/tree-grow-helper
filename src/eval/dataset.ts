@@ -54,4 +54,15 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'kb-toxicity', message: 'Chó ăn phải lá dâu có sao không?', expect: { type: 'reply' } },
   { id: 'kb-light-hours', message: 'Dâu tây cần mấy giờ nắng mỗi ngày?', expect: { type: 'reply' } },
   { id: 'kb-ph', message: 'Đất trồng dâu nên có pH khoảng bao nhiêu?', expect: { type: 'reply' } },
+
+  // --- A4: trap / chit-chat that should stay a reply (guards against over-triggering tools) ---
+  { id: 'chat-hello', message: 'Xin chào!', expect: { type: 'reply' }, note: 'no tool' },
+  { id: 'chat-thanks', message: 'Cảm ơn bạn nhiều nhé.', expect: { type: 'reply' }, note: 'no tool' },
+  { id: 'chat-name', message: 'Bạn tên gì thế?', expect: { type: 'reply' }, note: 'no tool' },
+  { id: 'chat-weather', message: 'Hôm nay trời đẹp nhỉ.', expect: { type: 'reply' }, note: 'no tool' },
+
+  // --- A5: symptom / plant-health questions → reply from knowledge, no sensor fetch ---
+  { id: 'symptom-yellow-leaves', message: 'Cây dâu của mình bị vàng lá, mình nên làm gì?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
+  { id: 'symptom-wilting', message: 'Dâu tây bị héo rũ thì xử lý sao?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
+  { id: 'symptom-leaf-spot', message: 'Lá dâu xuất hiện đốm nâu là bị gì?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
 ]
