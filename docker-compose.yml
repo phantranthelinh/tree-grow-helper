@@ -1,0 +1,37 @@
+# AI Server — deploy via Docker Compose.
+#
+# Quick start (uses all defaults below):
+#   docker compose up -d
+#   curl http://localhost:8787/health   # -> {"status":"ok"}
+#
+# Override any value WITHOUT editing this file: create a `.env` next to it
+# (compose auto-reads it for ${VAR} substitution). `.env` is git-ignored.
+#   cp .env.example .env   # then edit
+# Or pin a specific image build:  TAG=sha-c1a2325 docker compose up -d
+#
+# NOTE: LM Studio and the plant-tree MCP run OUTSIDE this container.
+# `host.docker.internal` points at the host running this container. If those
+# services live on another machine, set LMSTUDIO_BASE_URL / MCP_URL to its IP
+# (in `.env` or the environment).
+
+services:
+  ai-server:
+    image: ghcr.io/phantranthelinh/tree-grow-helper:${TAG:-latest}
+    container_name: ai-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8787}:${PORT:-8787}"
+    environment:
+      PORT: ${PORT:-8787}
+      LMSTUDIO_BASE_URL: ${LMSTUDIO_BASE_URL:-http://host.docker.internal:1234/v1}
+      LMSTUDIO_API_KEY: ${LMSTUDIO_API_KEY:-lm-studio}
+      MODEL: ${MODEL:-qwen2.5-3b-instruct}
+      EMBED_MODEL: ${EMBED_MODEL:-text-embedding-bge-m3}
+      MCP_URL: ${MCP_URL:-http://host.docker.internal:8000/mcp}
+      MAX_TOOL_STEPS: ${MAX_TOOL_STEPS:-3}
+      RAG_TOP_K: ${RAG_TOP_K:-4}
+      DEFAULT_PLANT: ${DEFAULT_PLANT:-strawberry}
+    # Makes `host.docker.internal` resolve on Linux too (harmless on Docker
+    # Desktop for Mac/Windows, where it already works).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
