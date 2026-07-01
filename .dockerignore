@@ -1,0 +1,23 @@
+# Dependencies are installed fresh inside the image (host binaries are Windows/musl-mismatched)
+node_modules
+npm-debug.log*
+
+# Secrets & local env — never bake into the image
+.env
+.env.*
+
+# VCS / CI / editor
+.git
+.gitignore
+.github
+.vscode
+
+# Tests, docs, build artifacts — not needed at runtime
+tests
+coverage
+dist
+docs
+
+# Docker files themselves
+Dockerfile
+.dockerignore
