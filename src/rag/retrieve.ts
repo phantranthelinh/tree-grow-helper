@@ -4,13 +4,31 @@ import type { InMemoryVectorStore } from './store'
 export interface RetrievedChunk {
   text: string
   score: number
+  /** Profile field name, when the chunk came from the curated plant profile. */
   field?: string
+  /** Content category for scraped docs: grow | uses | disease | price | ... */
+  category?: string
+  /** Source URL for scraped docs, so answers can cite where a claim came from. */
+  source?: string
 }
 
 export interface RetrievedContext {
   chunks: RetrievedChunk[]
   contextText: string
 }
+
+/** Build a labelled context block: each chunk prefixed with its category/source. */
+export function formatContextText(chunks: RetrievedChunk[]): string {
+  return chunks
+    .map((c) => {
+      const label = c.category ?? c.field ?? 'kb'
+      const src = c.source ? ` · nguồn: ${c.source}` : ''
+      return `[${label}${src}] ${c.text}`
+    })
+    .join('\n\n')
+}
+
+const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
 /** Embed the query and return the top-k most similar knowledge chunks. */
 export async function retrieve(
@@ -29,7 +47,9 @@ export async function retrieve(
   const chunks: RetrievedChunk[] = hits.map((h) => ({
     text: h.text,
     score: h.score,
-    field: typeof h.metadata?.field === 'string' ? h.metadata.field : undefined,
+    field: str(h.metadata?.field),
+    category: str(h.metadata?.category),
+    source: str(h.metadata?.source_url),
   }))
-  return { chunks, contextText: chunks.map((c) => c.text).join('\n\n') }
+  return { chunks, contextText: formatContextText(chunks) }
 }

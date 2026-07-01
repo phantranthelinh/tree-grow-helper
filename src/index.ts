@@ -1,5 +1,7 @@
+import { join } from 'node:path'
 import { Orchestrator } from './agent/orchestrator'
 import { config } from './config'
+import { loadDiseases } from './domain/diseases'
 import { getFewshot } from './domain/fewshot'
 import { loadProfile } from './domain/profiles'
 import { buildServer } from './http/server'
@@ -7,7 +9,10 @@ import { LmStudioEngine } from './llm'
 import { PlantMcpClient, type McpTool } from './mcp/client'
 import { KNOWN_TOOLS } from './mcp/knownTools'
 import { SessionStore } from './memory/sessions'
+import { loadEmbedCache, saveEmbedCache } from './rag/embedCache'
 import { ingestProfile } from './rag/ingest'
+import { ingestDiseases } from './rag/ingestDiseases'
+import { ingestDocs, readReviewedDocs } from './rag/ingestDocs'
 import { InMemoryVectorStore } from './rag/store'
 
 async function main(): Promise<void> {
@@ -29,10 +34,37 @@ async function main(): Promise<void> {
     )
   }
 
-  // Build the RAG index from the plant profile; degrade if embeddings are down.
+  // Build the RAG index: curated profile + reviewed scraped docs + structured
+  // disease KB, sharing an on-disk embedding cache so restarts don't re-embed.
   try {
-    const n = await ingestProfile(store, llm, profile)
-    console.log(`[rag] ingested ${n} chunks for "${profile.plant}"`)
+    const cachePath = join(process.cwd(), config.rag.embedCachePath)
+    const cache = loadEmbedCache(cachePath)
+
+    const nProfile = await ingestProfile(store, llm, profile)
+
+    const docs = readReviewedDocs(join(process.cwd(), config.rag.docsDir))
+    const nDocs = await ingestDocs(store, llm, docs, {
+      plant: profile.plant,
+      cache,
+      chunkSize: config.rag.chunkSize,
+      chunkOverlap: config.rag.chunkOverlap,
+      minChunkLen: config.rag.minChunkLen,
+    })
+
+    let nDiseases = 0
+    try {
+      nDiseases = await ingestDiseases(store, llm, loadDiseases(profile.plant), {
+        plant: profile.plant,
+        cache,
+      })
+    } catch (err) {
+      console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
+    }
+
+    saveEmbedCache(cachePath, cache)
+    console.log(
+      `[rag] ingested ${nProfile} profile + ${nDocs} doc + ${nDiseases} disease chunks (store=${store.size()})`,
+    )
   } catch (err) {
     console.warn(`[rag] ingest failed (${(err as Error).message}). Continuing WITHOUT RAG.`)
   }

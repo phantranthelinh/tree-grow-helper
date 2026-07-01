@@ -1,0 +1,91 @@
+{
+  "plant": "strawberry",
+  "notes": "Seed KB các bệnh/sâu hại phổ biến trên dâu tây. Đây là dữ liệu mồi để luồng chẩn đoán chạy được ngay; mở rộng và bổ sung 'sources' bằng đầu ra scraper ĐÃ DUYỆT (data/docs → review). Không dùng để đặt ngưỡng điều khiển thiết bị.",
+  "diseases": [
+    {
+      "id": "botrytis-gray-mold",
+      "name_vi": "Mốc xám (thối xám)",
+      "name_sci": "Botrytis cinerea",
+      "type": "nấm",
+      "symptoms": [
+        "quả chín thối mềm, màu nâu",
+        "lớp mốc xám như bụi phủ trên quả và hoa",
+        "hoa bị thối khô, rụng"
+      ],
+      "affected_parts": ["quả", "hoa", "lá"],
+      "favorable_conditions": { "humidity": 85, "temperature": 20, "note": "ẩm độ cao, thông gió kém, tán lá rậm rạp; hay bùng sau mưa hoặc tưới phun" },
+      "treatment": "Ngắt bỏ ngay quả và hoa nhiễm bệnh đem tiêu hủy; giảm ẩm bằng cách tăng thông gió; hạn chế tưới phun lên tán; có thể dùng thuốc gốc đồng hoặc thuốc trừ nấm đặc hiệu theo hướng dẫn.",
+      "prevention": "Trồng thưa để thoáng, tưới gốc thay vì tưới phun, thu hoạch quả chín kịp thời, dọn tàn dư cây bệnh.",
+      "severity": "cao",
+      "sources": []
+    },
+    {
+      "id": "powdery-mildew",
+      "name_vi": "Phấn trắng",
+      "name_sci": "Podosphaera aphanis",
+      "type": "nấm",
+      "symptoms": [
+        "lớp phấn trắng mịn phủ mặt dưới lá",
+        "mép lá cong lên, chuyển tím đỏ",
+        "quả bị phủ phấn trắng, chậm chín"
+      ],
+      "affected_parts": ["lá", "quả"],
+      "favorable_conditions": { "humidity": 70, "temperature": 22, "note": "ẩm độ trung bình-cao, chênh lệch nhiệt ngày đêm lớn; khác nấm khác, phấn trắng KHÔNG cần lá ướt" },
+      "treatment": "Cắt bỏ lá bệnh nặng; tăng thông thoáng; phun lưu huỳnh vôi hoặc thuốc trừ nấm đặc hiệu; có thể dùng dung dịch bicarbonate theo hướng dẫn.",
+      "prevention": "Chọn giống kháng, trồng thưa, tránh bón thừa đạm, giữ tán khô thoáng.",
+      "severity": "trung bình",
+      "sources": []
+    },
+    {
+      "id": "anthracnose",
+      "name_vi": "Thán thư",
+      "name_sci": "Colletotrichum spp.",
+      "type": "nấm",
+      "symptoms": [
+        "vết lõm tròn màu nâu đen trên quả",
+        "đốm đen trên thân và cuống",
+        "cây con héo rũ, chết đột ngột"
+      ],
+      "affected_parts": ["quả", "thân", "cuống", "cây con"],
+      "favorable_conditions": { "humidity": 90, "temperature": 28, "note": "nóng ẩm, mưa nhiều; lây lan mạnh qua nước bắn" },
+      "treatment": "Loại bỏ và tiêu hủy bộ phận bệnh; tránh làm việc khi cây ướt; phun thuốc trừ nấm phòng-trị theo khuyến cáo.",
+      "prevention": "Dùng cây giống sạch bệnh, phủ luống hạn chế nước bắn, luân canh, thoát nước tốt.",
+      "severity": "cao",
+      "sources": []
+    },
+    {
+      "id": "leaf-spot",
+      "name_vi": "Đốm lá",
+      "name_sci": "Mycosphaerella fragariae",
+      "type": "nấm",
+      "symptoms": [
+        "đốm tròn nhỏ, tâm xám trắng, viền tím đỏ trên lá",
+        "đốm lan rộng làm lá khô cháy",
+        "giảm diện tích lá quang hợp"
+      ],
+      "affected_parts": ["lá"],
+      "favorable_conditions": { "humidity": 80, "temperature": 24, "note": "ẩm ướt kéo dài, lá ẩm lâu" },
+      "treatment": "Ngắt bỏ lá bệnh nặng; giữ tán khô; phun thuốc trừ nấm khi bệnh chớm nếu diện rộng.",
+      "prevention": "Tưới gốc giữ lá khô, dọn lá già-lá bệnh, trồng thưa cho thoáng.",
+      "severity": "trung bình",
+      "sources": []
+    },
+    {
+      "id": "spider-mite",
+      "name_vi": "Nhện đỏ",
+      "name_sci": "Tetranychus urticae",
+      "type": "sâu hại",
+      "symptoms": [
+        "mặt dưới lá có chấm li ti vàng nhạt (lá bị châm hút)",
+        "lá bạc màu, khô giòn, có tơ nhện mảnh",
+        "cây còi cọc, giảm năng suất"
+      ],
+      "affected_parts": ["lá"],
+      "favorable_conditions": { "humidity": 40, "temperature": 30, "note": "nóng và KHÔ; bùng phát mạnh mùa khô nóng" },
+      "treatment": "Phun rửa nước tăng ẩm cục bộ; dùng dầu khoáng hoặc thuốc trừ nhện đặc hiệu, luân phiên hoạt chất tránh kháng; có thể thả thiên địch (nhện bắt mồi).",
+      "prevention": "Theo dõi mặt dưới lá định kỳ, giữ ẩm hợp lý, tránh bụi bặm, không lạm dụng thuốc phổ rộng diệt thiên địch.",
+      "severity": "trung bình",
+      "sources": []
+    }
+  ]
+}

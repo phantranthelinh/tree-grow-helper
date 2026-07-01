@@ -11,12 +11,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "eval": "tsx src/eval/run.ts",
+    "scrape": "tsx src/rag/scrape/run.ts",
     "mcp:catalog": "tsx scripts/mcp-catalog.ts"
   },
   "dependencies": {
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^6.0.0",
     "@modelcontextprotocol/sdk": "^1.12.0",
+    "cheerio": "^1.2.0",
     "dotenv": "^16.4.5",
     "fastify": "^5.2.0",
     "openai": "^4.77.0",

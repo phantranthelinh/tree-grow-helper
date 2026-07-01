@@ -49,6 +49,10 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '6. Nếu cần device_id mà chưa biết, hãy gọi list_devices trước (tool ĐỌC).',
     '7. Khi tưới/chiếu sáng cho dâu, đặt ngưỡng theo khoảng tối ưu của dâu (vd độ ẩm đất mục tiêu ~75%), KHÔNG dùng giá trị mặc định chung.',
     '8. Chỉ dùng thông tin từ ngữ cảnh và kết quả tool; nếu không chắc, hãy nói rõ và hỏi lại.',
+    '9. Khi dùng "Tri thức tham khảo", nêu nguồn nếu có (vd "theo <nguồn>"); tuyệt đối không bịa thông tin ngoài ngữ cảnh.',
+    '10. Nếu các nguồn mâu thuẫn nhau, ưu tiên nguồn nhất quán/đáng tin và nói rõ. Nếu mâu thuẫn với "Khoảng tối ưu của cây dâu" ở trên thì LUÔN theo khoảng tối ưu đó.',
+    '11. Khi chẩn đoán bệnh: nêu 1-2 bệnh nghi ngờ kèm mức độ tin cậy, cách xử lý và phòng ngừa (dựa trên [Tri thức tham khảo]); nếu triệu chứng chưa đủ để phân biệt thì hỏi thêm 1-2 câu triệu chứng; bệnh nặng hoặc không chắc thì khuyên tham khảo chuyên gia. (Việc kiểm tra cảm biến tuân theo quy tắc 3.)',
+    '12. Chưa hỗ trợ chẩn đoán qua ảnh; nếu người dùng gửi hoặc nhắc tới ảnh, hãy đề nghị họ mô tả triệu chứng bằng lời.',
     fewshot ? `\nVÍ DỤ:\n${fewshot}` : '',
   ].join('\n')
 }

@@ -3,3 +3,8 @@ node_modules/
 dist/
 *.log
 .DS_Store
+
+# RAG databank: raw scraper output + embedding cache are generated, not source.
+# Reviewed docs under data/docs/ are intentionally committed.
+data/staging/
+data/cache/
