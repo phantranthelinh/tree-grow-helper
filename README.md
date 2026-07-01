@@ -65,6 +65,17 @@ npm run mcp:catalog    # in danh sách tool của MCP (cần MCP đang chạy)
 
 ## API
 
+### Swagger UI — tự test chat trong trình duyệt
+
+Mở **http://localhost:8787/docs** sau khi `npm start`. Đây là Swagger UI tương tác:
+bấm **Try it out** ở `POST /chat`, sửa body mẫu (đã điền sẵn `userId`/`sessionId`/`message`)
+rồi **Execute** để gọi thật. Nếu phản hồi có `pendingAction`, copy `pendingAction.id`
+sang `POST /chat/confirm` (đặt `approved: true`) để xác nhận thực thi.
+
+Spec OpenAPI thô ở **http://localhost:8787/docs/json**.
+
+> Cần LM Studio đang chạy để `/chat` trả lời được; MCP chỉ cần khi thực thi lệnh điều khiển.
+
 ### `GET /health` → `{ "status": "ok" }`
 
 ### `POST /chat`

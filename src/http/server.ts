@@ -5,7 +5,9 @@ import type { Orchestrator } from '../agent/orchestrator'
 import { registerChatRoutes } from './routes.chat'
 
 export function buildServer(orch: Orchestrator): FastifyInstance {
-  const app = Fastify({ logger: true })
+  // `example` is an OpenAPI keyword (used to prefill Swagger "Try it out"), not a
+  // JSON-Schema validation keyword — register it so AJV strict mode ignores it.
+  const app = Fastify({ logger: true, ajv: { customOptions: { keywords: ['example'] } } })
 
   // OpenAPI spec + interactive UI at /docs so you can self-test the chat in a browser.
   // Registered BEFORE the routes: @fastify/swagger installs an `onRoute` hook that must

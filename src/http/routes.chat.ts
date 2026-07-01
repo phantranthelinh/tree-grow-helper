@@ -144,7 +144,7 @@ export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): vo
         summary: 'Xác nhận / huỷ một hành động điều khiển đang chờ',
         description: 'Dùng `actionId` lấy từ `pendingAction.id` của phản hồi `/chat`.',
         body: confirmBodySchema,
-        response: { 200: chatResultSchema },
+        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema },
       },
     },
     async (req, reply) => {
