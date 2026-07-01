@@ -17,8 +17,8 @@ describe('strawberry knowledge enrichment', () => {
     }
   })
 
-  it('states strawberries are non-toxic to pets', () => {
-    expect(p.toxicity?.toLowerCase()).toContain('non-toxic')
+  it('states the fruit is safe to eat for humans (food-safety framing)', () => {
+    expect(p.toxicity?.toLowerCase()).toContain('an toàn')
   })
 
   it('embeds the new text fields as RAG chunks', () => {
@@ -28,7 +28,8 @@ describe('strawberry knowledge enrichment', () => {
     expect(fields.has('care_notes')).toBe(true)
   })
 
-  it('records the new sources', () => {
-    expect(p.sources.some((s) => s.includes('aspca.org'))).toBe(true)
+  it('records official Vietnamese sources', () => {
+    expect(p.sources.some((s) => s.includes('vaas.vn'))).toBe(true)
+    expect(p.sources.some((s) => s.includes('.gov.vn'))).toBe(true)
   })
 })

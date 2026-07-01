@@ -7,7 +7,7 @@ describe('plant profiles', () => {
     expect(p.plant).toBe('strawberry')
     expect(p.soil_moisture_range).toEqual([75, 80])
     expect(p.light_range).toEqual([200, 800])
-    expect(p.pests).toContain('spider mite')
+    expect(p.pests).toContain('nhện đỏ')
   })
 
   it('derives control thresholds from the optimal ranges (not MCP defaults)', () => {
