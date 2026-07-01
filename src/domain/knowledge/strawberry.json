@@ -4,12 +4,12 @@
   "humidity_range": [40.0, 90.0],
   "soil_moisture_range": [75.0, 80.0],
   "light_range": [200.0, 800.0],
-  "scientific_name": null,
-  "aliases": [],
+  "scientific_name": "Fragaria × ananassa",
+  "aliases": ["dâu tây", "strawberry", "garden strawberry"],
   "soil_ph_range": [5.5, 6.5],
-  "light_description": null,
-  "toxicity": null,
-  "care_notes": null,
+  "light_description": "Strawberries need full sun to fruit well: 6-10 hours of direct sunlight per day is ideal, with a practical minimum of about 6 hours. Optimal ambient light for foliage is roughly 200-800 lux, well below the intensity of direct midday sun. In greenhouses, growers supplement with red-dominant LED light (for example 70% red / 30% blue) at about 130-250 µmol m-2 s-1 over a 14-16 hour photoperiod for maximum growth and yield. Indoors or in shaded spots, add grow lights (roughly one 60 W lamp per 6 m2). Photoperiod also drives flowering type: June-bearers are short-day plants, while day-neutral cultivars flower regardless of day length.",
+  "toxicity": "Non-toxic. The ASPCA lists strawberry (Fragaria spp., family Rosaceae) as non-toxic to dogs, cats and horses, and the ripe fruit is edible and safe for humans. The plant contains no known toxic compound, but eating a large amount of fibrous leaves or stems can cause mild digestive upset (vomiting or diarrhoea) in pets, and whole berries can pose a choking risk for small dogs. When sharing fruit with pets, wash it, remove stems and leaves, and cut it into small pieces.",
+  "care_notes": "Grow strawberries in fertile, well-drained, slightly acidic soil (pH 5.5-6.5); raised beds or containers improve drainage and reduce soil-borne disease. Keep plants weed-free and mulch with straw, pine needles or plastic film to conserve moisture, suppress weeds and keep the fruit off the soil. Water regularly while plants establish and during dry spells - about 25 mm (1 inch) per week - watering in the morning and avoiding wetting the crown or fruit to prevent grey mould (Botrytis). Set each plant with the midpoint of the crown level with the soil surface, neither buried nor exposed. In Da Lat-type climates strawberries are grown mainly from November to April at 18-22 C using clean-water drip or sub-surface irrigation; overly dense spacing in humid weather encourages disease. Remove first-year blossoms on June-bearing types to build vigour, and replace crowded, ageing plants to keep productivity high.",
   "daily_light_hours": [6.0, 13.0],
   "ec_range": [0.8, 2.2],
   "fertilizer": "Fertilization should follow growth stages, shifting from nitrogen-heavy in the vegetative phase (e.g., 3-1-2 or 4-1-3 N-P-K) to potassium-heavy during flowering and fruiting (e.g., 1-1-2, 1-1-3, or 1-1-4 N-P-K). MasterBlend 4-18-38 is commonly used in hydroponics. For soil, NPK rates depend on system and soil testing, often split into applications or provided via fertigation.",
@@ -36,7 +36,13 @@
     "https://ask.ifas.ufl.edu/publication/SS730",
     "https://extension.umn.edu/strawberry-farming/strawberry-nutrient-management",
     "https://extension.colostate.edu/resource/strawberry-diseases/",
-    "https://ipm.ucanr.edu/ipmproject/ads/manual_strawberry.html"
+    "https://ipm.ucanr.edu/ipmproject/ads/manual_strawberry.html",
+    "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/strawberry",
+    "https://extension.umn.edu/fruit/growing-strawberries-home-garden",
+    "https://www.rhs.org.uk/fruit/strawberries/grow-your-own",
+    "https://www.almanac.com/plant/strawberries",
+    "https://chimi.com.vn/ky-thuat-trong-cham-soc-va-thu-hoach-dau-tay/",
+    "https://baoangreen.vn/trong-dau-tay-o-da-lat-voi-da-perlite-nd32.html"
   ],
-  "notes": "src:exa | facets:environment,nutrients,health,lifecycle | web-sourced, review before production"
+  "notes": "src:exa | facets:environment,nutrients,health,lifecycle,care,light,toxicity | web-sourced, review before production"
 }
