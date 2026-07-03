@@ -14,3 +14,21 @@ export const ConfirmRequestSchema = z.object({
   approved: z.boolean(),
 })
 export type ConfirmRequest = z.infer<typeof ConfirmRequestSchema>
+
+const ProviderEnum = z.enum(['lmstudio', 'ollama', 'gemini', 'openai-compat'])
+
+export const SetupModelsRequestSchema = z.object({
+  provider: ProviderEnum,
+  baseURL: z.string().url(),
+  apiKey: z.string().optional(),
+})
+export type SetupModelsRequest = z.infer<typeof SetupModelsRequestSchema>
+
+export const SetupConnectRequestSchema = z.object({
+  provider: ProviderEnum,
+  baseURL: z.string().url(),
+  apiKey: z.string().optional(),
+  model: z.string().min(1),
+  embedModel: z.string().min(1),
+})
+export type SetupConnectRequest = z.infer<typeof SetupConnectRequestSchema>

@@ -11,7 +11,7 @@ import {
 import { config } from '../config'
 import { getFewshot } from '../domain/fewshot'
 import { loadProfile } from '../domain/profiles'
-import { LmStudioEngine } from '../llm'
+import { OpenAICompatEngine } from '../llm'
 import { assembleMessages, buildSystemPrompt } from '../llm/prompt'
 import { KNOWN_TOOLS } from '../mcp/knownTools'
 import { classifyTool } from '../mcp/policy'
@@ -42,10 +42,10 @@ function grade(expect: EvalExpect, actual: { type: 'reply' | 'tool'; tool?: stri
 
 async function main(): Promise<void> {
   const profile = loadProfile(config.defaultPlant)
-  const llm = new LmStudioEngine(config.lmStudio)
+  const llm = new OpenAICompatEngine(config.llmDefaults)
   const system = buildSystemPrompt({ profile, tools: KNOWN_TOOLS, fewshot: getFewshot() })
 
-  console.log(`Eval: ${EVAL_CASES.length} cases | model=${config.lmStudio.model} | plant=${profile.plant}\n`)
+  console.log(`Eval: ${EVAL_CASES.length} cases | model=${config.llmDefaults.model} | plant=${profile.plant}\n`)
 
   let exactHits = 0
   let safetyHits = 0
@@ -56,7 +56,7 @@ async function main(): Promise<void> {
       const raw = await llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME)
       actual = parse(raw)
     } catch (err) {
-      console.error(`\nLLM call failed. Is LM Studio running at ${config.lmStudio.baseURL} with "${config.lmStudio.model}"?`)
+      console.error(`\nLLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${config.llmDefaults.model}"?`)
       console.error(String((err as Error).message))
       process.exit(1)
     }

@@ -1,0 +1,207 @@
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { config } from '../src/config'
+import { buildServer } from '../src/http/server'
+import type { LlmEngine } from '../src/llm'
+import type { McpGateway, McpToolResult } from '../src/mcp/client'
+import type { SetupDeps } from '../src/setup/init'
+import { loadLlmConfig } from '../src/setup/llmConfig'
+import type { ProbeResult } from '../src/setup/probe'
+import { AppState } from '../src/setup/state'
+
+class FakeLlm implements LlmEngine {
+  async complete() {
+    return 'ok'
+  }
+  async completeJson() {
+    return '{"type":"reply","message":"Chào bạn!"}'
+  }
+  async embed(t: string[]) {
+    return t.map(() => [0, 0, 0])
+  }
+}
+
+class FakeMcp implements McpGateway {
+  async listTools() {
+    return []
+  }
+  async callTool(): Promise<McpToolResult> {
+    return { text: 'done', isError: false }
+  }
+}
+
+const dir = mkdtempSync(join(tmpdir(), 'setup-routes-'))
+afterAll(() => rmSync(dir, { recursive: true, force: true }))
+
+const configPath = join(dir, 'llm-config.json')
+
+// Test config: isolate all disk writes (config + embed cache) inside the temp dir,
+// and point docs at an empty dir so RAG ingest stays hermetic.
+const testConfig = {
+  ...config,
+  setup: { ...config.setup, configPath, probeTimeoutMs: 2000 },
+  rag: { ...config.rag, embedCachePath: join(dir, 'cache', 'emb.jsonl'), docsDir: join(dir, 'docs') },
+} as unknown as typeof config
+
+const okProbe = async (): Promise<ProbeResult> => ({ ok: true, models: ['m1'] })
+
+function baseDeps(probe: SetupDeps['probe']): Partial<SetupDeps> {
+  return {
+    probe,
+    buildEngine: () => new FakeLlm(),
+    buildMcp: () => new FakeMcp(),
+    listModels: async () => ({ ok: true as const, models: ['chat-a', 'embed-b'] }),
+  }
+}
+
+const connectBody = {
+  provider: 'lmstudio',
+  baseURL: 'http://localhost:1234/v1',
+  model: 'chat-a',
+  embedModel: 'embed-b',
+}
+
+function waitFor(pred: () => boolean, tries = 200): Promise<void> {
+  return new Promise((resolve, reject) => {
+    let n = 0
+    const tick = () => {
+      if (pred()) return resolve()
+      if (++n > tries) return reject(new Error('waitFor timed out'))
+      setTimeout(tick, 5)
+    }
+    tick()
+  })
+}
+
+describe('setup routes', () => {
+  let state: AppState
+  beforeEach(() => {
+    state = new AppState()
+  })
+
+  it('POST /chat before ready returns 503 not_configured', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/chat',
+      payload: { userId: 'u1', sessionId: 's1', message: 'hi' },
+    })
+    expect(res.statusCode).toBe(503)
+    expect(res.json().error).toBe('not_configured')
+    await app.close()
+  })
+
+  it('GET /api/setup/status returns waiting_config with defaults', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const res = await app.inject({ method: 'GET', url: '/api/setup/status' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.phase).toBe('waiting_config')
+    expect(body.defaults).toMatchObject({ provider: config.llmDefaults.provider })
+    await app.close()
+  })
+
+  it('POST /api/setup/models returns the model list, and 502 on failure', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const ok = await app.inject({
+      method: 'POST',
+      url: '/api/setup/models',
+      payload: { provider: 'lmstudio', baseURL: 'http://localhost:1234/v1' },
+    })
+    expect(ok.statusCode).toBe(200)
+    expect(ok.json().models).toEqual(['chat-a', 'embed-b'])
+    await app.close()
+
+    const failDeps: Partial<SetupDeps> = {
+      ...baseDeps(okProbe),
+      listModels: async () => ({ ok: false as const, code: 'unreachable', message: 'boom' }),
+    }
+    const app2 = buildServer({ state: new AppState(), config: testConfig, setupDeps: failDeps })
+    const bad = await app2.inject({
+      method: 'POST',
+      url: '/api/setup/models',
+      payload: { provider: 'lmstudio', baseURL: 'http://localhost:1234/v1' },
+    })
+    expect(bad.statusCode).toBe(502)
+    expect(bad.json().error).toBe('unreachable')
+    await app2.close()
+  })
+
+  it('connect happy path: saves config, reaches ready, then /chat works', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const res = await app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().ok).toBe(true)
+
+    await state.initPromise
+    expect(state.phase).toBe('ready')
+    expect(existsSync(configPath)).toBe(true)
+    expect(loadLlmConfig(configPath)).toMatchObject({ provider: 'lmstudio', model: 'chat-a' })
+
+    const chat = await app.inject({
+      method: 'POST',
+      url: '/chat',
+      payload: { userId: 'u1', sessionId: 's1', message: 'hi' },
+    })
+    expect(chat.statusCode).toBe(200)
+    expect(chat.json().reply).toBe('Chào bạn!')
+    await app.close()
+  })
+
+  it('connect probe failure returns 502 and does not write config', async () => {
+    const failPath = join(dir, 'never.json')
+    const failConfig = { ...testConfig, setup: { ...testConfig.setup, configPath: failPath } } as unknown as typeof config
+    const probe: SetupDeps['probe'] = async () => ({
+      ok: false,
+      stage: 'chat',
+      code: 'auth_failed',
+      message: 'bad key',
+    })
+    const app = buildServer({ state, config: failConfig, setupDeps: baseDeps(probe) })
+    const res = await app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
+    expect(res.statusCode).toBe(502)
+    expect(res.json().error).toBe('auth_failed')
+    expect(state.phase).toBe('waiting_config')
+    expect(existsSync(failPath)).toBe(false)
+    await app.close()
+  })
+
+  it('connect while busy returns 409', async () => {
+    let release: (() => void) | undefined
+    const gate = new Promise<void>((r) => {
+      release = r
+    })
+    const blockingProbe: SetupDeps['probe'] = async () => {
+      await gate
+      return { ok: true, models: [] }
+    }
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(blockingProbe) })
+    await app.ready() // finish async plugin registration so the handler runs promptly
+
+    const first = app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
+    await waitFor(() => state.isBusy())
+
+    const second = await app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
+    expect(second.statusCode).toBe(409)
+    expect(second.json().error).toBe('busy')
+
+    release?.()
+    await first
+    await state.initPromise
+    await app.close()
+  })
+
+  it('connect with missing model returns 400 invalid_request', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/setup/connect',
+      payload: { provider: 'lmstudio', baseURL: 'http://localhost:1234/v1', embedModel: 'e' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBe('invalid_request')
+    await app.close()
+  })
+})

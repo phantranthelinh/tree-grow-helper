@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import type { Orchestrator } from '../agent/orchestrator'
+import type { AppState } from '../setup/state'
 import { ChatRequestSchema, ConfirmRequestSchema } from './dto'
 
 // --- OpenAPI/JSON schemas (documentation + Swagger "Try it out") ---------------
@@ -68,7 +68,7 @@ const confirmBodySchema = {
   example: { userId: 'u1', sessionId: 's1', actionId: '<pendingAction.id từ /chat>', approved: true },
 } as const
 
-export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): void {
+export function registerChatRoutes(app: FastifyInstance, state: AppState): void {
   app.get(
     '/',
     {
@@ -80,8 +80,10 @@ export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): vo
     async () => ({
       name: 'ai-server',
       status: 'ok',
+      phase: state.phase,
       docs: '/docs',
       endpoints: [
+        { method: 'GET', path: '/setup' },
         { method: 'GET', path: '/health' },
         { method: 'POST', path: '/chat' },
         { method: 'POST', path: '/chat/confirm' },
@@ -97,11 +99,11 @@ export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): vo
         tags: ['system'],
         summary: 'Health check',
         response: {
-          200: { type: 'object', properties: { status: { type: 'string' } } },
+          200: { type: 'object', properties: { status: { type: 'string' }, phase: { type: 'string' } } },
         },
       },
     },
-    async () => ({ status: 'ok' }),
+    async () => ({ status: 'ok', phase: state.phase }),
   )
 
   app.post(
@@ -115,10 +117,15 @@ export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): vo
           'Trả về `reply`. Nếu yêu cầu là hành động **điều khiển thiết bị**, `pendingAction` sẽ khác null ' +
           '(chưa thực thi) — copy `pendingAction.id` sang `POST /chat/confirm` để xác nhận.',
         body: chatBodySchema,
-        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema },
+        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema, 503: errorSchema },
       },
     },
     async (req, reply) => {
+      const orch = state.orchestrator
+      if (!orch) {
+        reply.code(503)
+        return { error: 'not_configured', phase: state.phase, setup: '/setup' }
+      }
       const parsed = ChatRequestSchema.safeParse(req.body)
       if (!parsed.success) {
         reply.code(400)
@@ -144,10 +151,15 @@ export function registerChatRoutes(app: FastifyInstance, orch: Orchestrator): vo
         summary: 'Xác nhận / huỷ một hành động điều khiển đang chờ',
         description: 'Dùng `actionId` lấy từ `pendingAction.id` của phản hồi `/chat`.',
         body: confirmBodySchema,
-        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema },
+        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema, 503: errorSchema },
       },
     },
     async (req, reply) => {
+      const orch = state.orchestrator
+      if (!orch) {
+        reply.code(503)
+        return { error: 'not_configured', phase: state.phase, setup: '/setup' }
+      }
       const parsed = ConfirmRequestSchema.safeParse(req.body)
       if (!parsed.success) {
         reply.code(400)

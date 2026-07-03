@@ -1,10 +1,20 @@
 import Fastify, { type FastifyInstance } from 'fastify'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
-import type { Orchestrator } from '../agent/orchestrator'
+import type { Config } from '../config'
+import type { SetupDeps } from '../setup/init'
+import type { AppState } from '../setup/state'
 import { registerChatRoutes } from './routes.chat'
+import { registerSetupRoutes } from './routes.setup'
 
-export function buildServer(orch: Orchestrator): FastifyInstance {
+export interface ServerContext {
+  state: AppState
+  config: Config
+  /** Injectable setup construction seams (fakes in tests). */
+  setupDeps?: Partial<SetupDeps>
+}
+
+export function buildServer(ctx: ServerContext): FastifyInstance {
   // `example` is an OpenAPI keyword (used to prefill Swagger "Try it out"), not a
   // JSON-Schema validation keyword — register it so AJV strict mode ignores it.
   const app = Fastify({ logger: true, ajv: { customOptions: { keywords: ['example'] } } })
@@ -25,6 +35,7 @@ export function buildServer(orch: Orchestrator): FastifyInstance {
         version: '0.1.0',
       },
       tags: [
+        { name: 'setup', description: 'Cấu hình LLM khi khởi động' },
         { name: 'chat', description: 'Hội thoại với trợ lý & xác nhận hành động điều khiển' },
         { name: 'system', description: 'Health check & thông tin server' },
       ],
@@ -37,7 +48,8 @@ export function buildServer(orch: Orchestrator): FastifyInstance {
   })
 
   app.register(async (instance) => {
-    registerChatRoutes(instance, orch)
+    registerSetupRoutes(instance, ctx.state, ctx.config, ctx.setupDeps)
+    registerChatRoutes(instance, ctx.state)
   })
 
   return app

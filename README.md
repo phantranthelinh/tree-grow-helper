@@ -17,9 +17,11 @@ Chat App ──HTTP──► AI Server ──► Orchestrator ─► LLM (LM Stu
 ## Yêu cầu
 
 1. **Node.js 18+** (đã test trên Node 22).
-2. **[LM Studio](https://lmstudio.ai)** đang chạy server (OpenAI-compatible) tại `http://localhost:1234/v1`, đã **load**:
-   - Model chat: `qwen2.5-3b-instruct` (hoặc 7b) — hỗ trợ tool use + structured output.
-   - Model embedding: `bge-m3` (hoặc `text-embedding-*`), dùng cho RAG.
+2. **Một LLM có API tương thích OpenAI**, đã load 1 model chat + 1 model embedding. Chọn provider ngay trong UI cấu hình (`/setup`):
+   - **LM Studio** — `http://localhost:1234/v1` (không cần API key).
+   - **Ollama** (≥ 0.5) — `http://localhost:11434/v1` (không cần API key).
+   - **Google Gemini** — lớp tương thích OpenAI (`https://generativelanguage.googleapis.com/v1beta/openai/`, cần API key; embedding gợi ý `text-embedding-004`).
+   - **OpenAI-compatible khác** (vLLM, LiteLLM, OpenAI…) — nhập Base URL + API key nếu có.
 3. **plant-tree MCP** chạy ở chế độ **streamable-http** (xem bên dưới) tại `http://localhost:8000/mcp`.
 
 ### Bật MCP ở chế độ streamable-http
@@ -45,13 +47,23 @@ cũng cần chạy để tool điều khiển hoạt động thật.
 
 ```bash
 npm install
-cp .env.example .env      # chỉnh nếu cần
+cp .env.example .env      # tuỳ chọn — env chỉ prefill form cấu hình
 npm start                 # chạy AI server (http://localhost:8787)
 ```
 
-Server **vẫn khởi động** nếu LM Studio/MCP chưa sẵn sàng (chế độ degraded):
-- MCP offline → dùng catalog tool tĩnh (KNOWN_TOOLS); lệnh điều khiển sẽ báo lỗi cho tới khi MCP lên.
-- Embedding offline → chạy không có RAG.
+**Lần chạy đầu:** app tự mở trình duyệt vào **http://localhost:8787/setup** — chọn provider,
+nhập Base URL/API key, chọn model chat + embedding, bấm **Kết nối**. App kiểm tra kết nối
+(list model → 1 chat token → 1 embedding), rồi mới chạy MCP + nạp RAG (hiển thị tiến trình).
+Cấu hình được lưu vào `data/llm-config.json`.
+
+**Các lần sau:** app tự đọc `data/llm-config.json`, tự kiểm tra & kết nối lại — bỏ qua UI.
+Nếu kết nối lỗi (đổi máy, tắt LLM…) → quay lại `/setup` để cấu hình lại.
+
+- Trước khi cấu hình xong, `POST /chat` và `/chat/confirm` trả **503 `{ "error": "not_configured" }`**.
+- MCP offline khi khởi tạo → dùng catalog tool tĩnh (KNOWN_TOOLS); lệnh điều khiển báo lỗi cho tới khi MCP lên.
+- Embedding lỗi khi nạp RAG → chạy không có RAG (nhưng bước kiểm tra kết nối đã bắt lỗi embedding sớm).
+- `SETUP_OPEN_BROWSER=0` để không tự mở trình duyệt (mặc định trong Docker).
+- `SETUP_PROBE_TIMEOUT_MS` (mặc định 10000) — tăng lên nếu Ollama nạp model lần đầu chậm.
 
 ### Lệnh khác
 
@@ -74,9 +86,11 @@ sang `POST /chat/confirm` (đặt `approved: true`) để xác nhận thực thi
 
 Spec OpenAPI thô ở **http://localhost:8787/docs/json**.
 
-> Cần LM Studio đang chạy để `/chat` trả lời được; MCP chỉ cần khi thực thi lệnh điều khiển.
+> Cần cấu hình LLM xong (qua `/setup`) để `/chat` trả lời được; MCP chỉ cần khi thực thi lệnh điều khiển.
 
-### `GET /health` → `{ "status": "ok" }`
+### `GET /health` → `{ "status": "ok", "phase": "ready" }`
+
+`phase`: `waiting_config` (chưa cấu hình) → `connecting` → `initializing` → `ready`.
 
 ### `POST /chat`
 ```jsonc

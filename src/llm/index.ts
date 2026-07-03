@@ -21,18 +21,18 @@ export interface LlmEngine {
   embed(texts: string[]): Promise<number[][]>
 }
 
-export interface LmStudioOptions {
+export interface EngineOptions {
   baseURL: string
   apiKey: string
   model: string
   embedModel: string
 }
 
-/** LlmEngine backed by LM Studio's OpenAI-compatible server. */
-export class LmStudioEngine implements LlmEngine {
+/** LlmEngine backed by any OpenAI-compatible server (LM Studio, Ollama, Gemini, …). */
+export class OpenAICompatEngine implements LlmEngine {
   private readonly client: OpenAI
 
-  constructor(private readonly opts: LmStudioOptions) {
+  constructor(private readonly opts: EngineOptions) {
     this.client = new OpenAI({ baseURL: opts.baseURL, apiKey: opts.apiKey })
   }
 

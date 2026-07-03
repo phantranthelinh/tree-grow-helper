@@ -1,18 +1,23 @@
 # AI Server — deploy via Docker Compose.
 #
-# Quick start (uses all defaults below):
+# Quick start:
 #   docker compose up -d
-#   curl http://localhost:8787/health   # -> {"status":"ok"}
+#   # then open http://localhost:8787/setup to pick a provider and Connect (once).
+#   curl http://localhost:8787/health   # -> {"status":"ok","phase":"waiting_config"}
+#
+# FIRST RUN requires configuring the LLM via the setup UI at /setup. The chosen
+# config is saved to ./data/llm-config.json (mounted volume below), so later
+# `docker compose up`/restart auto-reconnects with no UI. The env vars below only
+# PREFILL the setup form — they do not auto-connect.
 #
 # Override any value WITHOUT editing this file: create a `.env` next to it
 # (compose auto-reads it for ${VAR} substitution). `.env` is git-ignored.
 #   cp .env.example .env   # then edit
 # Or pin a specific image build:  TAG=sha-c1a2325 docker compose up -d
 #
-# NOTE: LM Studio and the plant-tree MCP run OUTSIDE this container.
-# `host.docker.internal` points at the host running this container. If those
-# services live on another machine, set LMSTUDIO_BASE_URL / MCP_URL to its IP
-# (in `.env` or the environment).
+# NOTE: LM Studio/Ollama and the plant-tree MCP run OUTSIDE this container.
+# `host.docker.internal` points at the host running this container. In the setup
+# UI use http://host.docker.internal:<port>/v1 (NOT localhost) for host services.
 
 services:
   ai-server:
@@ -31,6 +36,10 @@ services:
       MAX_TOOL_STEPS: ${MAX_TOOL_STEPS:-3}
       RAG_TOP_K: ${RAG_TOP_K:-4}
       DEFAULT_PLANT: ${DEFAULT_PLANT:-strawberry}
+      SETUP_OPEN_BROWSER: "0" # headless container — never try to launch a browser
+    # Persists the saved LLM config + embedding cache across container recreation.
+    volumes:
+      - "./data:/app/data"
     # Makes `host.docker.internal` resolve on Linux too (harmless on Docker
     # Desktop for Mac/Windows, where it already works).
     extra_hosts:

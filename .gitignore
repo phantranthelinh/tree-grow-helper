@@ -8,3 +8,6 @@ dist/
 # Reviewed docs under data/docs/ are intentionally committed.
 data/staging/
 data/cache/
+
+# LLM config saved from the setup UI (per-deployment, contains an API key).
+data/llm-config.json
