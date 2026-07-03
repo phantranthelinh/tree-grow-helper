@@ -89,6 +89,13 @@ export function renderSetupPage(): string {
     <button id="btn-models" class="ghost" style="margin-top:12px">Tải danh sách model</button>
     <div id="models-hint" class="hint"></div>
 
+    <label for="mcpUrl">MCP URL</label>
+    <div class="row">
+      <div><input id="mcpUrl" type="text" placeholder="http://localhost:8000/mcp" autocomplete="off" /></div>
+      <button id="btn-mcp-test" class="ghost">Kiểm tra MCP</button>
+    </div>
+    <div id="mcp-hint" class="hint">Địa chỉ MCP điều khiển thiết bị. MCP chưa chạy vẫn kết nối được — lệnh điều khiển sẽ lỗi đến khi MCP sẵn sàng.</div>
+
     <div id="err" class="err"></div>
     <button id="btn-connect" class="primary">Kết nối</button>
   </div>
@@ -152,7 +159,8 @@ function currentBody() {
     baseURL: $('baseURL').value.trim(),
     apiKey: $('apiKey').value,
     model: $('model').value.trim(),
-    embedModel: $('embedModel').value.trim()
+    embedModel: $('embedModel').value.trim(),
+    mcpUrl: $('mcpUrl').value.trim()
   };
 }
 
@@ -179,6 +187,28 @@ function loadModels() {
     .finally(function () { btn.disabled = false; btn.textContent = 'Tải danh sách model'; });
 }
 
+function testMcp() {
+  var url = $('mcpUrl').value.trim();
+  if (!url) { $('mcp-hint').textContent = '✗ Nhập MCP URL trước.'; return; }
+  var btn = $('btn-mcp-test');
+  btn.disabled = true;
+  btn.textContent = 'Đang kiểm tra…';
+  fetch('/api/setup/mcp/test', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url: url })
+  }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) {
+      if (!res.ok) {
+        $('mcp-hint').textContent = '✗ Không kết nối được MCP' + (res.j.message ? ' (' + res.j.message + ')' : '') + ' — vẫn kết nối được, điều khiển sẽ lỗi đến khi MCP sẵn sàng.';
+        return;
+      }
+      $('mcp-hint').textContent = '✓ Tìm thấy ' + res.j.toolCount + ' tool.';
+    })
+    .catch(function (e) { $('mcp-hint').textContent = '✗ Lỗi kiểm tra MCP (' + String(e) + ')'; })
+    .finally(function () { btn.disabled = false; btn.textContent = 'Kiểm tra MCP'; });
+}
+
 function fillList(id, models) {
   var dl = $(id);
   dl.innerHTML = '';
@@ -195,6 +225,7 @@ function connect() {
   if (!body.baseURL) { showError('unknown', 'Thiếu Base URL'); return; }
   if (!body.model) { showError('unknown', 'Thiếu model chat'); return; }
   if (!body.embedModel) { showError('unknown', 'Thiếu model embedding'); return; }
+  if (!body.mcpUrl) { showError('unknown', 'Thiếu MCP URL'); return; }
   var btn = $('btn-connect');
   btn.disabled = true;
   btn.textContent = 'Đang kết nối…';
@@ -262,12 +293,14 @@ function prefill(status) {
   $('baseURL').value = src.baseURL || (p ? p.defaultBaseURL : '');
   $('model').value = src.model || '';
   $('embedModel').value = src.embedModel || '';
+  $('mcpUrl').value = src.mcpUrl || (status.defaults && status.defaults.mcpUrl) || '';
   $('key-opt').textContent = (p && p.requiresApiKey) ? '(bắt buộc)' : '(không bắt buộc)';
 }
 
 function init() {
   renderProviders();
   $('btn-models').onclick = loadModels;
+  $('btn-mcp-test').onclick = testMcp;
   $('btn-connect').onclick = connect;
   fetch('/api/setup/status').then(function (r) { return r.json(); }).then(function (status) {
     prefill(status);

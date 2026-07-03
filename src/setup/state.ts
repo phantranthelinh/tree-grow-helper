@@ -22,7 +22,13 @@ export interface SetupStatus {
   phase: SetupPhase
   steps: InitStep[]
   error: SetupError | null
-  config: { provider: string; baseURL: string; model: string; embedModel: string } | null
+  config: {
+    provider: string
+    baseURL: string
+    model: string
+    embedModel: string
+    mcpUrl: string | null
+  } | null
 }
 
 function freshSteps(): InitStep[] {
@@ -48,6 +54,7 @@ export class AppState {
   private steps: InitStep[] = freshSteps()
   private error: SetupError | null = null
   private currentConfig: LlmConfig | null = null
+  private currentMcpUrl: string | null = null
 
   get phase(): SetupPhase {
     return this._phase
@@ -64,8 +71,9 @@ export class AppState {
     this._phase = 'connecting'
   }
 
-  beginInitializing(cfg: LlmConfig): void {
+  beginInitializing(cfg: LlmConfig, mcpUrl?: string): void {
     this.currentConfig = cfg
+    this.currentMcpUrl = mcpUrl ?? null
     this.setStep('llm', 'done')
     this._phase = 'initializing'
   }
@@ -109,6 +117,7 @@ export class AppState {
             baseURL: this.currentConfig.baseURL,
             model: this.currentConfig.model,
             embedModel: this.currentConfig.embedModel,
+            mcpUrl: this.currentMcpUrl,
           }
         : null,
     }

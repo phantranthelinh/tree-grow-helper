@@ -51,6 +51,10 @@ index → assemble the `Orchestrator` → mark ready.
   if embeddings fail, it runs with no RAG. Only an unexpected throw reaches the `error` phase.
 - [config.ts](src/config.ts) `llmDefaults` **only prefill the setup form** — they never auto-connect.
   The saved `data/llm-config.json` is what auto-connects.
+- The MCP URL is likewise runtime-configured: the `/setup` form has an MCP URL field (+ a
+  "Kiểm tra MCP" probe via `POST /api/setup/mcp/test`), saved to `data/mcp-config.json`
+  ([src/setup/mcpConfig.ts](src/setup/mcpConfig.ts)). Env `MCP_URL` only prefills/falls back;
+  the saved file wins once written.
 
 ### The agent loop and tool-safety policy (the core safety invariant)
 

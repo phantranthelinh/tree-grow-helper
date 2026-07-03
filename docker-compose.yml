@@ -5,10 +5,10 @@
 #   # then open http://localhost:8787/setup to pick a provider and Connect (once).
 #   curl http://localhost:8787/health   # -> {"status":"ok","phase":"waiting_config"}
 #
-# FIRST RUN requires configuring the LLM via the setup UI at /setup. The chosen
-# config is saved to ./data/llm-config.json (mounted volume below), so later
-# `docker compose up`/restart auto-reconnects with no UI. The env vars below only
-# PREFILL the setup form — they do not auto-connect.
+# FIRST RUN requires configuring the LLM + MCP via the setup UI at /setup. The
+# chosen config is saved to ./data/llm-config.json + ./data/mcp-config.json
+# (mounted volume below), so later `docker compose up`/restart auto-reconnects
+# with no UI. The env vars below only PREFILL the setup form — no auto-connect.
 #
 # Override any value WITHOUT editing this file: create a `.env` next to it
 # (compose auto-reads it for ${VAR} substitution). `.env` is git-ignored.
@@ -37,7 +37,7 @@ services:
       RAG_TOP_K: ${RAG_TOP_K:-4}
       DEFAULT_PLANT: ${DEFAULT_PLANT:-strawberry}
       SETUP_OPEN_BROWSER: "0" # headless container — never try to launch a browser
-    # Persists the saved LLM config + embedding cache across container recreation.
+    # Persists the saved LLM + MCP configs + embedding cache across recreation.
     volumes:
       - "./data:/app/data"
     # Makes `host.docker.internal` resolve on Linux too (harmless on Docker

@@ -6,10 +6,12 @@
 import { config } from '../src/config'
 import { PlantMcpClient } from '../src/mcp/client'
 import { classifyTool } from '../src/mcp/policy'
+import { loadMcpConfig } from '../src/setup/mcpConfig'
 
 async function main(): Promise<void> {
-  const mcp = new PlantMcpClient(config.mcp.url)
-  console.log(`Connecting to MCP at ${config.mcp.url} ...`)
+  const url = loadMcpConfig(config.mcp.configPath)?.url ?? config.mcp.url
+  const mcp = new PlantMcpClient(url)
+  console.log(`Connecting to MCP at ${url} ...`)
   await mcp.connect()
   const tools = await mcp.listTools()
   console.log(`\n${tools.length} tools:\n`)

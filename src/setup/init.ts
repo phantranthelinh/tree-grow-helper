@@ -15,6 +15,7 @@ import { ingestDocs, readReviewedDocs } from '../rag/ingestDocs'
 import { InMemoryVectorStore } from '../rag/store'
 import type { LlmConfig } from './llmConfig'
 import { saveLlmConfig } from './llmConfig'
+import { loadMcpConfig, saveMcpConfig } from './mcpConfig'
 import { listProviderModels, testLlmConnection, type ProbeFn } from './probe'
 import type { ProbeResult } from './probe'
 import type { AppState } from './state'
@@ -56,11 +57,14 @@ export async function applyLlmConfig(
   state: AppState,
   appCfg: Config,
   deps: Partial<SetupDeps> = {},
+  opts: { mcpUrl?: string } = {},
 ): Promise<ApplyResult> {
   if (state.isBusy()) {
     return { ok: false, stage: 'busy', code: 'busy', message: 'Đang xử lý cấu hình khác, vui lòng đợi.' }
   }
   const d = { ...defaultSetupDeps(), ...deps }
+  // Explicit UI choice > saved mcp-config.json > MCP_URL env fallback.
+  const mcpUrl = opts.mcpUrl ?? loadMcpConfig(appCfg.mcp.configPath)?.url ?? appCfg.mcp.url
 
   state.beginConnecting()
   const probe = await d.probe(cfg, { timeoutMs: appCfg.setup.probeTimeoutMs })
@@ -70,8 +74,10 @@ export async function applyLlmConfig(
   }
 
   saveLlmConfig(appCfg.setup.configPath, cfg)
-  state.beginInitializing(cfg)
-  state.initPromise = runInitPipeline(cfg, state, appCfg, d).catch((err) => {
+  // Persist only on an explicit choice — boot auto-reconnect keeps env-only setups pure.
+  if (opts.mcpUrl !== undefined) saveMcpConfig(appCfg.mcp.configPath, { url: mcpUrl })
+  state.beginInitializing(cfg, mcpUrl)
+  state.initPromise = runInitPipeline(cfg, mcpUrl, state, appCfg, d).catch((err) => {
     state.crash((err as Error).message)
   })
 
@@ -85,13 +91,14 @@ export async function applyLlmConfig(
  */
 async function runInitPipeline(
   cfg: LlmConfig,
+  mcpUrl: string,
   state: AppState,
   appCfg: Config,
   deps: SetupDeps,
 ): Promise<void> {
   const profile = loadProfile(appCfg.defaultPlant)
   const llm = deps.buildEngine(cfg)
-  const mcp = deps.buildMcp(appCfg.mcp.url)
+  const mcp = deps.buildMcp(mcpUrl)
   const store = new InMemoryVectorStore()
   const sessions = new SessionStore()
 
@@ -101,7 +108,7 @@ async function runInitPipeline(
   try {
     tools = await mcp.listTools()
     state.setStep('mcp', 'done', `${tools.length} tools`)
-    console.log(`[mcp] connected at ${appCfg.mcp.url} — ${tools.length} tools`)
+    console.log(`[mcp] connected at ${mcpUrl} — ${tools.length} tools`)
   } catch (err) {
     tools = KNOWN_TOOLS
     const msg = `MCP không kết nối được (${(err as Error).message}) — dùng ${tools.length} tool tĩnh (điều khiển sẽ lỗi đến khi MCP sẵn sàng).`

@@ -22,7 +22,10 @@ export const config = {
     openBrowser: process.env.SETUP_OPEN_BROWSER !== '0',
   },
   mcp: {
+    // Like llmDefaults: `url` only prefills the setup form / is the fallback when
+    // no saved config exists. The saved data/mcp-config.json wins once written.
     url: process.env.MCP_URL ?? 'http://localhost:8000/mcp',
+    configPath: process.env.MCP_CONFIG_PATH ?? 'data/mcp-config.json',
   },
   agent: {
     maxToolSteps: num(process.env.MAX_TOOL_STEPS, 3),

@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import type { McpGateway } from '../mcp/client'
 import type { LlmConfig } from './llmConfig'
 
 export type ProbeErrorCode =
@@ -108,4 +109,49 @@ export async function testLlmConnection(
   }
 
   return { ok: true, models }
+}
+
+export type McpProbeResult =
+  | { ok: true; toolCount: number; tools: string[] }
+  | { ok: false; code: ProbeErrorCode; message: string }
+
+class McpTimeoutError extends Error {}
+
+/**
+ * Verify an MCP URL by connecting and listing tools. Advisory only — MCP being
+ * down never gates connect (init degrades to the static catalog); this backs the
+ * "Kiểm tra MCP" button in the setup UI.
+ */
+export async function testMcpConnection(
+  buildMcp: (url: string) => McpGateway,
+  url: string,
+  opts?: { timeoutMs?: number },
+): Promise<McpProbeResult> {
+  const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS
+  const gw = buildMcp(url)
+  let timer: NodeJS.Timeout | undefined
+  try {
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new McpTimeoutError()), timeoutMs)
+    })
+    const tools = await Promise.race([gw.listTools(), timeout])
+    return { ok: true, toolCount: tools.length, tools: tools.map((t) => t.name) }
+  } catch (err) {
+    if (err instanceof McpTimeoutError) {
+      return { ok: false, code: 'timeout', message: `MCP không phản hồi sau ${timeoutMs}ms` }
+    }
+    return { ok: false, code: 'unreachable', message: (err as Error)?.message ?? String(err) }
+  } finally {
+    if (timer) clearTimeout(timer)
+    // McpGateway doesn't declare close(), but PlantMcpClient has one — call it so
+    // the probe never leaks a streamable-HTTP connection. Fakes without close are fine.
+    const close = (gw as { close?: () => Promise<void> }).close
+    if (typeof close === 'function') {
+      try {
+        await close.call(gw)
+      } catch {
+        // best-effort cleanup only
+      }
+    }
+  }
 }

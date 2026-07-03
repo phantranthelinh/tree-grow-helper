@@ -30,5 +30,12 @@ export const SetupConnectRequestSchema = z.object({
   apiKey: z.string().optional(),
   model: z.string().min(1),
   embedModel: z.string().min(1),
+  // Optional so pre-existing clients keep working; missing → saved config → MCP_URL env.
+  mcpUrl: z.string().url().optional(),
 })
 export type SetupConnectRequest = z.infer<typeof SetupConnectRequestSchema>
+
+export const SetupMcpTestRequestSchema = z.object({
+  url: z.string().url(),
+})
+export type SetupMcpTestRequest = z.infer<typeof SetupMcpTestRequestSchema>

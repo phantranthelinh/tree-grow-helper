@@ -21,7 +21,8 @@ COPY --chown=node:node --from=deps /app/node_modules ./node_modules
 COPY --chown=node:node package.json tsconfig.json ./
 COPY --chown=node:node src ./src
 
-# Writable dir for the saved LLM config (data/llm-config.json) + embedding cache.
+# Writable dir for the saved LLM + MCP configs (data/llm-config.json,
+# data/mcp-config.json) + embedding cache.
 # Owned by `node` so a named volume inherits the right permissions; a bind mount
 # still needs the host dir to be writable by uid 1000 (see DEPLOY.md).
 RUN mkdir -p /app/data && chown node:node /app/data
