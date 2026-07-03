@@ -8,7 +8,8 @@ Giai đoạn 1 **chỉ hỗ trợ cây dâu tây (strawberry)**; thêm cây khá
 
 ```
 Chat App ──HTTP──► AI Server ──► Orchestrator ─► LLM (LM Studio, qwen2.5-3b)
-                                     │         ─► RAG (profile dâu, embeddings bge-m3)
+                                     │         ─► RAG (profile + tài liệu đã duyệt + KB bệnh; embeddings bge-m3)
+                                     │         ─► Chẩn đoán bệnh theo triệu chứng (đối chiếu cảm biến)
                                      │         ─► Session memory (multi-turn)
                                      │         ─► Tool policy (đọc = tự chạy / điều khiển = xác nhận)
                                      └─────────► MCP client ─streamable-http→ plant-tree MCP
@@ -73,6 +74,7 @@ npm test               # unit + integration test (không cần service ngoài)
 npm run typecheck      # kiểm tra kiểu TypeScript
 npm run eval           # đo độ chính xác chọn tool của model (cần LM Studio)
 npm run mcp:catalog    # in danh sách tool của MCP (cần MCP đang chạy)
+npm run scrape         # cào tài liệu từ allowlist vào data/staging để review (xem "Databank")
 ```
 
 ## API
@@ -122,19 +124,49 @@ App chat có thể render nút **Có/Không** (gọi `/chat/confirm`) **hoặc**
   `reply` hoặc `tool`. Tool **ĐỌC** tự chạy và nạp kết quả lại; tool **ĐIỀU KHIỂN** không chạy
   ngay mà tạo `pendingAction` chờ xác nhận.
 - **An toàn**: phân loại tool ở `src/mcp/policy.ts`. Tool lạ mặc định coi là ĐIỀU KHIỂN (cần xác nhận).
+- **Tư vấn trước, đo sau**: câu hỏi kiến thức/triệu chứng ("lá vàng", "bị bệnh gì", "bón phân gì")
+  được trả lời trực tiếp từ RAG — **không** tự gọi tool cảm biến, chỉ mời kiểm tra số liệu như một
+  gợi ý tùy chọn. Người dùng hỏi số liệu thì mới đọc cảm biến.
 - **Profile lái ngưỡng**: dâu cần độ ẩm đất **75–80%** (không dùng default 30% của MCP). Xem
   `src/domain/profiles.ts` (`deriveControlThresholds`).
-- **RAG**: `src/domain/knowledge/strawberry.json` → tách ngưỡng số (vào prompt) + field text
-  (embed để truy hồi). Cross-lingual: hỏi tiếng Việt, tài liệu tiếng Anh vẫn tìm được nhờ `bge-m3`.
+- **RAG (3 nguồn)** gộp vào một vector store cosine trong bộ nhớ (`src/rag/store.ts`), embed bằng
+  `bge-m3` với cache trên đĩa (`data/cache/embeddings.jsonl`) để khởi động lại nhanh:
+  1. **Profile** `src/domain/knowledge/strawberry.json` → tách ngưỡng số (vào prompt) + field text (embed).
+  2. **Tài liệu đã duyệt** `data/docs/*.jsonl` → chunk + khử trùng lặp (xem "Databank" bên dưới).
+  3. **KB bệnh** `src/domain/knowledge/strawberry-diseases.json` → index theo triệu chứng.
+  Cross-lingual: hỏi tiếng Việt, tài liệu tiếng Anh vẫn tìm được nhờ `bge-m3`.
+- **Chẩn đoán bệnh**: KB bệnh (`src/domain/diseases.ts`) index theo triệu chứng, mỗi bệnh kèm
+  `favorable_conditions` để đối chiếu với cảm biến. Model nêu 1–2 bệnh nghi ngờ + cách xử lý/phòng ngừa;
+  triệu chứng chưa đủ thì hỏi thêm; bệnh nặng thì khuyên gặp chuyên gia. Chưa hỗ trợ chẩn đoán qua ảnh.
+
+## Databank — cào tài liệu vào RAG
+
+Pipeline có cổng review của con người, không nạp thẳng dữ liệu web vào bot:
+
+1. Thêm nguồn tin cậy (khuyến nông, `.edu.vn`, `.gov.vn`, viện nghiên cứu) vào `src/rag/scrape/sources.ts`
+   — mặc định rỗng; chỉ host trong allowlist mới được cào.
+2. `npm run scrape` → ghi bản thô ra `data/staging/*.raw.jsonl` (không đụng vào vector store).
+3. **Review/cắt rác** trong file staging, rồi copy các bản ghi tốt sang `data/docs/*.jsonl`.
+4. Lần khởi động sau, `ingestDocs` tự nạp mọi `.jsonl` trong `data/docs/` vào RAG.
+
+Mỗi bản ghi `.jsonl`: `{ "source_url", "category": "grow|uses|disease", "title?", "date?", "text", "plant?" }`.
+Dữ liệu này **chỉ để tư vấn**, không bao giờ đặt ngưỡng điều khiển thiết bị.
 
 ## Thêm cây mới
 
-Tạo `src/domain/knowledge/<plant>.json` theo schema trong `src/domain/profiles.ts`, rồi đặt
-`DEFAULT_PLANT=<plant>` trong `.env`. Không cần đổi code.
+1. Tạo `src/domain/knowledge/<plant>.json` theo schema trong `src/domain/profiles.ts`.
+2. (Tùy chọn) Tạo `src/domain/knowledge/<plant>-diseases.json` cho luồng chẩn đoán (schema ở `src/domain/diseases.ts`).
+3. Đặt `DEFAULT_PLANT=<plant>` trong `.env`. Không cần đổi code.
 
 ## Trạng thái & giới hạn
 
-- Dữ liệu dâu là web-sourced (exa) — **review trước production**; một số field còn trống
-  (`scientific_name`, `care_notes`, `toxicity`…), có thể bổ sung sau.
+- Tri thức dâu đã viết lại theo **nguồn tiếng Việt chính thống** (Khuyến nông Lâm Đồng/Quốc gia,
+  VAAS, VISTA, Chi cục Trồng trọt & BVTV Lâm Đồng…); các field chính (`scientific_name`, `care_notes`,
+  `toxicity`…) đã điền. KB bệnh (`strawberry-diseases.json`) hiện là **dữ liệu mồi** — mở rộng bằng
+  đầu ra scraper đã duyệt.
 - Session memory hiện in-memory (mất khi restart) — đủ cho demo 1–5 người; thay bằng SQLite nếu cần.
 - Chất lượng chọn tool phụ thuộc model nhỏ — chạy `npm run eval` để đo và cân nhắc 3b vs 7b.
+
+## Triển khai
+
+Xem [DEPLOY.md](DEPLOY.md). Có sẵn `Dockerfile` và `docker-compose.yml` (đã đặt `SETUP_OPEN_BROWSER=0`).
