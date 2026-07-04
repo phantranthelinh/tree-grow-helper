@@ -1,3 +1,5 @@
+import type { EvalGrounding } from './grounding'
+
 export interface EvalExpect {
   type: 'reply' | 'tool'
   tool?: string
@@ -8,6 +10,13 @@ export interface EvalCase {
   id: string
   message: string
   expect: EvalExpect
+  /**
+   * Optional grounding expectations for the reply TEXT (reply cases only). To keep
+   * the grounding metric honest, do NOT put these on cases whose wording is
+   * verbatim in the few-shot (e.g. the "vàng lá" case = few-shot Ví dụ 1) — the
+   * model would score by copying, not by grounding.
+   */
+  grounding?: EvalGrounding
   note?: string
 }
 
@@ -25,9 +34,9 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'fan-off', message: 'Tắt quạt thiết bị esp32-01 giúp mình.', expect: { type: 'tool', tool: 'send_command', safety: 'control' } },
   { id: 'auto-water', message: 'Bật chế độ tưới tự động cho esp32-01.', expect: { type: 'tool', tool: 'auto_water', safety: 'control' } },
   { id: 'set-moisture-rule', message: 'Đặt luật tưới cho esp32-01 khi độ ẩm đất dưới 75%.', expect: { type: 'tool', tool: 'set_moisture_rule', safety: 'control' } },
-  { id: 'kb-temp', message: 'Cây dâu tây thích hợp nhiệt độ khoảng bao nhiêu?', expect: { type: 'reply' } },
+  { id: 'kb-temp', message: 'Cây dâu tây thích hợp nhiệt độ khoảng bao nhiêu?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['10', '27'] } },
   { id: 'kb-pests', message: 'Cây dâu hay bị sâu bệnh gì?', expect: { type: 'reply' } },
-  { id: 'kb-moisture', message: 'Độ ẩm đất tối ưu cho dâu là bao nhiêu phần trăm?', expect: { type: 'reply' } },
+  { id: 'kb-moisture', message: 'Độ ẩm đất tối ưu cho dâu là bao nhiêu phần trăm?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['75', '80'], forbid: ['30%'] } },
 
   // --- A1: tools not previously covered ---
   { id: 'device-info', message: 'Cho xem thông tin chi tiết thiết bị esp32-01.', expect: { type: 'tool', tool: 'get_device_info', safety: 'read' } },
@@ -46,14 +55,14 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'water-15s', message: 'Mở nước tưới esp32-01 trong 15 giây.', expect: { type: 'tool', tool: 'send_command', safety: 'control' } },
 
   // --- A3: knowledge questions that should stay a reply (drives RAG) ---
-  { id: 'kb-fertilizer', message: 'Nên bón phân gì cho dâu khi cây ra hoa?', expect: { type: 'reply' } },
-  { id: 'kb-botrytis', message: 'Dâu bị mốc xám (nấm Botrytis) thì xử lý sao?', expect: { type: 'reply' } },
+  { id: 'kb-fertilizer', message: 'Nên bón phân gì cho dâu khi cây ra hoa?', expect: { type: 'reply' }, grounding: { requireCitation: true } },
+  { id: 'kb-botrytis', message: 'Dâu bị mốc xám (nấm Botrytis) thì xử lý sao?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] } },
   { id: 'kb-harvest', message: 'Khi nào thì thu hoạch dâu được?', expect: { type: 'reply' } },
   { id: 'kb-propagation', message: 'Dâu tây nhân giống bằng cách nào?', expect: { type: 'reply' } },
-  { id: 'kb-planting', message: 'Trồng dâu nên để khoảng cách cây bao nhiêu?', expect: { type: 'reply' } },
+  { id: 'kb-planting', message: 'Trồng dâu nên để khoảng cách cây bao nhiêu?', expect: { type: 'reply' }, grounding: { requireCitation: true } },
   { id: 'kb-toxicity', message: 'Chó ăn phải lá dâu có sao không?', expect: { type: 'reply' } },
   { id: 'kb-light-hours', message: 'Dâu tây cần mấy giờ nắng mỗi ngày?', expect: { type: 'reply' } },
-  { id: 'kb-ph', message: 'Đất trồng dâu nên có pH khoảng bao nhiêu?', expect: { type: 'reply' } },
+  { id: 'kb-ph', message: 'Đất trồng dâu nên có pH khoảng bao nhiêu?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['5.5', '6.5'] } },
 
   // --- A4: trap / chit-chat that should stay a reply (guards against over-triggering tools) ---
   { id: 'chat-hello', message: 'Xin chào!', expect: { type: 'reply' }, note: 'no tool' },
@@ -67,8 +76,8 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'symptom-leaf-spot', message: 'Lá dâu xuất hiện đốm nâu là bị gì?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
 
   // --- A6: specific disease diagnosis (disease KB) + uses (databank) — all reply ---
-  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
-  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
+  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] }, note: 'diagnose from disease KB' },
+  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['phấn trắng'] }, note: 'diagnose from disease KB' },
   { id: 'diag-spider-mite', message: 'Lá dâu có chấm li ti vàng và có tơ nhện mảnh, xử lý thế nào?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
   { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
   { id: 'uses-general', message: 'Dâu tây dùng để làm gì?', expect: { type: 'reply' } },

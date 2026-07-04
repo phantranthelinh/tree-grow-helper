@@ -34,4 +34,19 @@ describe('eval dataset', () => {
       }
     }
   })
+
+  it('only attaches grounding expectations to reply cases', () => {
+    for (const c of EVAL_CASES) {
+      if (c.grounding) {
+        expect(c.expect.type, `grounding on non-reply case ${c.id}`).toBe('reply')
+      }
+    }
+  })
+
+  it('keeps the grounding metric meaningful: >=6 cases, >=2 requiring a citation', () => {
+    const grounded = EVAL_CASES.filter((c) => c.grounding)
+    expect(grounded.length).toBeGreaterThanOrEqual(6)
+    const citing = grounded.filter((c) => c.grounding?.requireCitation)
+    expect(citing.length).toBeGreaterThanOrEqual(2)
+  })
 })
