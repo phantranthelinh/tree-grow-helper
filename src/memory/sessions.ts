@@ -5,6 +5,13 @@ export interface PendingAction {
   tool: string
   args: Record<string, unknown>
   summary: string
+  /**
+   * How the action runs once confirmed:
+   *  - 'control' (default): a device command executed via executeAction.
+   *  - 'read': a user-facing sensor read that runs and is summarized on confirm.
+   * Optional for backward compatibility; absent means 'control'.
+   */
+  kind?: 'control' | 'read'
 }
 
 interface Session {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyTool, isReadOnly, requiresConfirmation } from '../src/mcp/policy'
+import { classifyTool, confirmsBeforeRead, isReadOnly, requiresConfirmation } from '../src/mcp/policy'
 
 const READ = [
   'list_devices',
@@ -33,5 +33,24 @@ describe('tool policy', () => {
     expect(classifyTool('reboot_everything')).toBe('control')
     expect(classifyTool('get_future_sensor')).toBe('read')
     expect(classifyTool('list_zones')).toBe('read')
+  })
+})
+
+describe('confirmsBeforeRead', () => {
+  it('flags user-facing sensor reads as confirm-before-read', () => {
+    expect(confirmsBeforeRead('get_latest_sensor')).toBe(true)
+    expect(confirmsBeforeRead('get_sensor_history')).toBe(true)
+  })
+
+  it('does not flag internal reads or control tools', () => {
+    for (const n of ['list_devices', 'get_device_info', 'get_moisture_rule', 'get_light_rule', 'get_pending_commands']) {
+      expect(confirmsBeforeRead(n)).toBe(false)
+    }
+    expect(confirmsBeforeRead('send_command')).toBe(false)
+  })
+
+  it('keeps sensor reads classified as read (over-confirm is a UX layer, not a safety reclassification)', () => {
+    expect(classifyTool('get_latest_sensor')).toBe('read')
+    expect(isReadOnly('get_latest_sensor')).toBe(true)
   })
 })

@@ -16,6 +16,9 @@ describe('summarizeAction', () => {
   it('describes auto_water with threshold', () => {
     expect(summarizeAction('auto_water', { device_id: 'esp32-01', threshold: 75 })).toContain('ngưỡng độ ẩm đất 75%')
   })
+  it('describes a latest-sensor read in Vietnamese', () => {
+    expect(summarizeAction('get_latest_sensor', { device_id: 'esp32-01' })).toContain('cảm biến')
+  })
 })
 
 describe('createPendingAction', () => {
@@ -24,6 +27,17 @@ describe('createPendingAction', () => {
     const b = createPendingAction('send_command', { device_id: 'd1', command: 'LIGHT_ON' })
     expect(a.id).not.toBe(b.id)
     expect(a.summary).toBe('Bật đèn thiết bị d1')
+  })
+
+  it('defaults kind to control', () => {
+    const a = createPendingAction('send_command', { device_id: 'd1', command: 'WATER_ON' })
+    expect(a.kind).toBe('control')
+  })
+
+  it('marks a sensor read pending as kind read with a read-flavored summary', () => {
+    const a = createPendingAction('get_latest_sensor', { device_id: 'd1' }, 'read')
+    expect(a.kind).toBe('read')
+    expect(a.summary).toContain('cảm biến')
   })
 })
 

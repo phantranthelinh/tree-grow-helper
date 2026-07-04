@@ -2,7 +2,7 @@ import type { PlantProfile } from '../domain/profiles'
 import type { ChatMessage, LlmEngine } from '../llm'
 import { assembleMessages, buildSystemPrompt } from '../llm/prompt'
 import type { McpGateway, McpTool } from '../mcp/client'
-import { classifyTool } from '../mcp/policy'
+import { classifyTool, confirmsBeforeRead } from '../mcp/policy'
 import type { PendingAction, SessionStore } from '../memory/sessions'
 import type { InMemoryVectorStore } from '../rag/store'
 import { retrieve } from '../rag/retrieve'
@@ -77,10 +77,10 @@ export class Orchestrator {
     if (pending) {
       const intent = detectConfirmation(message)
       if (intent === 'affirm') {
-        const exec = await executeAction(mcp, pending)
+        const text = await this.runConfirmedAction(userId, sessionId, pending)
         sessions.clearPending(userId, sessionId)
-        this.remember(userId, sessionId, message, exec.text)
-        return { reply: exec.text, pendingAction: null }
+        this.remember(userId, sessionId, message, text)
+        return { reply: text, pendingAction: null }
       }
       if (intent === 'negate') {
         sessions.clearPending(userId, sessionId)
@@ -109,9 +109,54 @@ export class Orchestrator {
       this.remember(userId, sessionId, `[huỷ] ${pending.summary}`, reply)
       return { reply, pendingAction: null }
     }
-    const exec = await executeAction(mcp, pending)
-    this.remember(userId, sessionId, `[xác nhận] ${pending.summary}`, exec.text)
-    return { reply: exec.text, pendingAction: null }
+    const text = await this.runConfirmedAction(userId, sessionId, pending)
+    this.remember(userId, sessionId, `[xác nhận] ${pending.summary}`, text)
+    return { reply: text, pendingAction: null }
+  }
+
+  /**
+   * Run a confirmed pending action and return the Vietnamese reply. A control
+   * action executes the device command; a user-facing read runs the sensor tool
+   * then summarizes the result through one LLM turn.
+   */
+  private async runConfirmedAction(userId: string, sessionId: string, pending: PendingAction): Promise<string> {
+    if (pending.kind === 'read') {
+      return this.executeReadPending(userId, sessionId, pending)
+    }
+    const exec = await executeAction(this.deps.mcp, pending)
+    return exec.text
+  }
+
+  /** Anchor a user-facing sensor read as a pending offer and build the (Có/Không) prompt. */
+  private anchorReadOffer(
+    userId: string,
+    sessionId: string,
+    tool: string,
+    args: Record<string, unknown>,
+    message?: string,
+  ): { reply: string; view: PendingActionView } {
+    const pending = createPendingAction(tool, args, 'read')
+    this.deps.sessions.setPending(userId, sessionId, pending)
+    const lead = message ? `${message}\n\n` : ''
+    return { reply: `${lead}Bạn có muốn mình ${pending.summary} không? (Có/Không)`, view: toView(pending) }
+  }
+
+  /** Execute a confirmed sensor read and turn the raw result into a Vietnamese answer. */
+  private async executeReadPending(userId: string, sessionId: string, pending: PendingAction): Promise<string> {
+    const { llm, sessions, profile, tools, fewshot } = this.deps
+    const resultText = await this.callReadTool(pending.tool, pending.args)
+    const system = buildSystemPrompt({ profile, tools, fewshot })
+    const history = sessions.getHistory(userId, sessionId)
+    const messages: ChatMessage[] = [
+      { role: 'system', content: system },
+      ...history,
+      {
+        role: 'user',
+        content: `[Kết quả ${pending.tool}]\n${resultText}\nHãy tóm tắt và trả lời người dùng bằng tiếng Việt, ngắn gọn, so với khoảng tối ưu của dâu nếu phù hợp.`,
+      },
+    ]
+    const text = await llm.complete(messages, { temperature: this.deps.replyTemp })
+    return text || 'Mình đã đọc số liệu nhưng chưa tóm tắt được, bạn thử lại giúp mình nhé.'
   }
 
   private async runAgentLoop(userId: string, sessionId: string, message: string): Promise<ChatResult> {
@@ -133,6 +178,16 @@ export class Orchestrator {
       }
 
       if (decision.type === 'reply' || !decision.tool) {
+        // A reply may still carry a confirm-before-read tool as an OFFER to anchor
+        // (symptom question → advice + an offer to check sensors), so a follow-up
+        // "có" runs it deterministically. Only sensor reads are anchored this way —
+        // a control tool named on a reply is ignored (never executed from a reply).
+        if (decision.tool && confirmsBeforeRead(decision.tool)) {
+          const offer = this.anchorReadOffer(userId, sessionId, decision.tool, decision.args ?? {}, decision.message)
+          finalReply = offer.reply
+          pendingView = offer.view
+          break
+        }
         finalReply = decision.message || FALLBACK_REPLY
         break
       }
@@ -141,7 +196,7 @@ export class Orchestrator {
       const args = decision.args ?? {}
 
       if (classifyTool(toolName) === 'control') {
-        const pending = createPendingAction(toolName, args)
+        const pending = createPendingAction(toolName, args, 'control')
         sessions.setPending(userId, sessionId, pending)
         const lead = decision.message ? `${decision.message}\n\n` : ''
         finalReply = `${lead}Bạn xác nhận thực hiện: "${pending.summary}"? (Có/Không)`
@@ -149,7 +204,16 @@ export class Orchestrator {
         break
       }
 
-      // Read-only tool: execute automatically and feed the result back.
+      // User-facing sensor read requested directly: OFFER it (anchor as a pending)
+      // instead of running inline, so a follow-up "có" runs it via the confirm path.
+      if (confirmsBeforeRead(toolName)) {
+        const offer = this.anchorReadOffer(userId, sessionId, toolName, args, decision.message)
+        finalReply = offer.reply
+        pendingView = offer.view
+        break
+      }
+
+      // Internal read-only tool: execute automatically and feed the result back.
       const resultText = await this.callReadTool(toolName, args)
       messages.push({ role: 'assistant', content: JSON.stringify({ type: 'tool', tool: toolName, args }) })
       messages.push({
