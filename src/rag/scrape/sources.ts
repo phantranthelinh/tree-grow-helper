@@ -14,11 +14,30 @@ export interface Source {
   selector?: string
 }
 
+/**
+ * Luồng vận hành (có cổng người duyệt — KHÔNG tự động vào store):
+ *   1. `npm run scrape` → ghi TẤT CẢ vào data/staging/strawberry-docs.raw.jsonl
+ *      (chỉ fetch các host trong danh sách này; host lạ bị chặn cứng).
+ *   2. NGƯỜI đọc, cắt bỏ boilerplate, kiểm tra là tiếng Việt + đáng tin, rồi COPY
+ *      các record tốt sang data/docs/*.jsonl (tự tạo thư mục khi copy).
+ *   3. Lần init sau, ingestDocs sẽ chunk → embed → khử trùng lặp → nạp vào store.
+ *
+ * `selector` để trống ⇒ lấy cả <body> (nhiều rác hơn — người duyệt cắt ở bước 2).
+ * Nên MỞ từng trang, tìm vùng nội dung chính (article/main/.item-page…) và điền
+ * `selector` để scrape sạch hơn. Các URL dưới đây là nguồn chính thống VN đã dùng
+ * để soạn profile dâu (src/domain/knowledge/strawberry.json → sources).
+ */
 export const SOURCES: Source[] = [
-  // Ví dụ (thay bằng nguồn thật của bạn, rồi bỏ comment):
-  // { url: 'https://<trusted>.edu.vn/ky-thuat-trong-dau-tay', category: 'grow', selector: 'article' },
-  // { url: 'https://<trusted>.gov.vn/ung-dung-che-bien-dau-tay', category: 'uses', selector: 'main' },
-  // { url: 'https://<trusted>.edu.vn/benh-hai-dau-tay', category: 'disease', selector: '.article-content' },
+  { url: 'https://khuyennong.lamdong.gov.vn/ky-thuat-trong-trot/ki-thuat-trong-rau/865-quy-trinh-k-thut-trng-cay-dau-tay', category: 'grow' },
+  { url: 'https://khuyennongvn.gov.vn/hoat-dong-khuyen-nong/chuyen-giao-tbkt/lam-dong-chuyen-doi-trong-dau-tay-giup-cai-thien-sinh-ke-cho-dong-bao-dan-toc-thieu-so-31818.html', category: 'grow' },
+  { url: 'https://smartfarm.mard.gov.vn/2022/12/tai-lieu-ky-thuat-canh-tac-dau-tay-ca.html', category: 'grow' },
+  { url: 'https://sti.vista.gov.vn/projects/kqnv/chuyen-giao-quy-trinh-ky-thuat-san-xuat-dau-tay-ot-ngot-va-ca-chua-theo-mo-hinh-trang-trai-thong-minh-cua-han-quoc-166065.html', category: 'grow' },
+  { url: 'https://techport.vn/83/quy-trinh-trong-cay-dau-tay-trong-dieu-kien-co-kiem-soat-mot-so-yeu-to-moi-truong-102381.html', category: 'grow' },
+  { url: 'https://tapchi.vaas.vn/vi/tap-chi/anh-huong-cua-nong-do-nito-trong-dung-dich-dinh-duong-den-sinh-truong-nang-suat-va-chat', category: 'grow' },
+  { url: 'https://tapchi.vaas.vn/vi/tap-chi/ket-qua-lai-tao-chon-loc-mot-so-dong-dau-tay-co-trien-vong-tai-lam-dong', category: 'grow' },
+  { url: 'https://vaas.vn/vi/khoa-hoc-cong-nghe/ung-dung-cong-nghe-cao-trong-san-xuat-dau-tay-dam-bao-toan-thuc-pham', category: 'uses' },
+  { url: 'https://jst.iuh.edu.vn/index.php/jst-iuh/article/download/5073/843/16744', category: 'disease' },
+  { url: 'http://ttbvtv.lamdong.gov.vn/du-tinh-du-bao-dich-hai/sau-benh-hai-quan-tam-trong-ky/484-benh-thoi-trai-dau-tay-tai-da-lat-va-bien-phap-phong-tru', category: 'disease' },
 ]
 
 /** Hosts derived from SOURCES — used to hard-block accidental off-allowlist fetches. */

@@ -36,6 +36,8 @@ export interface OrchestratorDeps {
   fewshot?: string
   maxToolSteps: number
   ragTopK: number
+  /** Drop retrieved chunks below this cosine score. Defaults to 0 (off) when unset. */
+  ragMinScore?: number
   /** Temperature for the JSON decision call. Defaults to 0.1 when unset. */
   decisionTemp?: number
   /** Temperature for the free-text fallback answer. Defaults to 0.3 when unset. */
@@ -113,10 +115,10 @@ export class Orchestrator {
   }
 
   private async runAgentLoop(userId: string, sessionId: string, message: string): Promise<ChatResult> {
-    const { llm, mcp, store, sessions, profile, tools, fewshot, maxToolSteps, ragTopK } = this.deps
+    const { llm, mcp, store, sessions, profile, tools, fewshot, maxToolSteps, ragTopK, ragMinScore } = this.deps
 
     const system = buildSystemPrompt({ profile, tools, fewshot })
-    const rag = await retrieve(store, llm, message, ragTopK)
+    const rag = await retrieve(store, llm, message, ragTopK, ragMinScore)
     const history = sessions.getHistory(userId, sessionId)
     const messages: ChatMessage[] = assembleMessages({ system, history, ragContext: rag.contextText, userMessage: message })
 

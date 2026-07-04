@@ -43,6 +43,10 @@ export const config = {
     // can A/B whether it stays accurate without the knowledge base.
     disabled: process.env.RAG_DISABLED === '1',
     topK: num(process.env.RAG_TOP_K, 5),
+    // Drop retrieved chunks scoring below this cosine threshold. Default 0 = OFF
+    // (keep all top-K, unchanged behavior). Raise (~0.3–0.4 for bge-m3) once the
+    // grounding eval shows weak chunks are misleading the small model.
+    minScore: num(process.env.RAG_MIN_SCORE, 0),
     docsDir: process.env.RAG_DOCS_DIR ?? 'data/docs',
     stagingDir: process.env.RAG_STAGING_DIR ?? 'data/staging',
     embedCachePath: process.env.RAG_EMBED_CACHE ?? 'data/cache/embeddings.jsonl',

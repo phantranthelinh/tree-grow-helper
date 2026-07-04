@@ -30,12 +30,17 @@ export function formatContextText(chunks: RetrievedChunk[]): string {
 
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
-/** Embed the query and return the top-k most similar knowledge chunks. */
+/**
+ * Embed the query and return the top-k most similar knowledge chunks. `minScore`
+ * drops hits below that cosine score; 0 (default) keeps all top-K — including
+ * negative-scored ones, matching the pre-threshold behavior.
+ */
 export async function retrieve(
   store: InMemoryVectorStore,
   llm: LlmEngine,
   query: string,
   topK: number,
+  minScore = 0,
 ): Promise<RetrievedContext> {
   if (store.size() === 0 || query.trim().length === 0) {
     return { chunks: [], contextText: '' }
@@ -51,7 +56,7 @@ export async function retrieve(
     )
   }
 
-  const hits = store.search(queryEmbedding, topK)
+  const hits = store.search(queryEmbedding, topK).filter((h) => minScore <= 0 || h.score >= minScore)
   const chunks: RetrievedChunk[] = hits.map((h) => ({
     text: h.text,
     score: h.score,

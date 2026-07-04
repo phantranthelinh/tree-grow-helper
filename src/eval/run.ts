@@ -105,7 +105,7 @@ async function main(): Promise<void> {
   let groundTotal = 0
   let groundHits = 0
   for (const c of EVAL_CASES) {
-    const rag = await retrieve(store, llm, c.message, config.rag.topK)
+    const rag = await retrieve(store, llm, c.message, config.rag.topK, config.rag.minScore)
     const messages = assembleMessages({ system, history: [], ragContext: rag.contextText, userMessage: c.message })
     let actual: Decision | null = null
     try {
