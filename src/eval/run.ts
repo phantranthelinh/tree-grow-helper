@@ -109,7 +109,9 @@ async function main(): Promise<void> {
     const messages = assembleMessages({ system, history: [], ragContext: rag.contextText, userMessage: c.message })
     let actual: Decision | null = null
     try {
-      const raw = await llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME)
+      const raw = await llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME, {
+        temperature: config.llm.decisionTemp,
+      })
       actual = parse(raw)
     } catch (err) {
       console.error(`\nLLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${config.llmDefaults.model}"?`)

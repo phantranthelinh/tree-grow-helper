@@ -30,6 +30,13 @@ export const config = {
   agent: {
     maxToolSteps: num(process.env.MAX_TOOL_STEPS, 3),
   },
+  llm: {
+    // Sampling temperatures. Low for the JSON decision (consistency/citation
+    // discipline), higher for the free-text fallback answer. Defaults match the
+    // previous hardcoded engine values, so behavior is unchanged unless overridden.
+    decisionTemp: num(process.env.LLM_DECISION_TEMP, 0.1),
+    replyTemp: num(process.env.LLM_REPLY_TEMP, 0.3),
+  },
   rag: {
     // RAG_DISABLED=1 skips building the vector store at init — the model then
     // answers from the system prompt alone (no [Tri thức tham khảo] block), so you

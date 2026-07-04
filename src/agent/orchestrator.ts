@@ -36,6 +36,10 @@ export interface OrchestratorDeps {
   fewshot?: string
   maxToolSteps: number
   ragTopK: number
+  /** Temperature for the JSON decision call. Defaults to 0.1 when unset. */
+  decisionTemp?: number
+  /** Temperature for the free-text fallback answer. Defaults to 0.3 when unset. */
+  replyTemp?: number
 }
 
 const FALLBACK_REPLY = 'Xin lỗi, mình chưa xử lý được yêu cầu. Bạn nói rõ hơn giúp mình nhé.'
@@ -154,10 +158,13 @@ export class Orchestrator {
 
     if (finalReply === undefined) {
       // Ran out of tool steps: force a final text answer.
-      const text = await llm.complete([
-        ...messages,
-        { role: 'user', content: 'Dựa trên dữ liệu ở trên, hãy trả lời người dùng bằng tiếng Việt, ngắn gọn.' },
-      ])
+      const text = await llm.complete(
+        [
+          ...messages,
+          { role: 'user', content: 'Dựa trên dữ liệu ở trên, hãy trả lời người dùng bằng tiếng Việt, ngắn gọn.' },
+        ],
+        { temperature: this.deps.replyTemp },
+      )
       finalReply = text || 'Mình đã xem dữ liệu nhưng chưa thể kết luận, bạn hỏi cụ thể hơn nhé.'
     }
 
@@ -166,7 +173,8 @@ export class Orchestrator {
   }
 
   private async decide(messages: ChatMessage[]): Promise<AgentDecision | null> {
-    const raw = await this.deps.llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME)
+    const opts = { temperature: this.deps.decisionTemp }
+    const raw = await this.deps.llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME, opts)
     const decision = parseDecision(raw)
     if (decision) return decision
     // one retry with a stricter nudge
@@ -174,6 +182,7 @@ export class Orchestrator {
       [...messages, { role: 'user', content: 'Chỉ trả về đúng MỘT JSON hợp lệ theo schema, không thêm chữ nào khác.' }],
       AGENT_DECISION_JSON_SCHEMA,
       AGENT_DECISION_SCHEMA_NAME,
+      opts,
     )
     return parseDecision(raw2)
   }

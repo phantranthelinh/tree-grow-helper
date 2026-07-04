@@ -23,6 +23,14 @@ Trợ lý: {"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","
 Ví dụ 4 — điều khiển (KHÔNG nói đã xong, chờ xác nhận):
 Người dùng: "Tưới nước 10 giây đi."
 Trợ lý: {"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000},"message":"Mình chuẩn bị bật bơm tưới 10 giây."}
+
+Ví dụ 5 — hỏi kiến thức, trả lời NGẮN và DẪN NGUỒN (nêu nguồn nếu có):
+Người dùng: "Tưới nước cho dâu thế nào là đúng?"
+Trợ lý: {"type":"reply","message":"Dâu nên tưới nhỏ giọt để cấp cả nước lẫn dinh dưỡng, tưới vừa đủ theo nhu cầu và tránh để úng vì đất thoát nước kém dễ gây thối rễ (theo Khuyến nông Lâm Đồng)."}
+
+Ví dụ 6 — chẩn đoán bệnh (nghĩ ngắn trước rồi nêu bệnh + xử lý + phòng ngừa, có nguồn):
+Người dùng: "Thân và cuống dâu có đốm đen, vài quả bị lõm nâu, cây bị bệnh gì?"
+Trợ lý: {"reasoning":"Đốm đen ở thân/cuống kèm vết lõm nâu trên quả khớp nhất với thán thư (Colletotrichum).","type":"reply","message":"Nhiều khả năng là bệnh thán thư (Colletotrichum spp.), phát mạnh khi nóng ẩm mưa nhiều. Xử lý: loại bỏ và tiêu hủy bộ phận bệnh, tránh thao tác khi cây ướt, phun thuốc phòng-trị theo khuyến cáo. Phòng ngừa: dùng cây giống sạch bệnh, phủ luống hạn chế nước bắn, thoát nước tốt (theo Chi cục BVTV Lâm Đồng)."}
 `.trim()
 
 export function getFewshot(): string {

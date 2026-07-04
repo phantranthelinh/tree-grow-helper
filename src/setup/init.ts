@@ -181,6 +181,8 @@ async function runInitPipeline(
     fewshot: getFewshot(),
     maxToolSteps: appCfg.agent.maxToolSteps,
     ragTopK: appCfg.rag.topK,
+    decisionTemp: appCfg.llm.decisionTemp,
+    replyTemp: appCfg.llm.replyTemp,
   })
 
   state.setReady(orch)

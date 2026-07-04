@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Orchestrator, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
-import type { ChatMessage, LlmEngine } from '../src/llm'
+import type { ChatMessage, CompleteOptions, LlmEngine } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
 import { SessionStore } from '../src/memory/sessions'
 import { InMemoryVectorStore } from '../src/rag/store'
@@ -11,14 +11,23 @@ class FakeLlm implements LlmEngine {
   completeReturn = 'Trả lời cuối cùng.'
   jsonCalls = 0
   completeCalls = 0
+  lastJsonOpts?: CompleteOptions
+  lastCompleteOpts?: CompleteOptions
 
-  async complete(): Promise<string> {
+  async complete(_messages: ChatMessage[], opts?: CompleteOptions): Promise<string> {
     this.completeCalls++
+    this.lastCompleteOpts = opts
     return this.completeReturn
   }
 
-  async completeJson(): Promise<string> {
+  async completeJson(
+    _messages: ChatMessage[],
+    _schema: Record<string, unknown>,
+    _name: string,
+    opts?: CompleteOptions,
+  ): Promise<string> {
     this.jsonCalls++
+    this.lastJsonOpts = opts
     return this.jsonQueue.shift() ?? '{"type":"reply","message":"hết kịch bản"}'
   }
 
@@ -74,6 +83,24 @@ describe('Orchestrator', () => {
     expect(res.reply).toBe('Chào bạn!')
     expect(res.pendingAction).toBeNull()
     expect(mcp.calls).toHaveLength(0)
+  })
+
+  it('uses message as the reply and never leaks the internal reasoning field', async () => {
+    llm.jsonQueue = [
+      '{"reasoning":"triệu chứng khớp bệnh thán thư","type":"reply","message":"Nhiều khả năng là thán thư (theo VAAS)."}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'thân cây có đốm đen')
+    expect(res.reply).toBe('Nhiều khả năng là thán thư (theo VAAS).')
+    expect(res.reply).not.toContain('triệu chứng khớp')
+    expect(res.pendingAction).toBeNull()
+  })
+
+  it('forwards the configured decision temperature to completeJson', async () => {
+    deps = makeDeps({ llm, mcp, decisionTemp: 0.05 })
+    orch = new Orchestrator(deps)
+    llm.jsonQueue = ['{"type":"reply","message":"ok"}']
+    await orch.handleChat('u1', 's1', 'câu hỏi')
+    expect(llm.lastJsonOpts?.temperature).toBe(0.05)
   })
 
   it('runs a read-only tool automatically then replies', async () => {
