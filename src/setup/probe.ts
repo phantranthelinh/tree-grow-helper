@@ -42,25 +42,6 @@ function makeClient(baseURL: string, apiKey: string, timeoutMs: number): OpenAI 
 }
 
 /**
- * List models exposed by an OpenAI-compatible server. Used by the setup UI to
- * populate the model dropdowns before Connect.
- */
-export async function listProviderModels(opts: {
-  baseURL: string
-  apiKey: string
-  timeoutMs?: number
-}): Promise<{ ok: true; models: string[] } | { ok: false; code: ProbeErrorCode; message: string }> {
-  const client = makeClient(opts.baseURL, opts.apiKey, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS)
-  try {
-    const res = await client.models.list()
-    const models = res.data.map((m) => m.id).sort((a, b) => a.localeCompare(b))
-    return { ok: true, models }
-  } catch (err) {
-    return { ok: false, ...classify(err) }
-  }
-}
-
-/**
  * Verify a full LLM configuration: list models (soft — some servers lack the
  * endpoint), then a 1-token chat completion, then a tiny embedding. Returns the
  * discovered model list on success, or the failing stage + code on failure.

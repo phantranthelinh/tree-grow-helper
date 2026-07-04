@@ -16,14 +16,13 @@ import { InMemoryVectorStore } from '../rag/store'
 import type { LlmConfig } from './llmConfig'
 import { saveLlmConfig } from './llmConfig'
 import { loadMcpConfig, saveMcpConfig } from './mcpConfig'
-import { listProviderModels, testLlmConnection, type ProbeFn } from './probe'
+import { testLlmConnection, type ProbeFn } from './probe'
 import type { ProbeResult } from './probe'
 import type { AppState } from './state'
 
 /** Injectable construction seams so tests can run the pipeline with fakes. */
 export interface SetupDeps {
   probe: ProbeFn
-  listModels: typeof listProviderModels
   buildEngine: (cfg: LlmConfig) => LlmEngine
   buildMcp: (url: string) => McpGateway
 }
@@ -31,7 +30,6 @@ export interface SetupDeps {
 export function defaultSetupDeps(): SetupDeps {
   return {
     probe: testLlmConnection,
-    listModels: listProviderModels,
     buildEngine: (cfg) =>
       new OpenAICompatEngine({
         baseURL: cfg.baseURL,
@@ -116,41 +114,49 @@ async function runInitPipeline(
     console.warn(`[mcp] ${msg}`)
   }
 
-  // RAG index — degrade to no-RAG if embeddings are unavailable.
+  // RAG index — skipped entirely when RAG_DISABLED (store stays empty, so the
+  // orchestrator sends no [Tri thức tham khảo] block); otherwise degrade to no-RAG
+  // if embeddings are unavailable.
   state.setStep('rag', 'running')
-  try {
-    const cachePath = resolve(process.cwd(), appCfg.rag.embedCachePath)
-    const cache = loadEmbedCache(cachePath)
-
-    const nProfile = await ingestProfile(store, llm, profile)
-
-    const docs = readReviewedDocs(resolve(process.cwd(), appCfg.rag.docsDir))
-    const nDocs = await ingestDocs(store, llm, docs, {
-      plant: profile.plant,
-      cache,
-      chunkSize: appCfg.rag.chunkSize,
-      chunkOverlap: appCfg.rag.chunkOverlap,
-      minChunkLen: appCfg.rag.minChunkLen,
-    })
-
-    let nDiseases = 0
+  if (appCfg.rag.disabled) {
+    const msg = 'RAG đã tắt (RAG_DISABLED) — chạy KHÔNG có tri thức tham khảo, model tự trả lời.'
+    state.setStep('rag', 'done', msg)
+    console.log(`[rag] ${msg}`)
+  } else {
     try {
-      nDiseases = await ingestDiseases(store, llm, loadDiseases(profile.plant), {
+      const cachePath = resolve(process.cwd(), appCfg.rag.embedCachePath)
+      const cache = loadEmbedCache(cachePath)
+
+      const nProfile = await ingestProfile(store, llm, profile)
+
+      const docs = readReviewedDocs(resolve(process.cwd(), appCfg.rag.docsDir))
+      const nDocs = await ingestDocs(store, llm, docs, {
         plant: profile.plant,
         cache,
+        chunkSize: appCfg.rag.chunkSize,
+        chunkOverlap: appCfg.rag.chunkOverlap,
+        minChunkLen: appCfg.rag.minChunkLen,
       })
-    } catch (err) {
-      console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
-    }
 
-    saveEmbedCache(cachePath, cache)
-    const detail = `${nProfile} profile + ${nDocs} doc + ${nDiseases} disease (store=${store.size()})`
-    state.setStep('rag', 'done', detail)
-    console.log(`[rag] ingested ${detail}`)
-  } catch (err) {
-    const msg = `Nạp RAG thất bại (${(err as Error).message}) — chạy KHÔNG có RAG.`
-    state.setStep('rag', 'failed', msg)
-    console.warn(`[rag] ${msg}`)
+      let nDiseases = 0
+      try {
+        nDiseases = await ingestDiseases(store, llm, loadDiseases(profile.plant), {
+          plant: profile.plant,
+          cache,
+        })
+      } catch (err) {
+        console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
+      }
+
+      saveEmbedCache(cachePath, cache)
+      const detail = `${nProfile} profile + ${nDocs} doc + ${nDiseases} disease (store=${store.size()})`
+      state.setStep('rag', 'done', detail)
+      console.log(`[rag] ingested ${detail}`)
+    } catch (err) {
+      const msg = `Nạp RAG thất bại (${(err as Error).message}) — chạy KHÔNG có RAG.`
+      state.setStep('rag', 'failed', msg)
+      console.warn(`[rag] ${msg}`)
+    }
   }
 
   const orch = new Orchestrator({

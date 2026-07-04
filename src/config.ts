@@ -31,6 +31,10 @@ export const config = {
     maxToolSteps: num(process.env.MAX_TOOL_STEPS, 3),
   },
   rag: {
+    // RAG_DISABLED=1 skips building the vector store at init — the model then
+    // answers from the system prompt alone (no [Tri thức tham khảo] block), so you
+    // can A/B whether it stays accurate without the knowledge base.
+    disabled: process.env.RAG_DISABLED === '1',
     topK: num(process.env.RAG_TOP_K, 5),
     docsDir: process.env.RAG_DOCS_DIR ?? 'data/docs',
     stagingDir: process.env.RAG_STAGING_DIR ?? 'data/staging',

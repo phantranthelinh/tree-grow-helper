@@ -73,7 +73,6 @@ function baseDeps(probe: SetupDeps['probe']): Partial<SetupDeps> {
     probe,
     buildEngine: () => new FakeLlm(),
     buildMcp: () => new FakeMcp(),
-    listModels: async () => ({ ok: true as const, models: ['chat-a', 'embed-b'] }),
   }
 }
 
@@ -123,32 +122,6 @@ describe('setup routes', () => {
     expect(body.defaults).toMatchObject({ provider: config.llmDefaults.provider })
     expect(body.defaults.mcpUrl).toBe(testConfig.mcp.url)
     await app.close()
-  })
-
-  it('POST /api/setup/models returns the model list, and 502 on failure', async () => {
-    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
-    const ok = await app.inject({
-      method: 'POST',
-      url: '/api/setup/models',
-      payload: { provider: 'lmstudio', baseURL: 'http://localhost:1234/v1' },
-    })
-    expect(ok.statusCode).toBe(200)
-    expect(ok.json().models).toEqual(['chat-a', 'embed-b'])
-    await app.close()
-
-    const failDeps: Partial<SetupDeps> = {
-      ...baseDeps(okProbe),
-      listModels: async () => ({ ok: false as const, code: 'unreachable', message: 'boom' }),
-    }
-    const app2 = buildServer({ state: new AppState(), config: testConfig, setupDeps: failDeps })
-    const bad = await app2.inject({
-      method: 'POST',
-      url: '/api/setup/models',
-      payload: { provider: 'lmstudio', baseURL: 'http://localhost:1234/v1' },
-    })
-    expect(bad.statusCode).toBe(502)
-    expect(bad.json().error).toBe('unreachable')
-    await app2.close()
   })
 
   it('connect happy path: saves config, reaches ready, then /chat works', async () => {

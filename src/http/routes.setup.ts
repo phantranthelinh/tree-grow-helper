@@ -3,10 +3,10 @@ import type { Config } from '../config'
 import { resolveApiKey } from '../llm/providers'
 import { applyLlmConfig, defaultSetupDeps, type SetupDeps } from '../setup/init'
 import type { LlmConfig } from '../setup/llmConfig'
-import { listProviderModels, testMcpConnection } from '../setup/probe'
+import { testMcpConnection } from '../setup/probe'
 import { renderSetupPage } from '../setup/page'
 import type { AppState } from '../setup/state'
-import { SetupConnectRequestSchema, SetupMcpTestRequestSchema, SetupModelsRequestSchema } from './dto'
+import { SetupConnectRequestSchema, SetupMcpTestRequestSchema } from './dto'
 
 const errorSchema = {
   type: 'object',
@@ -37,17 +37,6 @@ const statusSchema = {
     error: { type: 'object', nullable: true, additionalProperties: true },
     config: { type: 'object', nullable: true, additionalProperties: true },
     defaults: { type: 'object', additionalProperties: true },
-  },
-} as const
-
-const modelsBodySchema = {
-  type: 'object',
-  required: ['provider', 'baseURL'],
-  additionalProperties: false,
-  properties: {
-    provider: { type: 'string' },
-    baseURL: { type: 'string' },
-    apiKey: { type: 'string' },
   },
 } as const
 
@@ -110,38 +99,6 @@ export function registerSetupRoutes(
         mcpUrl: appCfg.mcp.url,
       },
     }),
-  )
-
-  app.post(
-    '/api/setup/models',
-    {
-      attachValidation: true,
-      schema: {
-        tags: ['setup'],
-        summary: 'Lấy danh sách model từ Base URL đã nhập',
-        body: modelsBodySchema,
-        response: { 200: { type: 'object', properties: { models: { type: 'array', items: { type: 'string' } } } }, 400: errorSchema, 502: errorSchema },
-      },
-    },
-    async (req, reply) => {
-      const parsed = SetupModelsRequestSchema.safeParse(req.body)
-      if (!parsed.success) {
-        reply.code(400)
-        return { error: 'invalid_request', details: parsed.error.flatten() }
-      }
-      const { provider, baseURL, apiKey } = parsed.data
-      const listModels = deps.listModels ?? listProviderModels
-      const res = await listModels({
-        baseURL,
-        apiKey: resolveApiKey(provider, apiKey),
-        timeoutMs: appCfg.setup.probeTimeoutMs,
-      })
-      if (!res.ok) {
-        reply.code(502)
-        return { error: res.code, message: res.message }
-      }
-      return { models: res.models }
-    },
   )
 
   app.post(

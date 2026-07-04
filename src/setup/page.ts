@@ -77,17 +77,13 @@ export function renderSetupPage(): string {
     <div class="row">
       <div>
         <label for="model">Model chat</label>
-        <input id="model" type="text" list="model-list" autocomplete="off" />
-        <datalist id="model-list"></datalist>
+        <input id="model" type="text" autocomplete="off" />
       </div>
       <div>
         <label for="embedModel">Model embedding</label>
-        <input id="embedModel" type="text" list="embed-list" autocomplete="off" />
-        <datalist id="embed-list"></datalist>
+        <input id="embedModel" type="text" autocomplete="off" />
       </div>
     </div>
-    <button id="btn-models" class="ghost" style="margin-top:12px">Tải danh sách model</button>
-    <div id="models-hint" class="hint"></div>
 
     <label for="mcpUrl">MCP URL</label>
     <div class="row">
@@ -164,29 +160,6 @@ function currentBody() {
   };
 }
 
-function loadModels() {
-  clearError();
-  var btn = $('btn-models');
-  btn.disabled = true;
-  btn.textContent = 'Đang tải…';
-  fetch('/api/setup/models', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ provider: selected, baseURL: $('baseURL').value.trim(), apiKey: $('apiKey').value })
-  }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-    .then(function (res) {
-      if (!res.ok) { showError(res.j.error, res.j.message); $('models-hint').textContent = ''; return; }
-      var models = res.j.models || [];
-      fillList('model-list', models);
-      fillList('embed-list', models);
-      $('models-hint').textContent = models.length
-        ? (models.length + ' model — chọn từ danh sách hoặc gõ tay.')
-        : 'Server không hỗ trợ /models — nhập tên model bằng tay.';
-    })
-    .catch(function (e) { showError('unknown', String(e)); })
-    .finally(function () { btn.disabled = false; btn.textContent = 'Tải danh sách model'; });
-}
-
 function testMcp() {
   var url = $('mcpUrl').value.trim();
   if (!url) { $('mcp-hint').textContent = '✗ Nhập MCP URL trước.'; return; }
@@ -207,16 +180,6 @@ function testMcp() {
     })
     .catch(function (e) { $('mcp-hint').textContent = '✗ Lỗi kiểm tra MCP (' + String(e) + ')'; })
     .finally(function () { btn.disabled = false; btn.textContent = 'Kiểm tra MCP'; });
-}
-
-function fillList(id, models) {
-  var dl = $(id);
-  dl.innerHTML = '';
-  models.forEach(function (m) {
-    var o = document.createElement('option');
-    o.value = m;
-    dl.appendChild(o);
-  });
 }
 
 function connect() {
@@ -299,7 +262,6 @@ function prefill(status) {
 
 function init() {
   renderProviders();
-  $('btn-models').onclick = loadModels;
   $('btn-mcp-test').onclick = testMcp;
   $('btn-connect').onclick = connect;
   fetch('/api/setup/status').then(function (r) { return r.json(); }).then(function (status) {
