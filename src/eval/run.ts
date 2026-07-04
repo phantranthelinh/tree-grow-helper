@@ -64,7 +64,13 @@ async function buildStore(llm: OpenAICompatEngine, plant: string): Promise<InMem
   const cache = loadEmbedCache(cachePath)
   const embedModel = config.llmDefaults.embedModel
 
-  await ingestProfile(store, llm, loadProfile(plant), { cache, embedModel })
+  await ingestProfile(store, llm, loadProfile(plant), {
+    cache,
+    embedModel,
+    chunkSize: config.rag.chunkSize,
+    chunkOverlap: config.rag.chunkOverlap,
+    minChunkLen: config.rag.minChunkLen,
+  })
   const docs = readReviewedDocs(resolve(process.cwd(), config.rag.docsDir))
   await ingestDocs(store, llm, docs, {
     plant,

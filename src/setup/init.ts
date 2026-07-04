@@ -129,7 +129,13 @@ async function runInitPipeline(
 
       const embedModel = cfg.embedModel
 
-      const nProfile = await ingestProfile(store, llm, profile, { cache, embedModel })
+      const nProfile = await ingestProfile(store, llm, profile, {
+        cache,
+        embedModel,
+        chunkSize: appCfg.rag.chunkSize,
+        chunkOverlap: appCfg.rag.chunkOverlap,
+        minChunkLen: appCfg.rag.minChunkLen,
+      })
 
       const docs = readReviewedDocs(resolve(process.cwd(), appCfg.rag.docsDir))
       const nDocs = await ingestDocs(store, llm, docs, {

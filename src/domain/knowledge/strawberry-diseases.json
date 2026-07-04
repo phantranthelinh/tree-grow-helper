@@ -86,6 +86,103 @@
       "prevention": "Theo dõi mặt dưới lá định kỳ, giữ ẩm hợp lý, tránh bụi bặm, không lạm dụng thuốc phổ rộng diệt thiên địch.",
       "severity": "trung bình",
       "sources": []
+    },
+    {
+      "id": "bacterial-leaf-spot",
+      "name_vi": "Đốm lá vi khuẩn (xì mủ)",
+      "name_sci": "Xanthomonas fragariae",
+      "type": "vi khuẩn",
+      "symptoms": [
+        "đốm nhỏ sũng nước ở mặt dưới lá, trong mờ khi soi ngược sáng",
+        "đốm chuyển nâu đỏ có quầng, liên kết thành mảng cháy lá",
+        "khi ẩm ướt có dịch vi khuẩn (xì mủ) rỉ ra rồi khô lại thành vảy"
+      ],
+      "affected_parts": ["lá", "đài hoa", "cuống"],
+      "favorable_conditions": { "humidity": 85, "temperature": 20, "note": "mát và ẩm, mưa hoặc tưới phun làm nước bắn; lây qua nước và cây giống nhiễm bệnh" },
+      "treatment": "Ngắt bỏ lá bệnh đem tiêu hủy; ngừng tưới phun và tránh thao tác khi lá còn ướt; có thể dùng thuốc gốc đồng theo hướng dẫn. Không có thuốc đặc trị vi khuẩn nên chủ yếu dựa vào phòng bệnh.",
+      "prevention": "Dùng cây giống sạch bệnh và giống chống chịu (các dòng PS lai tạo tại Lâm Đồng), tưới gốc thay tưới phun, trồng thưa cho thoáng, vệ sinh dụng cụ cắt tỉa.",
+      "severity": "trung bình",
+      "sources": [
+        "https://jst.iuh.edu.vn/index.php/jst-iuh/article/download/5073/843/16744",
+        "https://tapchi.vaas.vn/vi/tap-chi/ket-qua-lai-tao-chon-loc-mot-so-dong-dau-tay-co-trien-vong-tai-lam-dong"
+      ]
+    },
+    {
+      "id": "root-rot",
+      "name_vi": "Thối đen rễ",
+      "name_sci": "Pythium spp., Fusarium spp.",
+      "type": "nấm",
+      "symptoms": [
+        "rễ thâm đen, thối nhũn, bộ rễ kém phát triển",
+        "cây còi cọc, lá già vàng và héo dần vào giữa trưa nắng",
+        "cây héo rũ rồi chết từng chòm, nhổ lên thấy rễ hỏng"
+      ],
+      "affected_parts": ["rễ", "gốc", "cả cây"],
+      "favorable_conditions": { "humidity": 90, "temperature": 26, "note": "đất hoặc giá thể úng nước, thoát nước kém, bí chặt; lây qua đất và nước tưới" },
+      "treatment": "Nhổ bỏ cây bệnh nặng đem tiêu hủy; cải thiện thoát nước và ngừng tưới thừa; xử lý đất/giá thể; dùng chế phẩm Trichoderma hoặc thuốc trừ nấm gốc theo khuyến cáo.",
+      "prevention": "Lên luống cao, dùng giá thể/đất thoát nước tốt, tưới nhỏ giọt vừa đủ tránh úng, dùng cây giống sạch bệnh và luân canh với cây khác họ.",
+      "severity": "cao",
+      "sources": [
+        "http://ttbvtv.lamdong.gov.vn/du-tinh-du-bao-dich-hai/sau-benh-hai-quan-tam-trong-ky/484-benh-thoi-trai-dau-tay-tai-da-lat-va-bien-phap-phong-tru"
+      ]
+    },
+    {
+      "id": "thrips",
+      "name_vi": "Bọ trĩ (bù lạch)",
+      "name_sci": "Frankliniella / Thrips spp.",
+      "type": "sâu hại",
+      "symptoms": [
+        "hoa và lá non biến dạng, cong queo",
+        "vết cào xước bạc trắng trên cánh hoa và lá non",
+        "quả sần sùi, méo mó, chín không đều"
+      ],
+      "affected_parts": ["hoa", "lá non", "quả"],
+      "favorable_conditions": { "humidity": 60, "temperature": 30, "note": "khô và nóng; côn trùng rất nhỏ khó thấy, sinh sản nhanh, ẩn trong hoa" },
+      "treatment": "Treo bẫy dính màu vàng/xanh để theo dõi và bắt bớt; phun dầu khoáng hoặc thuốc đặc hiệu, luân phiên hoạt chất tránh kháng; có thể thả thiên địch (bọ xít bắt mồi).",
+      "prevention": "Vệ sinh vườn, dọn cỏ dại là ký chủ phụ, thăm vườn thường xuyên nhất là bên trong hoa, treo bẫy dính sớm.",
+      "severity": "trung bình",
+      "sources": [
+        "http://ttbvtv.lamdong.gov.vn/du-tinh-du-bao-dich-hai/sau-benh-hai-quan-tam-trong-ky/484-benh-thoi-trai-dau-tay-tai-da-lat-va-bien-phap-phong-tru",
+        "https://khuyennong.lamdong.gov.vn/ky-thuat-trong-trot/ki-thuat-trong-rau/865-quy-trinh-k-thut-trng-cay-dau-tay"
+      ]
+    },
+    {
+      "id": "aphid",
+      "name_vi": "Rệp",
+      "name_sci": "Aphididae",
+      "type": "sâu hại",
+      "symptoms": [
+        "rệp tụ thành đám ở mặt dưới lá non và ngọn, chích hút nhựa",
+        "lá non xoăn lại, cây còi cọc chậm lớn",
+        "tiết dịch ngọt gây nấm bồ hóng đen, thường có kiến kéo tới"
+      ],
+      "affected_parts": ["lá non", "ngọn", "hoa"],
+      "favorable_conditions": { "humidity": 65, "temperature": 25, "note": "thời tiết ấm; sinh sản rất nhanh và có thể truyền virus cho cây" },
+      "treatment": "Phun nước mạnh rửa trôi khi mật độ thấp; dùng dầu khoáng hoặc thuốc đặc hiệu khi mật độ cao; bảo vệ thiên địch (bọ rùa, ong ký sinh).",
+      "prevention": "Thăm vườn kiểm tra ngọn và lá non định kỳ, dọn cỏ dại, tránh bón thừa đạm làm lá non mềm hấp dẫn rệp.",
+      "severity": "trung bình",
+      "sources": [
+        "https://khuyennong.lamdong.gov.vn/ky-thuat-trong-trot/ki-thuat-trong-rau/865-quy-trinh-k-thut-trng-cay-dau-tay"
+      ]
+    },
+    {
+      "id": "slug-snail",
+      "name_vi": "Ốc sên và sên nhớt",
+      "name_sci": "Gastropoda",
+      "type": "sâu hại",
+      "symptoms": [
+        "lá và quả bị gặm khuyết thành lỗ lớn, mép nham nhở",
+        "vệt nhớt bóng để lại trên lá, mặt luống và màng phủ",
+        "hại mạnh vào ban đêm và sáng sớm, nặng hơn sau mưa"
+      ],
+      "affected_parts": ["lá", "quả", "hoa"],
+      "favorable_conditions": { "humidity": 90, "temperature": 22, "note": "ẩm ướt, râm mát, nhiều tàn dư che khuất; hoạt động về đêm" },
+      "treatment": "Bắt bằng tay vào chiều tối hoặc sáng sớm; đặt bẫy bia hoặc mồi dụ; rải vôi hoặc bả diệt ốc sên chuyên dụng quanh luống theo hướng dẫn.",
+      "prevention": "Dọn sạch tàn dư, cỏ và nơi ẩn nấp; bảo đảm vườn thoát nước tốt, không để đọng ẩm; đặt vành cản quanh luống.",
+      "severity": "thấp",
+      "sources": [
+        "https://khuyennong.lamdong.gov.vn/ky-thuat-trong-trot/ki-thuat-trong-rau/865-quy-trinh-k-thut-trng-cay-dau-tay"
+      ]
     }
   ]
 }

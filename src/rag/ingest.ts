@@ -2,6 +2,7 @@ import type { PlantProfile } from '../domain/profiles'
 import type { LlmEngine } from '../llm'
 import { type EmbedCache, embedWithCache } from './embedCache'
 import { InMemoryVectorStore, type VectorRecord } from './store'
+import { chunkDocument, dropShortChunks } from './textChunk'
 
 /** Long-text fields worth embedding for semantic retrieval. */
 const TEXT_FIELDS: Array<keyof PlantProfile> = [
@@ -24,22 +25,41 @@ export interface Chunk {
   text: string
 }
 
-/** Split the text portion of a profile into one chunk per non-empty field. */
-export function profileToChunks(p: PlantProfile): Chunk[] {
+export interface ProfileChunkOptions {
+  chunkSize?: number
+  chunkOverlap?: number
+  minChunkLen?: number
+}
+
+/**
+ * Split the text portion of a profile into RAG chunks. Long fields (care_notes,
+ * light_description…) are sub-split with the shared document chunker so one big
+ * multi-topic field can't crowd a top-K slot or dilute its own embedding. Every
+ * non-empty field still yields at least one chunk carrying its `[field]` label.
+ */
+export function profileToChunks(p: PlantProfile, opts: ProfileChunkOptions = {}): Chunk[] {
   const chunks: Chunk[] = []
+  const addField = (field: string, value: string) => {
+    const trimmed = value.trim()
+    const pieces = dropShortChunks(
+      chunkDocument(trimmed, { size: opts.chunkSize, overlap: opts.chunkOverlap }),
+      opts.minChunkLen,
+    )
+    // Keep the whole field if it's shorter than minChunkLen (don't drop it entirely).
+    const finalPieces = pieces.length > 0 ? pieces : [trimmed]
+    finalPieces.forEach((text, i) => {
+      chunks.push({ id: `${p.plant}:${field}#${i}`, field, text: `[${field}] ${text}` })
+    })
+  }
   for (const field of TEXT_FIELDS) {
     const value = p[field]
-    if (typeof value === 'string' && value.trim().length > 0) {
-      chunks.push({ id: `${p.plant}:${String(field)}`, field: String(field), text: `[${String(field)}] ${value.trim()}` })
-    }
+    if (typeof value === 'string' && value.trim().length > 0) addField(String(field), value)
   }
-  if (p.varieties.length > 0) {
-    chunks.push({ id: `${p.plant}:varieties`, field: 'varieties', text: `[varieties] ${p.varieties.join('; ')}` })
-  }
+  if (p.varieties.length > 0) addField('varieties', p.varieties.join('; '))
   return chunks
 }
 
-export interface IngestProfileOptions {
+export interface IngestProfileOptions extends ProfileChunkOptions {
   cache?: EmbedCache
   embedModel?: string
 }
@@ -51,7 +71,7 @@ export async function ingestProfile(
   p: PlantProfile,
   opts: IngestProfileOptions = {},
 ): Promise<number> {
-  const chunks = profileToChunks(p)
+  const chunks = profileToChunks(p, opts)
   if (chunks.length === 0) return 0
   const cache = opts.cache ?? new Map<string, number[]>()
   const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache, opts.embedModel ?? '')
