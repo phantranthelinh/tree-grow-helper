@@ -28,6 +28,8 @@ export interface IngestDocsOptions {
   minChunkLen?: number
   dedupeThreshold?: number
   cache?: EmbedCache
+  /** Embed model name; namespaces the cache key so vectors can't cross models. */
+  embedModel?: string
 }
 
 /** Read reviewed source docs from every .jsonl file in a directory (empty if absent). */
@@ -92,7 +94,7 @@ export async function ingestDocs(
   if (chunks.length === 0) return 0
 
   const cache = opts.cache ?? new Map<string, number[]>()
-  const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache)
+  const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache, opts.embedModel ?? '')
 
   const withEmbedding = chunks
     .map((c, i) => ({ ...c, embedding: embeddings[i] ?? [] }))

@@ -6,6 +6,8 @@ import { InMemoryVectorStore, type VectorRecord } from './store'
 export interface IngestDiseasesOptions {
   plant?: string
   cache?: EmbedCache
+  /** Embed model name; namespaces the cache key so vectors can't cross models. */
+  embedModel?: string
 }
 
 /** Turn each disease into a symptom-focused chunk carrying diagnosis metadata. */
@@ -38,7 +40,7 @@ export async function ingestDiseases(
   if (chunks.length === 0) return 0
 
   const cache = opts.cache ?? new Map<string, number[]>()
-  const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache)
+  const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache, opts.embedModel ?? '')
 
   const records: VectorRecord[] = []
   chunks.forEach((c, i) => {

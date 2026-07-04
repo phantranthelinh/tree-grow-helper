@@ -49,6 +49,29 @@ describe('embedWithCache', () => {
     expect(llm.calls).toEqual([['cccc']])
     expect(out).toEqual([[2, 0], [4, 0]])
   })
+
+  it('reuses the cache for the same model prefix', async () => {
+    const llm = new FakeLlm()
+    const cache = new Map<string, number[]>()
+    await embedWithCache(llm, ['aa'], cache, 'model-x')
+    llm.calls = []
+    const out = await embedWithCache(llm, ['aa'], cache, 'model-x')
+    expect(llm.calls).toEqual([])
+    expect(out).toEqual([[2, 0]])
+  })
+
+  it('misses (re-embeds) when the model prefix changes — no cross-model reuse', async () => {
+    const llm = new FakeLlm()
+    const cache = new Map<string, number[]>()
+    await embedWithCache(llm, ['aa'], cache, 'model-x')
+    llm.calls = []
+    await embedWithCache(llm, ['aa'], cache, 'model-y')
+    expect(llm.calls).toEqual([['aa']])
+    // A bare-prefix lookup also misses model-namespaced entries (legacy stale cache).
+    llm.calls = []
+    await embedWithCache(llm, ['aa'], cache, '')
+    expect(llm.calls).toEqual([['aa']])
+  })
 })
 
 describe('saveEmbedCache / loadEmbedCache', () => {

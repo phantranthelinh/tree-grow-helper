@@ -127,12 +127,15 @@ async function runInitPipeline(
       const cachePath = resolve(process.cwd(), appCfg.rag.embedCachePath)
       const cache = loadEmbedCache(cachePath)
 
-      const nProfile = await ingestProfile(store, llm, profile)
+      const embedModel = cfg.embedModel
+
+      const nProfile = await ingestProfile(store, llm, profile, { cache, embedModel })
 
       const docs = readReviewedDocs(resolve(process.cwd(), appCfg.rag.docsDir))
       const nDocs = await ingestDocs(store, llm, docs, {
         plant: profile.plant,
         cache,
+        embedModel,
         chunkSize: appCfg.rag.chunkSize,
         chunkOverlap: appCfg.rag.chunkOverlap,
         minChunkLen: appCfg.rag.minChunkLen,
@@ -143,15 +146,18 @@ async function runInitPipeline(
         nDiseases = await ingestDiseases(store, llm, loadDiseases(profile.plant), {
           plant: profile.plant,
           cache,
+          embedModel,
         })
       } catch (err) {
         console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
       }
 
       saveEmbedCache(cachePath, cache)
-      const detail = `${nProfile} profile + ${nDocs} doc + ${nDiseases} disease (store=${store.size()})`
+      const mixed = store.uniformDims() ? '' : ' ⚠ CHIỀU EMBEDDING KHÔNG ĐỒNG NHẤT — một số chunk sẽ không truy hồi được; xóa cache cũ.'
+      const detail = `${nProfile} profile + ${nDocs} doc + ${nDiseases} disease (store=${store.size()})${mixed}`
       state.setStep('rag', 'done', detail)
       console.log(`[rag] ingested ${detail}`)
+      if (mixed) console.warn(`[rag]${mixed}`)
     } catch (err) {
       const msg = `Nạp RAG thất bại (${(err as Error).message}) — chạy KHÔNG có RAG.`
       state.setStep('rag', 'failed', msg)

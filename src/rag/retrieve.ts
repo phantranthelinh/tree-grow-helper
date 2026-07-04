@@ -43,6 +43,14 @@ export async function retrieve(
   const [queryEmbedding] = await llm.embed([query])
   if (!queryEmbedding) return { chunks: [], contextText: '' }
 
+  const storeDim = store.dim()
+  if (storeDim !== null && queryEmbedding.length !== storeDim) {
+    console.warn(
+      `[rag] chiều embedding truy vấn (${queryEmbedding.length}) khác chiều của store (${storeDim}) — ` +
+        'retrieval sẽ trả về rỗng. Kiểm tra embed model / xóa cache cũ tại data/cache/embeddings.jsonl.',
+    )
+  }
+
   const hits = store.search(queryEmbedding, topK)
   const chunks: RetrievedChunk[] = hits.map((h) => ({
     text: h.text,

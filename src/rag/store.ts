@@ -39,6 +39,23 @@ export class InMemoryVectorStore {
     return this.records.length
   }
 
+  /** Embedding dimension of the store (from the first record), or null if empty. */
+  dim(): number | null {
+    return this.records[0]?.embedding.length ?? null
+  }
+
+  /**
+   * True if every record shares one embedding dimension (or the store is empty).
+   * A false result means mixed-dimension vectors — cosine scores them 0, so
+   * some chunks are silently unretrievable (usually a stale embed cache).
+   */
+  uniformDims(): boolean {
+    const first = this.records[0]
+    if (!first) return true
+    const d = first.embedding.length
+    return this.records.every((r) => r.embedding.length === d)
+  }
+
   clear(): void {
     this.records = []
   }

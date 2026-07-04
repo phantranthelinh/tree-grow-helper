@@ -1,5 +1,6 @@
 import type { PlantProfile } from '../domain/profiles'
 import type { LlmEngine } from '../llm'
+import { type EmbedCache, embedWithCache } from './embedCache'
 import { InMemoryVectorStore, type VectorRecord } from './store'
 
 /** Long-text fields worth embedding for semantic retrieval. */
@@ -38,11 +39,22 @@ export function profileToChunks(p: PlantProfile): Chunk[] {
   return chunks
 }
 
+export interface IngestProfileOptions {
+  cache?: EmbedCache
+  embedModel?: string
+}
+
 /** Embed the profile's text chunks and add them to the store. Returns count added. */
-export async function ingestProfile(store: InMemoryVectorStore, llm: LlmEngine, p: PlantProfile): Promise<number> {
+export async function ingestProfile(
+  store: InMemoryVectorStore,
+  llm: LlmEngine,
+  p: PlantProfile,
+  opts: IngestProfileOptions = {},
+): Promise<number> {
   const chunks = profileToChunks(p)
   if (chunks.length === 0) return 0
-  const embeddings = await llm.embed(chunks.map((c) => c.text))
+  const cache = opts.cache ?? new Map<string, number[]>()
+  const embeddings = await embedWithCache(llm, chunks.map((c) => c.text), cache, opts.embedModel ?? '')
   const records: VectorRecord[] = []
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]
