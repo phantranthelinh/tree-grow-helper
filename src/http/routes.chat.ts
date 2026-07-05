@@ -191,6 +191,11 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
       req.raw.on('close', () => {
         if (!finished) abort.abort()
       })
+      // A client socket reset mid-write would otherwise surface as an unhandled
+      // 'error' event and crash the process; absorb it and stop streaming.
+      raw.on('error', () => {
+        if (!finished) abort.abort()
+      })
       try {
         for await (const event of orch.handleChatStream(userId, sessionId, message, { signal: abort.signal })) {
           switch (event.type) {
@@ -222,7 +227,7 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
       } finally {
         finished = true
         stopHeartbeat()
-        raw.end()
+        if (!raw.writableEnded) raw.end()
       }
     },
   )
