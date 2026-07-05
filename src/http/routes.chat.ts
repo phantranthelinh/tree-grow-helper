@@ -206,6 +206,12 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
             case 'done':
               writeSseEvent(raw, 'done', { reply: event.reply, pendingAction: event.pendingAction })
               break
+            default: {
+              // Compile-time exhaustiveness: a new ChatStreamEvent variant must fail here,
+              // not get silently dropped off the wire.
+              const unhandled: never = event
+              void unhandled
+            }
           }
         }
       } catch (err) {
