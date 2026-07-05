@@ -118,6 +118,27 @@ Spec OpenAPI thô ở **http://localhost:8787/docs/json**.
 App chat có thể render nút **Có/Không** (gọi `/chat/confirm`) **hoặc** chỉ gửi tiếp text
 ("có"/"không") vào `/chat` — server nhận diện cả hai.
 
+### `POST /chat/stream` — bản streaming (SSE)
+
+Giống hệt `POST /chat` (cùng body `userId`/`sessionId`/`message`) nhưng câu trả lời về theo thời
+gian thực dưới dạng `text/event-stream`. Swagger UI không hiển thị được — dùng `curl -N` hoặc
+`fetch` + `ReadableStream`. Mỗi frame là `event: <tên>` với `data` là JSON một dòng:
+
+- `token` `{ text }` — nối thêm vào câu trả lời đang hiện.
+- `tool_status` `{ tool, note }` — trạng thái tạm khi đọc dữ liệu (không thuộc câu trả lời).
+- `reset` `{}` — xóa phần đã hiện của lượt này (model thử lại).
+- `done` `{ reply, pendingAction }` — kết thúc; `reply` là bản chuẩn, cùng shape với `POST /chat`.
+- `error` `{ message }` — kết thúc do lỗi.
+
+Chỉ phần `message` của câu trả lời được stream ra — `reasoning` và lời gọi tool không lên wire.
+Lỗi trước khi stream (400/503) vẫn trả JSON thường như `/chat`.
+
+```bash
+curl -N -X POST localhost:8787/chat/stream \
+  -H 'content-type: application/json' \
+  -d '{"userId":"u1","sessionId":"s1","message":"Độ ẩm đất bao nhiêu?"}'
+```
+
 ## Cơ chế chính
 
 - **Agent có giới hạn** (`MAX_TOOL_STEPS`, mặc định 3): mỗi lượt LLM trả JSON quyết định

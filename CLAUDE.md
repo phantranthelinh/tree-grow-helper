@@ -70,6 +70,20 @@ index → assemble the `Orchestrator` → mark ready.
   default to `control` (require confirmation) unless they start with a read-style prefix. When adding
   MCP tools, update the `READ_ONLY`/`CONTROL` sets there.
 
+### Small-model prompt constraints (qwen2.5-3b)
+
+The decision prompt is tuned around quirks of the 3B model, and regressions are silent — so
+[tests/prompt.test.ts](tests/prompt.test.ts) guards them. Two rules that look arbitrary but aren't:
+
+- **`type:"reply"` messages must be flowing prose, no lists.** The model crams the whole answer into
+  the JSON `message` string; when it starts a bulleted/numbered list it writes a "here's a list:"
+  lead-in, then closes the JSON — the list never appears (truncated reply, `finish_reason=stop`, not
+  a token cutoff). The prose rule sits at the very **end** of the system prompt
+  ([src/llm/prompt.ts](src/llm/prompt.ts)); the same rule placed mid-prompt was ignored (recency).
+- **`type:"tool"` few-shot examples put `message` before `tool`/`args`.** The 3B closes the JSON
+  right after `args`, so a `message` placed last is almost never emitted. Keep the field order
+  `type → message → tool → args` in [src/domain/fewshot.ts](src/domain/fewshot.ts); do not reorder.
+
 ### Profile drives both thresholds and RAG
 
 [src/domain/profiles.ts](src/domain/profiles.ts): a plant profile JSON in
