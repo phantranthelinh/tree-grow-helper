@@ -80,4 +80,15 @@ describe('JsonStringFieldStreamer', () => {
     const { events } = collect(['{"type":"reply","tool":null,"message":"a"}'])
     expect(events.some((e) => e.kind === 'field' && e.key === 'tool')).toBe(false)
   })
+
+  it('closes cleanly when a bare primitive is the last field before }', () => {
+    const { events } = collect(['{"type":"reply","tool":null}'])
+    expect(events).toContainEqual({ kind: 'field', key: 'type', value: 'reply' })
+    expect(events.filter((e) => e.kind === 'end')).toHaveLength(1)
+  })
+
+  it('does not end a key early on an escaped quote inside the key name', () => {
+    const { events } = collect(['{"me\\"ssage":"decoy","message":"ok"}'])
+    expect(joinedMessage(events)).toBe('ok')
+  })
 })
