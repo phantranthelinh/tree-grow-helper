@@ -6,6 +6,11 @@ export interface CompleteOptions {
   temperature?: number
 }
 
+export interface StreamOptions extends CompleteOptions {
+  /** Abort the underlying HTTP request (e.g. client disconnected). */
+  signal?: AbortSignal
+}
+
 /** Abstraction over the local LLM so the agent can be tested with fakes. */
 export interface LlmEngine {
   /** Plain text completion. */
@@ -17,6 +22,15 @@ export interface LlmEngine {
     schemaName: string,
     opts?: CompleteOptions,
   ): Promise<string>
+  /** Streaming twin of complete(): yields raw content deltas as generated. */
+  completeStream(messages: ChatMessage[], opts?: StreamOptions): AsyncGenerator<string, void, unknown>
+  /** Streaming twin of completeJson(): yields raw JSON-text deltas; caller reassembles. */
+  completeJsonStream(
+    messages: ChatMessage[],
+    jsonSchema: Record<string, unknown>,
+    schemaName: string,
+    opts?: StreamOptions,
+  ): AsyncGenerator<string, void, unknown>
   /** Embed one or more texts (for RAG). */
   embed(texts: string[]): Promise<number[][]>
 }
@@ -61,6 +75,47 @@ export class OpenAICompatEngine implements LlmEngine {
       },
     })
     return res.choices[0]?.message?.content ?? ''
+  }
+
+  async *completeStream(messages: ChatMessage[], opts?: StreamOptions): AsyncGenerator<string, void, unknown> {
+    const stream = await this.client.chat.completions.create(
+      {
+        model: this.opts.model,
+        messages,
+        temperature: opts?.temperature ?? 0.3,
+        stream: true,
+      },
+      { signal: opts?.signal },
+    )
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content
+      if (delta) yield delta
+    }
+  }
+
+  async *completeJsonStream(
+    messages: ChatMessage[],
+    jsonSchema: Record<string, unknown>,
+    schemaName: string,
+    opts?: StreamOptions,
+  ): AsyncGenerator<string, void, unknown> {
+    const stream = await this.client.chat.completions.create(
+      {
+        model: this.opts.model,
+        messages,
+        temperature: opts?.temperature ?? 0.1,
+        response_format: {
+          type: 'json_schema',
+          json_schema: { name: schemaName, strict: false, schema: jsonSchema },
+        },
+        stream: true,
+      },
+      { signal: opts?.signal },
+    )
+    for await (const chunk of stream) {
+      const delta = chunk.choices[0]?.delta?.content
+      if (delta) yield delta
+    }
   }
 
   async embed(texts: string[]): Promise<number[][]> {
