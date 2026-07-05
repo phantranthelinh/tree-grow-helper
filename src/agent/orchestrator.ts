@@ -1,6 +1,7 @@
 import type { PlantProfile } from '../domain/profiles'
 import type { ChatMessage, LlmEngine } from '../llm'
 import { assembleMessages, buildSystemPrompt } from '../llm/prompt'
+import { sanitizeArgs } from '../mcp/args'
 import type { McpGateway, McpTool } from '../mcp/client'
 import { classifyTool, confirmsBeforeRead } from '../mcp/policy'
 import type { PendingAction, SessionStore } from '../memory/sessions'
@@ -183,7 +184,8 @@ export class Orchestrator {
         // "có" runs it deterministically. Only sensor reads are anchored this way —
         // a control tool named on a reply is ignored (never executed from a reply).
         if (decision.tool && confirmsBeforeRead(decision.tool)) {
-          const offer = this.anchorReadOffer(userId, sessionId, decision.tool, decision.args ?? {}, decision.message)
+          const args = this.sanitizeToolArgs(decision.tool, decision.args ?? {})
+          const offer = this.anchorReadOffer(userId, sessionId, decision.tool, args, decision.message)
           finalReply = offer.reply
           pendingView = offer.view
           break
@@ -193,7 +195,7 @@ export class Orchestrator {
       }
 
       const toolName = decision.tool
-      const args = decision.args ?? {}
+      const args = this.sanitizeToolArgs(toolName, decision.args ?? {})
 
       if (classifyTool(toolName) === 'control') {
         const pending = createPendingAction(toolName, args, 'control')
@@ -251,6 +253,14 @@ export class Orchestrator {
       opts,
     )
     return parseDecision(raw2)
+  }
+
+  /** Drop model-hallucinated args not declared by the tool's schema before it reaches the MCP. */
+  private sanitizeToolArgs(toolName: string, args: Record<string, unknown>): Record<string, unknown> {
+    return sanitizeArgs(
+      this.deps.tools.find((t) => t.name === toolName),
+      args,
+    )
   }
 
   private async callReadTool(toolName: string, args: Record<string, unknown>): Promise<string> {

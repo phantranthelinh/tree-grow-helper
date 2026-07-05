@@ -3,6 +3,7 @@ import { Orchestrator, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
 import type { ChatMessage, CompleteOptions, LlmEngine } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
+import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 import { SessionStore } from '../src/memory/sessions'
 import { InMemoryVectorStore } from '../src/rag/store'
 
@@ -175,6 +176,47 @@ describe('Orchestrator', () => {
     expect(mcp.calls).toHaveLength(3) // capped
     expect(res.reply).toBe('Trả lời cuối cùng.') // from llm.complete fallback
     expect(llm.completeCalls).toBe(1)
+  })
+})
+
+describe('Orchestrator — arg sanitization against the tool schema', () => {
+  let llm: FakeLlm
+  let mcp: FakeMcp
+  let deps: OrchestratorDeps
+  let orch: Orchestrator
+
+  beforeEach(() => {
+    llm = new FakeLlm()
+    mcp = new FakeMcp()
+    deps = makeDeps({ llm, mcp, tools: KNOWN_TOOLS })
+    orch = new Orchestrator(deps)
+  })
+
+  it('drops undeclared args (leaked decision message) from a control pending action', async () => {
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON","duration":60000,"message":"Mình sẽ bật đèn thiết bị esp32-01 trong 60s."},"message":"Bật đèn nhé."}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'bật đèn cho cây thiết bị esp32-01')
+    expect(res.pendingAction?.tool).toBe('send_command')
+    expect(res.pendingAction?.args).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON', duration: 60000 })
+    expect(res.pendingAction?.args).not.toHaveProperty('message')
+  })
+
+  it('sends only schema-declared args to the MCP when the control action is confirmed', async () => {
+    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON","message":"x"}}']
+    const offer = await orch.handleChat('u1', 's1', 'bật đèn esp32-01')
+    await orch.confirm('u1', 's1', offer.pendingAction!.id, true)
+    expect(mcp.calls).toHaveLength(1)
+    expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON' })
+  })
+
+  it('sanitizes args on a user-facing sensor read offer too', async () => {
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01","message":"để mình xem"}}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'độ ẩm đất bao nhiêu?')
+    expect(res.pendingAction?.tool).toBe('get_latest_sensor')
+    expect(res.pendingAction?.args).toEqual({ device_id: 'esp32-01' })
   })
 })
 
