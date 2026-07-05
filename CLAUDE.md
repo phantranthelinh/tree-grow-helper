@@ -103,16 +103,31 @@ relies on the `bge-m3` embedding model.
 serves LM Studio, Ollama, Gemini (OpenAI-compat layer), and any OpenAI-compatible server.
 [src/llm/providers.ts](src/llm/providers.ts) `PROVIDERS` only carries per-provider presets (default
 base URL, whether an API key is required, display copy). It relies on `response_format: json_schema`
-for structured decisions — providers must support it.
+for structured decisions — providers must support it. `LlmEngine` also has streaming twins
+(`completeStream`/`completeJsonStream`, `stream: true` + optional `AbortSignal`) used only by the
+SSE path; a provider that buffers structured output despite `stream: true` degrades gracefully to
+one big token frame.
 
 ### HTTP surface
 
-[src/http/server.ts](src/http/server.ts) wires Swagger UI at `/docs`, then registers setup + chat
-routes. Endpoints: `POST /chat`, `POST /chat/confirm` ([routes.chat.ts](src/http/routes.chat.ts)),
-the `/setup` UI + `/api/setup/*` ([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`.
+[src/http/server.ts](src/http/server.ts) wires CORS (`@fastify/cors`, reflective origin — browser
+chat apps POST from other origins), Swagger UI at `/docs`, then registers setup + chat routes.
+Endpoints: `POST /chat`, `POST /chat/stream` (SSE), `POST /chat/confirm`
+([routes.chat.ts](src/http/routes.chat.ts)), the `/setup` UI + `/api/setup/*`
+([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`.
 Before config completes, `/chat` returns **503 `{error:"not_configured"}`**. Validation uses Zod DTOs
 ([src/http/dto.ts](src/http/dto.ts)) with `attachValidation: true` so failures return the
 `{error:"invalid_request", details}` envelope rather than Fastify's default.
+
+`POST /chat/stream` is the streaming twin of `/chat`: same body, but the reply arrives as SSE frames
+(`token`/`tool_status`/`reset`/`done`/`error` — contract documented on the route's Swagger
+description). It rides `Orchestrator.handleChatStream`, which shares one event-generator core with
+the buffered path; the decision JSON is scanned incrementally
+([src/agent/streamParser.ts](src/agent/streamParser.ts)) so only the `message` field streams out —
+`reasoning` and tool calls never reach the wire, and no token is emitted before the decision `type`
+is known. The buffered `/chat` still uses the non-streaming LLM calls (provider behavior unchanged).
+Pre-stream failures (400/503) stay plain JSON; smoke-test streaming with
+`curl -N -X POST localhost:8787/chat/stream -H 'content-type: application/json' -d '{"userId":"u1","sessionId":"s1","message":"..."}'`.
 
 ## Testing conventions
 
