@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify'
+import fastifyCors from '@fastify/cors'
 import fastifySwagger from '@fastify/swagger'
 import fastifySwaggerUi from '@fastify/swagger-ui'
 import type { Config } from '../config'
@@ -18,6 +19,10 @@ export function buildServer(ctx: ServerContext): FastifyInstance {
   // `example` is an OpenAPI keyword (used to prefill Swagger "Try it out"), not a
   // JSON-Schema validation keyword — register it so AJV strict mode ignores it.
   const app = Fastify({ logger: true, ajv: { customOptions: { keywords: ['example'] } } })
+
+  // Browser chat apps live on another origin and must POST /chat/stream with
+  // fetch (EventSource can't POST), which triggers a preflight — allow it.
+  app.register(fastifyCors, { origin: true, methods: ['GET', 'POST', 'OPTIONS'] })
 
   // OpenAPI spec + interactive UI at /docs so you can self-test the chat in a browser.
   // Registered BEFORE the routes: @fastify/swagger installs an `onRoute` hook that must
