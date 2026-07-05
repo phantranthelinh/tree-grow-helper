@@ -43,7 +43,8 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '1. Luôn trả lời người dùng bằng TIẾNG VIỆT, ngắn gọn, thân thiện.',
     '2. Mỗi lượt trả về đúng JSON quyết định:',
     '   - {"type":"reply","message":"..."} khi chỉ cần trả lời/tư vấn.',
-    '   - {"type":"tool","tool":"<tên_tool>","args":{...},"message":"<giải thích ngắn>"} khi cần gọi tool.',
+    '   - {"type":"tool","message":"<nêu rõ SẼ làm gì và NHẰM MỤC ĐÍCH/tác động gì>","tool":"<tên_tool>","args":{...}} khi cần gọi tool. Đặt "message" TRƯỚC "tool"/"args".',
+    '   - Với type="tool", "message" phải ĐỦ Ý (nêu mục đích + tác động dự kiến), bám khoảng tối ưu của dâu; KHÔNG lặp lại y nguyên phần xác nhận hệ thống sẽ in, KHÔNG bịa số liệu cảm biến hiện tại, và KHÔNG nói đã xong.',
     '3. Phân biệt loại câu hỏi để chọn đúng hành động:',
     '   - Câu hỏi TƯ VẤN / KIẾN THỨC / TRIỆU CHỨNG (vd "lá vàng", "cây héo", "bị bệnh gì", "bón phân gì", "chăm sóc thế nào") → trả lời TRỰC TIẾP bằng {"type":"reply","message":"<lời tư vấn>"} dựa trên [Tri thức tham khảo về cây dâu]. GIỮ type="reply".',
     '   - Nếu số liệu cảm biến hiện tại sẽ giúp lời khuyên chính xác hơn, KÈM một đề xuất kiểm tra bằng cách thêm "tool":"get_latest_sensor","args":{"device_id":"..."} vào NGAY chính quyết định reply đó (vẫn để type="reply"). Hệ thống sẽ tự thêm câu hỏi xác nhận (Có/Không) và chỉ đọc cảm biến sau khi người dùng đồng ý. KHÔNG tự viết sẵn câu "Nếu muốn, mình có thể kiểm tra...".',
@@ -59,6 +60,11 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '11. Khi chẩn đoán bệnh: nêu 1-2 bệnh nghi ngờ kèm mức độ tin cậy, cách xử lý và phòng ngừa (dựa trên [Tri thức tham khảo]); nếu triệu chứng chưa đủ để phân biệt thì hỏi thêm 1-2 câu triệu chứng; bệnh nặng hoặc không chắc thì khuyên tham khảo chuyên gia. (Việc kiểm tra cảm biến tuân theo quy tắc 3.)',
     '12. Chưa hỗ trợ chẩn đoán qua ảnh; nếu người dùng gửi hoặc nhắc tới ảnh, hãy đề nghị họ mô tả triệu chứng bằng lời.',
     fewshot ? `\nVÍ DỤ:\n${fewshot}` : '',
+    // Đặt CUỐI cùng (gần vị trí sinh token nhất) vì model nhỏ hay bỏ qua quy tắc ở
+    // giữa prompt. Model 3B viết đoạn văn trong JSON tốt nhưng hay "hụt" khi định
+    // liệt kê trong chuỗi JSON: viết câu dẫn kết thúc bằng ":" rồi đóng JSON, danh
+    // sách không bao giờ xuất hiện (reply cụt/đứt đoạn). Ép trả lời bằng văn xuôi.
+    '\nQUAN TRỌNG khi type="reply": viết "message" thành ĐOẠN VĂN liền mạch 2-5 câu, KHÔNG dùng gạch đầu dòng hay danh sách đánh số, và KHÔNG kết thúc "message" bằng dấu hai chấm ":". Nói thẳng nội dung, không hứa "dưới đây là..." rồi bỏ dở.',
   ].join('\n')
 }
 

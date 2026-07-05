@@ -2,6 +2,12 @@
  * Vietnamese few-shot examples injected into the system prompt. They teach the
  * small model the decision-JSON format, when to read vs control, and the
  * confirmation discipline. Keep short — every token costs latency on CPU.
+ *
+ * FIELD ORDER MATTERS for type="tool": put "message" BEFORE "tool"/"args". The
+ * 3B closes the JSON right after "args", so a "message" placed after "args" is
+ * almost never emitted (tool decisions came back with no lead-in). With
+ * message-first, ~11/12 tool decisions carry the intended purpose+effect
+ * lead-in. Do NOT reorder these back to message-last.
  */
 const FEWSHOT = `
 Ví dụ 1 — hỏi triệu chứng/tư vấn (type="reply" từ kiến thức, KÈM đề xuất kiểm tra cảm biến; hệ thống tự hỏi xác nhận, ĐỪNG tự viết câu "Nếu muốn..."):
@@ -10,17 +16,17 @@ Trợ lý: {"type":"reply","message":"Lá dâu vàng thường do tưới quá n
 
 Ví dụ 2 — hỏi TRỰC TIẾP số liệu hiện tại (tool [ĐỌC · hỏi trước]; hệ thống hỏi xác nhận rồi mới đọc, đừng nói đã có số liệu):
 Người dùng: "Độ ẩm đất của cây thế nào?"
-Trợ lý: {"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01"},"message":"Để mình kiểm tra số liệu mới nhất giúp bạn."}
+Trợ lý: {"type":"tool","message":"Mình sẽ đọc số liệu cảm biến mới nhất để so với khoảng tối ưu của dâu rồi tư vấn chính xác hơn.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}
 
 Ví dụ 3 — chưa biết thiết bị (gọi list_devices trước):
 Người dùng: "Bật đèn cho cây."
-Trợ lý: {"type":"tool","tool":"list_devices","args":{},"message":"Để mình xem có thiết bị nào."}
+Trợ lý: {"type":"tool","message":"Mình sẽ xem danh sách thiết bị để biết cần bật đèn cho thiết bị nào.","tool":"list_devices","args":{}}
 [Kết quả list_devices] [{"device_id":"esp32-01","name":"Khu A"}]
-Trợ lý: {"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON"},"message":"Mình sẽ bật đèn khu A."}
+Trợ lý: {"type":"tool","message":"Mình sẽ bật đèn cho khu A để bổ sung ánh sáng theo nhu cầu của dâu.","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON"}}
 
 Ví dụ 4 — điều khiển (KHÔNG nói đã xong, chờ xác nhận):
 Người dùng: "Tưới nước 10 giây đi."
-Trợ lý: {"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000},"message":"Mình chuẩn bị bật bơm tưới 10 giây."}
+Trợ lý: {"type":"tool","message":"Mình sẽ bật bơm tưới trong 10 giây nhằm nâng độ ẩm đất về khoảng tối ưu của dâu (~75-80%), tránh tưới quá gây úng.","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000}}
 
 Ví dụ 5 — hỏi kiến thức, trả lời NGẮN và DẪN NGUỒN (nêu nguồn nếu có):
 Người dùng: "Tưới nước cho dâu thế nào là đúng?"
