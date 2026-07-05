@@ -19,6 +19,12 @@ class FakeLlm implements LlmEngine {
   async completeJson() {
     return '{"type":"reply","message":"Chào bạn!"}'
   }
+  async *completeStream() {
+    yield await this.complete()
+  }
+  async *completeJsonStream() {
+    yield await this.completeJson()
+  }
   async embed(t: string[]) {
     return t.map(() => [0, 0, 0])
   }

@@ -19,6 +19,12 @@ class CountingLlm implements LlmEngine {
   async completeJson(): Promise<string> {
     return '{"type":"reply","message":"ok"}'
   }
+  async *completeStream() {
+    yield await this.complete()
+  }
+  async *completeJsonStream() {
+    yield await this.completeJson()
+  }
   async embed(texts: string[]): Promise<number[][]> {
     this.embedCalls++
     return texts.map(() => [0.1, 0.2, 0.3])

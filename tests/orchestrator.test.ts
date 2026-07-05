@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Orchestrator, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
-import type { ChatMessage, CompleteOptions, LlmEngine } from '../src/llm'
+import type { ChatMessage, CompleteOptions, LlmEngine, StreamOptions } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 import { SessionStore } from '../src/memory/sessions'
@@ -30,6 +30,19 @@ class FakeLlm implements LlmEngine {
     this.jsonCalls++
     this.lastJsonOpts = opts
     return this.jsonQueue.shift() ?? '{"type":"reply","message":"hết kịch bản"}'
+  }
+
+  async *completeStream(messages: ChatMessage[], opts?: StreamOptions): AsyncGenerator<string, void, unknown> {
+    yield await this.complete(messages, opts)
+  }
+
+  async *completeJsonStream(
+    messages: ChatMessage[],
+    jsonSchema: Record<string, unknown>,
+    schemaName: string,
+    opts?: StreamOptions,
+  ): AsyncGenerator<string, void, unknown> {
+    yield await this.completeJson(messages, jsonSchema, schemaName, opts)
   }
 
   async embed(texts: string[]): Promise<number[][]> {
