@@ -96,7 +96,7 @@ setup form; the live config comes from `/setup` → `data/llm-config.json`.
 | `LLM_CONFIG_PATH`        | `data/llm-config.json`                 | mount this as a volume        |
 | `SETUP_PROBE_TIMEOUT_MS` | `10000`                                | raise for Ollama cold-load    |
 | `SETUP_OPEN_BROWSER`     | `0` (in image)                         | never launch a browser        |
-| `MCP_URL`                | `http://host.docker.internal:8000/mcp` | form prefill / fallback only  |
+| `MCP_URL`                | `http://host.docker.internal:8100/mcp` | form prefill / fallback only  |
 | `MCP_CONFIG_PATH`        | `data/mcp-config.json`                 | saved at /setup, wins over env |
 | `MAX_TOOL_STEPS`         | `3`                                    |                               |
 | `RAG_TOP_K`              | `4`                                    |                               |

@@ -15,7 +15,7 @@ FROM node:22-alpine AS runner
 ENV NODE_ENV=production \
     PORT=8787 \
     LMSTUDIO_BASE_URL=http://host.docker.internal:1234/v1 \
-    MCP_URL=http://host.docker.internal:8000/mcp \
+    MCP_URL=http://host.docker.internal:8100/mcp \
     SETUP_OPEN_BROWSER=0
 WORKDIR /app
 

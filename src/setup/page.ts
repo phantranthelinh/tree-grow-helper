@@ -87,7 +87,7 @@ export function renderSetupPage(): string {
 
     <label for="mcpUrl">MCP URL</label>
     <div class="row">
-      <div><input id="mcpUrl" type="text" placeholder="http://localhost:8000/mcp" autocomplete="off" /></div>
+      <div><input id="mcpUrl" type="text" placeholder="http://localhost:8100/mcp" autocomplete="off" /></div>
       <button id="btn-mcp-test" class="ghost">Kiểm tra MCP</button>
     </div>
     <div id="mcp-hint" class="hint">Địa chỉ MCP điều khiển thiết bị. MCP chưa chạy vẫn kết nối được — lệnh điều khiển sẽ lỗi đến khi MCP sẵn sàng.</div>

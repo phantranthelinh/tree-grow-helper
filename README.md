@@ -23,7 +23,7 @@ Chat App ──HTTP──► AI Server ──► Orchestrator ─► LLM (LM Stu
    - **Ollama** (≥ 0.5) — `http://localhost:11434/v1` (không cần API key).
    - **Google Gemini** — lớp tương thích OpenAI (`https://generativelanguage.googleapis.com/v1beta/openai/`, cần API key; embedding gợi ý `text-embedding-004`).
    - **OpenAI-compatible khác** (vLLM, LiteLLM, OpenAI…) — nhập Base URL + API key nếu có.
-3. **plant-tree MCP** chạy ở chế độ **streamable-http** (xem bên dưới) tại `http://localhost:8000/mcp`.
+3. **plant-tree MCP** chạy ở chế độ **streamable-http** (xem bên dưới) tại `http://localhost:8100/mcp`.
 
 ### Bật MCP ở chế độ streamable-http
 
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     mcp.run()
 
 # Sau
-mcp = FastMCP(MCP_SERVER_NAME, host="0.0.0.0", port=8000)
+mcp = FastMCP(MCP_SERVER_NAME, host="0.0.0.0", port=8100)
 if __name__ == "__main__":
     mcp.run(transport="streamable-http")
 ```
