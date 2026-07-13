@@ -3,6 +3,7 @@ import type { ChatMessage, LlmEngine } from '../llm'
 import { assembleMessages, buildSystemPrompt } from '../llm/prompt'
 import { sanitizeArgs } from '../mcp/args'
 import type { McpGateway, McpTool } from '../mcp/client'
+import { describeMcpError, isRouteErrorText } from '../mcp/errors'
 import { classifyTool, confirmsBeforeRead } from '../mcp/policy'
 import type { PendingAction, SessionStore } from '../memory/sessions'
 import type { InMemoryVectorStore } from '../rag/store'
@@ -188,8 +189,9 @@ export class Orchestrator {
 
   /** Execute a confirmed sensor read and turn the raw result into a Vietnamese answer. */
   private async executeReadPending(userId: string, sessionId: string, pending: PendingAction): Promise<string> {
-    const resultText = await this.callReadTool(pending.tool, pending.args)
-    const messages = this.buildReadSummaryMessages(userId, sessionId, pending, resultText)
+    const toolCall = await this.callReadTool(pending.tool, pending.args)
+    if (toolCall.routeError) return toolCall.text
+    const messages = this.buildReadSummaryMessages(userId, sessionId, pending, toolCall.text)
     const text = await this.deps.llm.complete(messages, { temperature: this.deps.replyTemp })
     return text || READ_SUMMARY_FALLBACK
   }
@@ -201,8 +203,13 @@ export class Orchestrator {
     pending: PendingAction,
     signal?: AbortSignal,
   ): AsyncGenerator<ChatStreamEvent, string, unknown> {
-    const resultText = await this.callReadTool(pending.tool, pending.args)
-    const messages = this.buildReadSummaryMessages(userId, sessionId, pending, resultText)
+    const toolCall = await this.callReadTool(pending.tool, pending.args)
+    if (toolCall.routeError) {
+      // Route/URL MCP sai hoặc tool không tồn tại: báo thẳng, đừng nhờ LLM tóm tắt.
+      yield { type: 'token', text: toolCall.text }
+      return toolCall.text
+    }
+    const messages = this.buildReadSummaryMessages(userId, sessionId, pending, toolCall.text)
     let text = ''
     for await (const delta of this.deps.llm.completeStream(messages, { temperature: this.deps.replyTemp, signal })) {
       text += delta
@@ -327,11 +334,18 @@ export class Orchestrator {
 
       // Internal read-only tool: execute automatically and feed the result back.
       yield { type: 'tool_status', tool: toolName, note: `Đang đọc dữ liệu (${toolName})…` }
-      const resultText = await this.callReadTool(toolName, args)
+      const toolCall = await this.callReadTool(toolName, args)
+      if (toolCall.routeError) {
+        // MCP route/URL sai hoặc tool không tồn tại: báo thẳng cho người dùng,
+        // đừng để LLM diễn giải che mất lỗi.
+        finalReply = toolCall.text
+        yield { type: 'token', text: finalReply }
+        break
+      }
       messages.push({ role: 'assistant', content: JSON.stringify({ type: 'tool', tool: toolName, args }) })
       messages.push({
         role: 'user',
-        content: `[Kết quả ${toolName}]\n${resultText}\nHãy tiếp tục xử lý hoặc trả lời người dùng.`,
+        content: `[Kết quả ${toolName}]\n${toolCall.text}\nHãy tiếp tục xử lý hoặc trả lời người dùng.`,
       })
     }
 
@@ -451,13 +465,27 @@ export class Orchestrator {
     )
   }
 
-  private async callReadTool(toolName: string, args: Record<string, unknown>): Promise<string> {
+  private async callReadTool(
+    toolName: string,
+    args: Record<string, unknown>,
+  ): Promise<{ text: string; routeError: boolean }> {
     try {
       const res = await this.deps.mcp.callTool(toolName, args)
-      if (res.isError) return `Lỗi: ${res.text || 'thiết bị báo lỗi'}`
-      return res.text || '(không có dữ liệu)'
+      if (res.isError) {
+        const detail = res.text || 'thiết bị báo lỗi'
+        const routeError = isRouteErrorText(detail)
+        return {
+          text: routeError
+            ? `⚠️ MCP không tìm thấy/route sai khi gọi "${toolName}": ${detail}`
+            : `Lỗi: ${detail}`,
+          routeError,
+        }
+      }
+      return { text: res.text || '(không có dữ liệu)', routeError: false }
     } catch (err) {
-      return `Lỗi khi gọi ${toolName}: ${(err as Error).message}`
+      const info = describeMcpError(err)
+      const hint = info.route ? ' — kiểm tra lại route/URL MCP hoặc tên tool.' : ''
+      return { text: `⚠️ Không gọi được MCP tool "${toolName}": ${info.message}${hint}`, routeError: info.route }
     }
   }
 

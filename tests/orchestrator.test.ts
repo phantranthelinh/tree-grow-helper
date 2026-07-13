@@ -1,3 +1,4 @@
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Orchestrator, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
@@ -53,6 +54,7 @@ class FakeLlm implements LlmEngine {
 class FakeMcp implements McpGateway {
   calls: Array<{ name: string; args: Record<string, unknown> }> = []
   result: McpToolResult = { text: 'ok', isError: false }
+  error?: Error
 
   async listTools() {
     return []
@@ -60,6 +62,7 @@ class FakeMcp implements McpGateway {
 
   async callTool(name: string, args: Record<string, unknown>): Promise<McpToolResult> {
     this.calls.push({ name, args })
+    if (this.error) throw this.error
     return this.result
   }
 }
@@ -176,6 +179,40 @@ describe('Orchestrator', () => {
     const res = await orch.handleChat('u1', 's1', 'không')
     expect(mcp.calls).toHaveLength(0)
     expect(res.reply).toContain('Đã hủy')
+  })
+
+  it('surfaces an MCP route error directly instead of feeding it back to the LLM', async () => {
+    // get_moisture_rule is an internal auto-run read, so it reaches the MCP in the loop.
+    mcp.error = new Error('Error POSTing to endpoint (HTTP 404): Not Found')
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
+      // A second decision would only be reached if the loop kept going — it must NOT.
+      '{"type":"reply","message":"che lỗi"}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'ngưỡng tưới bao nhiêu?')
+    expect(mcp.calls).toHaveLength(1)
+    expect(res.reply).toContain('404')
+    expect(res.reply).toMatch(/MCP/)
+    expect(llm.jsonCalls).toBe(1) // short-circuited, did not loop again
+  })
+
+  it('surfaces a not-found tool error reported via isError', async () => {
+    mcp.result = { text: 'Unknown tool: get_moisture_rule', isError: true }
+    llm.jsonQueue = ['{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}']
+    const res = await orch.handleChat('u1', 's1', 'ngưỡng tưới bao nhiêu?')
+    expect(res.reply).toContain('Unknown tool')
+    expect(res.reply).toMatch(/route sai|không tìm thấy/)
+    expect(llm.jsonCalls).toBe(1)
+  })
+
+  it('surfaces a route error when executing a confirmed control action', async () => {
+    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    const pending = await orch.handleChat('u1', 's1', 'tưới đi')
+    const id = pending.pendingAction!.id
+    mcp.error = new McpError(ErrorCode.MethodNotFound, 'Unknown tool: send_command')
+    const res = await orch.confirm('u1', 's1', id, true)
+    expect(res.reply).toContain('-32601')
+    expect(res.reply).toMatch(/route/)
   })
 
   it('bounds read-tool loops to maxToolSteps then forces a text reply', async () => {
@@ -298,6 +335,19 @@ describe('Orchestrator — confirm-before-read for user-facing sensor tools', ()
     expect(mcp.calls).toHaveLength(1)
     expect(mcp.calls[0]?.name).toBe('get_latest_sensor')
     expect(res.reply).toBe('Độ ẩm đất hiện tại 70%.')
+    expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
+  })
+
+  it('surfaces a route error on a confirmed sensor read instead of summarizing it', async () => {
+    const offer = await makeOffer()
+    const id = offer.pendingAction!.id
+    mcp.error = new Error('Error POSTing to endpoint (HTTP 404): Not Found')
+
+    const res = await orch.confirm('u1', 's1', id, true)
+
+    expect(mcp.calls).toHaveLength(1)
+    expect(res.reply).toContain('404')
+    expect(llm.completeCalls).toBe(0) // did not ask the LLM to summarize a failed read
     expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
   })
 

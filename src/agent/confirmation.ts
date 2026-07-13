@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { McpGateway } from '../mcp/client'
+import { describeMcpError, isRouteErrorText } from '../mcp/errors'
 import type { PendingAction } from '../memory/sessions'
 
 const COMMAND_LABELS: Record<string, string> = {
@@ -75,10 +76,14 @@ export async function executeAction(mcp: McpGateway, action: PendingAction): Pro
   try {
     const res = await mcp.callTool(action.tool, action.args)
     if (res.isError) {
-      return { ok: false, text: `Không thực hiện được: ${res.text || 'thiết bị báo lỗi'}` }
+      const detail = res.text || 'thiết bị báo lỗi'
+      const hint = isRouteErrorText(detail) ? ' — route/URL MCP sai hoặc tool không tồn tại.' : ''
+      return { ok: false, text: `Không thực hiện được: ${detail}${hint}` }
     }
     return { ok: true, text: res.text ? `Đã thực hiện. ${res.text}` : `Đã thực hiện: ${action.summary}.` }
   } catch (err) {
-    return { ok: false, text: `Lỗi khi gọi thiết bị: ${(err as Error).message}` }
+    const info = describeMcpError(err)
+    const hint = info.route ? ' — kiểm tra lại route/URL MCP hoặc tên tool.' : ''
+    return { ok: false, text: `Lỗi khi gọi thiết bị: ${info.message}${hint}` }
   }
 }
