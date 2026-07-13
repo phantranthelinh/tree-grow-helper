@@ -63,13 +63,14 @@ afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
 const configPath = join(dir, 'llm-config.json')
 
-// Test config: isolate all disk writes (config + embed cache) inside the temp dir,
-// and point docs at an empty dir so RAG ingest stays hermetic.
+// Test config: isolate all disk writes (config + embed cache + session store)
+// inside the temp dir, and point docs at an empty dir so RAG ingest stays hermetic.
 const testConfig = {
   ...config,
   setup: { ...config.setup, configPath, probeTimeoutMs: 2000 },
   mcp: { ...config.mcp, configPath: join(dir, 'mcp-config.json') },
   rag: { ...config.rag, embedCachePath: join(dir, 'cache', 'emb.jsonl'), docsDir: join(dir, 'docs') },
+  memory: { ...config.memory, sessionsPath: join(dir, 'sessions.json') },
 } as unknown as typeof config
 
 const okProbe = async (): Promise<ProbeResult> => ({ ok: true, models: ['m1'] })

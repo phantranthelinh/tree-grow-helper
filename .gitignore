@@ -11,3 +11,6 @@ data/cache/
 
 # LLM config saved from the setup UI (per-deployment, contains an API key).
 data/llm-config.json
+
+# Session history + pendingAction persisted at runtime (per-deployment state).
+data/sessions.json

@@ -185,7 +185,8 @@ Dữ liệu này **chỉ để tư vấn**, không bao giờ đặt ngưỡng đ
   VAAS, VISTA, Chi cục Trồng trọt & BVTV Lâm Đồng…); các field chính (`scientific_name`, `care_notes`,
   `toxicity`…) đã điền. KB bệnh (`strawberry-diseases.json`) hiện là **dữ liệu mồi** — mở rộng bằng
   đầu ra scraper đã duyệt.
-- Session memory hiện in-memory (mất khi restart) — đủ cho demo 1–5 người; thay bằng SQLite nếu cần.
+- Session memory được ghi ra `data/sessions.json` (sống sót qua restart; `SESSIONS_PATH` để đổi chỗ).
+  pendingAction quá `PENDING_TTL_MS` (mặc định 30 phút) thì bỏ qua. Đủ cho 1–5 user; không hỗ trợ đa-instance.
 - Chất lượng chọn tool phụ thuộc model nhỏ — chạy `npm run eval` để đo và cân nhắc 3b vs 7b.
 
 ## Triển khai

@@ -54,6 +54,13 @@ export const config = {
     chunkOverlap: num(process.env.RAG_CHUNK_OVERLAP, 80),
     minChunkLen: num(process.env.RAG_MIN_CHUNK_LEN, 60),
   },
+  memory: {
+    // Session history + pendingAction được ghi ra file này để sống sót qua restart
+    // (mount làm volume trong Docker). Mục tiêu 1–5 user; không hỗ trợ đa-instance.
+    sessionsPath: process.env.SESSIONS_PATH ?? 'data/sessions.json',
+    // pendingAction quá hạn (ms) coi như không còn → tránh confirm nhầm lệnh cũ sau restart.
+    pendingTtlMs: num(process.env.PENDING_TTL_MS, 30 * 60 * 1000),
+  },
   defaultPlant: process.env.DEFAULT_PLANT ?? 'strawberry',
 } as const
 

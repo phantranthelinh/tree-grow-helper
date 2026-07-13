@@ -98,7 +98,10 @@ async function runInitPipeline(
   const llm = deps.buildEngine(cfg)
   const mcp = deps.buildMcp(mcpUrl)
   const store = new InMemoryVectorStore()
-  const sessions = new SessionStore()
+  const sessions = new SessionStore({
+    path: appCfg.memory.sessionsPath,
+    pendingTtlMs: appCfg.memory.pendingTtlMs,
+  })
 
   // MCP connect — degrade to the static catalog so control actions are known.
   state.setStep('mcp', 'running')
