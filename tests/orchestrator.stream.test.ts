@@ -153,6 +153,23 @@ describe('Orchestrator — handleChatStream', () => {
     expect(doneOf(events).reply).toBe('Ngưỡng là 75%.')
   })
 
+  it('runs a directly-requested sensor read inline (no offer) and streams the follow-up reply', async () => {
+    mcp.result = { text: 'soil_moisture=62', isError: false }
+    llm.jsonScripts = [
+      ['{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}'],
+      ['{"type":"reply","message":"Độ ẩm đất 62%."}'],
+    ]
+    const events = await collect(orch.handleChatStream('u1', 's1', 'đọc thông số cảm biến'))
+    expect(events).toContainEqual({
+      type: 'tool_status',
+      tool: 'get_latest_sensor',
+      note: 'Đang đọc dữ liệu (get_latest_sensor)…',
+    })
+    expect(mcp.calls).toHaveLength(1)
+    expect(tokens(events)).toBe('Độ ẩm đất 62%.')
+    expect(doneOf(events).pendingAction).toBeNull()
+  })
+
   it('emits a control confirmation as a single composed token without calling MCP', async () => {
     llm.jsonScripts = [
       ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"},"message":"Mình sẽ bật bơm."}'],
@@ -228,8 +245,11 @@ describe('Orchestrator — handleChatStream', () => {
 
   it('streams the summary after a free-text "có" on a pending sensor read', async () => {
     mcp.result = { text: 'soil_moisture=70', isError: false }
-    llm.jsonScripts = [['{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}']]
-    await collect(orch.handleChatStream('u1', 's1', 'độ ẩm bao nhiêu?'))
+    // Offer path: the read is carried on a reply decision, so it's anchored, not run.
+    llm.jsonScripts = [
+      ['{"type":"reply","message":"Lá vàng có thể do úng nước.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}'],
+    ]
+    await collect(orch.handleChatStream('u1', 's1', 'cây vàng lá'))
     expect(mcp.calls).toHaveLength(0)
 
     llm.streamScripts = [['Độ ẩm đất ', '70% — ổn.']]
