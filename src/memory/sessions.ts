@@ -14,21 +14,44 @@ export interface PendingAction {
   kind?: 'control' | 'read'
 }
 
+/**
+ * In-memory pending wrapper. `createdAt` (epoch ms) drives the TTL and is kept
+ * OUT of PendingAction so the public type / client JSON never gain a field.
+ */
+interface PendingRecord {
+  action: PendingAction
+  createdAt: number
+}
+
 interface Session {
   history: ChatMessage[]
-  pending?: PendingAction
+  pending?: PendingRecord
+}
+
+export interface SessionStoreOptions {
+  /** Max multi-turn turns kept (each turn ≈ 2 messages). Default 20. */
+  maxTurns?: number
+  /** A pending action older than this (ms) is treated as gone. Default 30 min. */
+  pendingTtlMs?: number
+  /** Clock injection point for deterministic TTL tests. Default Date.now. */
+  now?: () => number
 }
 
 /**
- * In-memory multi-turn store keyed by userId+sessionId. Sufficient for the
- * 1-5 user internal/demo target; swap for SQLite if persistence is needed.
+ * Multi-turn store keyed by userId+sessionId. In-memory by default; pass a
+ * `path` (see the persistence overload) to survive restarts. Sufficient for the
+ * 1-5 user internal/demo target.
  */
 export class SessionStore {
   private readonly sessions = new Map<string, Session>()
   private readonly maxMessages: number
+  private readonly pendingTtlMs: number
+  private readonly now: () => number
 
-  constructor(opts?: { maxTurns?: number }) {
+  constructor(opts?: SessionStoreOptions) {
     this.maxMessages = (opts?.maxTurns ?? 20) * 2
+    this.pendingTtlMs = opts?.pendingTtlMs ?? 30 * 60 * 1000
+    this.now = opts?.now ?? (() => Date.now())
   }
 
   private key(userId: string, sessionId: string): string {
@@ -58,11 +81,19 @@ export class SessionStore {
   }
 
   getPending(userId: string, sessionId: string): PendingAction | undefined {
-    return this.session(userId, sessionId).pending
+    const s = this.session(userId, sessionId)
+    if (!s.pending) return undefined
+    if (this.now() - s.pending.createdAt > this.pendingTtlMs) {
+      s.pending = undefined
+      return undefined
+    }
+    return s.pending.action
   }
 
   setPending(userId: string, sessionId: string, pending: PendingAction | undefined): void {
     this.session(userId, sessionId).pending = pending
+      ? { action: pending, createdAt: this.now() }
+      : undefined
   }
 
   clearPending(userId: string, sessionId: string): void {
