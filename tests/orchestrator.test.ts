@@ -260,17 +260,22 @@ describe('Orchestrator — arg sanitization against the tool schema', () => {
     expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON' })
   })
 
-  it('sanitizes args on a user-facing sensor read offer too', async () => {
+  it('sanitizes args on a directly-requested sensor read before running it', async () => {
+    mcp.result = { text: 'soil_moisture=62', isError: false }
     llm.jsonQueue = [
       '{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01","message":"để mình xem"}}',
+      '{"type":"reply","message":"Độ ẩm đất 62%."}',
     ]
     const res = await orch.handleChat('u1', 's1', 'độ ẩm đất bao nhiêu?')
-    expect(res.pendingAction?.tool).toBe('get_latest_sensor')
-    expect(res.pendingAction?.args).toEqual({ device_id: 'esp32-01' })
+    // Direct sensor read now runs inline; the hallucinated "message" arg is stripped.
+    expect(mcp.calls).toHaveLength(1)
+    expect(mcp.calls[0]?.name).toBe('get_latest_sensor')
+    expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01' })
+    expect(res.pendingAction).toBeNull()
   })
 })
 
-describe('Orchestrator — confirm-before-read for user-facing sensor tools', () => {
+describe('Orchestrator — user-facing sensor reads (run direct, offer on reply)', () => {
   let llm: FakeLlm
   let mcp: FakeMcp
   let deps: OrchestratorDeps
@@ -283,10 +288,14 @@ describe('Orchestrator — confirm-before-read for user-facing sensor tools', ()
     orch = new Orchestrator(deps)
   })
 
-  /** Drive the offer turn: model emits get_latest_sensor; orchestrator should anchor it as a pending. */
+  /**
+   * Drive the offer turn: the model carries get_latest_sensor on a REPLY decision
+   * (advice + an offer to check sensors). That is the only path that anchors a
+   * sensor read as a pending offer — a direct {type:"tool"} request runs inline.
+   */
   async function makeOffer() {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01"},"message":"Mình có thể kiểm tra số liệu hiện tại của cây giúp bạn."}',
+      '{"type":"reply","message":"Lá vàng có thể do úng nước hoặc thiếu đạm; bạn kiểm tra thoát nước và bón cân đối.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}',
     ]
     return orch.handleChat('u1', 's1', 'Cây dâu của mình bị vàng lá và rụng lá, nên làm gì?')
   }
@@ -351,10 +360,13 @@ describe('Orchestrator — confirm-before-read for user-facing sensor tools', ()
     expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
   })
 
-  it('treats get_sensor_history as confirm-before-read as well', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"get_sensor_history","args":{"device_id":"esp32-01","hours":24}}']
-    const res = await orch.handleChat('u1', 's1', 'cho mình xem lịch sử cảm biến 24h')
+  it('offers get_sensor_history too when carried on a reply decision', async () => {
+    llm.jsonQueue = [
+      '{"type":"reply","message":"Để đánh giá xu hướng, mình có thể xem lịch sử cảm biến.","tool":"get_sensor_history","args":{"device_id":"esp32-01","hours":24}}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'cây dạo này thế nào?')
     expect(res.pendingAction?.tool).toBe('get_sensor_history')
+    expect(res.reply).toContain('Có/Không')
     expect(mcp.calls).toHaveLength(0)
   })
 
@@ -394,5 +406,31 @@ describe('Orchestrator — confirm-before-read for user-facing sensor tools', ()
     expect(res.pendingAction).toBeNull()
     expect(mcp.calls).toHaveLength(0)
     expect(res.reply).toContain('Mình gợi ý tưới thêm')
+  })
+
+  it('runs a directly-requested get_latest_sensor inline instead of offering it', async () => {
+    mcp.result = { text: 'soil_moisture=62, temp=25', isError: false }
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}',
+      '{"type":"reply","message":"Độ ẩm đất 62%, nhiệt độ 25°C."}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'đọc thông số cảm biến mới nhất')
+    expect(mcp.calls).toHaveLength(1)
+    expect(mcp.calls[0]?.name).toBe('get_latest_sensor')
+    expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01' })
+    expect(res.pendingAction).toBeNull() // no Có/Không offer for a direct request
+    expect(res.reply).toContain('62%')
+  })
+
+  it('runs a directly-requested get_sensor_history inline too', async () => {
+    mcp.result = { text: 'history 24h', isError: false }
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"get_sensor_history","args":{"device_id":"esp32-01","hours":24}}',
+      '{"type":"reply","message":"Trong 24h qua độ ẩm ổn định."}',
+    ]
+    const res = await orch.handleChat('u1', 's1', 'cho mình xem lịch sử cảm biến 24h')
+    expect(mcp.calls).toHaveLength(1)
+    expect(mcp.calls[0]?.name).toBe('get_sensor_history')
+    expect(res.pendingAction).toBeNull()
   })
 })

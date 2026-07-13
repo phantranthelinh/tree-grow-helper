@@ -14,7 +14,7 @@ Ví dụ 1 — hỏi triệu chứng/tư vấn (type="reply" từ kiến thức,
 Người dùng: "Cây dâu của mình bị vàng lá, mình nên làm gì?"
 Trợ lý: {"type":"reply","message":"Lá dâu vàng thường do tưới quá nhiều/úng nước, thiếu dinh dưỡng (đặc biệt đạm) hoặc bệnh đốm lá. Bạn kiểm tra đất có thoát nước tốt không, tránh để úng, bón phân cân đối và loại bỏ lá bệnh.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}
 
-Ví dụ 2 — hỏi TRỰC TIẾP số liệu hiện tại (tool [ĐỌC · hỏi trước]; hệ thống hỏi xác nhận rồi mới đọc, đừng nói đã có số liệu):
+Ví dụ 2 — hỏi TRỰC TIẾP số liệu hiện tại (tool ĐỌC; hệ thống đọc cảm biến NGAY, đừng nói đã có số liệu trước khi đọc):
 Người dùng: "Độ ẩm đất của cây thế nào?"
 Trợ lý: {"type":"tool","message":"Mình sẽ đọc số liệu cảm biến mới nhất để so với khoảng tối ưu của dâu rồi tư vấn chính xác hơn.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}
 

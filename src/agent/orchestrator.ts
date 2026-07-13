@@ -322,17 +322,11 @@ export class Orchestrator {
         break
       }
 
-      // User-facing sensor read requested directly: OFFER it (anchor as a pending)
-      // instead of running inline, so a follow-up "có" runs it via the confirm path.
-      if (confirmsBeforeRead(toolName)) {
-        const offer = this.anchorReadOffer(userId, sessionId, toolName, args, decision.message)
-        finalReply = offer.reply
-        pendingView = offer.view
-        yield { type: 'token', text: finalReply }
-        break
-      }
-
-      // Internal read-only tool: execute automatically and feed the result back.
+      // Read-only tool — internal (list_devices, get_*_rule…) OR a directly
+      // requested sensor read: execute automatically and feed the result back
+      // into the loop. Sensor reads are only OFFERED (Có/Không) when the model
+      // attaches them to a reply decision (handled above); a direct request for
+      // the data IS the user's consent, so we don't gate it behind a confirm.
       yield { type: 'tool_status', tool: toolName, note: `Đang đọc dữ liệu (${toolName})…` }
       const toolCall = await this.callReadTool(toolName, args)
       if (toolCall.routeError) {

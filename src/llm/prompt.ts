@@ -1,7 +1,7 @@
 import type { PlantProfile } from '../domain/profiles'
 import { summarizeRanges } from '../domain/profiles'
 import type { McpTool } from '../mcp/client'
-import { classifyTool, confirmsBeforeRead } from '../mcp/policy'
+import { classifyTool } from '../mcp/policy'
 import type { ChatMessage } from './index'
 
 /** Render the MCP tool catalog as a Vietnamese-annotated list for the prompt. */
@@ -11,11 +11,7 @@ export function renderToolCatalog(tools: McpTool[]): string {
     .map((t) => {
       const props = (t.inputSchema?.properties ?? {}) as Record<string, unknown>
       const params = Object.keys(props).join(', ') || 'không tham số'
-      const safety = confirmsBeforeRead(t.name)
-        ? 'ĐỌC · hỏi trước'
-        : classifyTool(t.name) === 'read'
-          ? 'ĐỌC'
-          : 'ĐIỀU KHIỂN'
+      const safety = classifyTool(t.name) === 'read' ? 'ĐỌC' : 'ĐIỀU KHIỂN'
       return `- ${t.name}(${params}) [${safety}]: ${t.description ?? ''}`
     })
     .join('\n')
@@ -36,7 +32,7 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '',
     `Khoảng tối ưu của cây dâu: ${ranges}.`,
     '',
-    'Các tool có thể dùng (ĐỌC = tự chạy; ĐỌC · hỏi trước = cảm biến hướng người dùng, hệ thống sẽ hỏi xác nhận rồi mới đọc; ĐIỀU KHIỂN = cần xác nhận người dùng):',
+    'Các tool có thể dùng (ĐỌC = hệ thống tự chạy khi được yêu cầu; ĐIỀU KHIỂN = cần xác nhận người dùng trước):',
     catalog,
     '',
     'QUY TẮC:',
@@ -48,10 +44,10 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '3. Phân biệt loại câu hỏi để chọn đúng hành động:',
     '   - Câu hỏi TƯ VẤN / KIẾN THỨC / TRIỆU CHỨNG (vd "lá vàng", "cây héo", "bị bệnh gì", "bón phân gì", "chăm sóc thế nào") → trả lời TRỰC TIẾP bằng {"type":"reply","message":"<lời tư vấn>"} dựa trên [Tri thức tham khảo về cây dâu]. GIỮ type="reply".',
     '   - Nếu số liệu cảm biến hiện tại sẽ giúp lời khuyên chính xác hơn, KÈM một đề xuất kiểm tra bằng cách thêm "tool":"get_latest_sensor","args":{"device_id":"..."} vào NGAY chính quyết định reply đó (vẫn để type="reply"). Hệ thống sẽ tự thêm câu hỏi xác nhận (Có/Không) và chỉ đọc cảm biến sau khi người dùng đồng ý. KHÔNG tự viết sẵn câu "Nếu muốn, mình có thể kiểm tra...".',
-    '   - Câu hỏi TRỰC TIẾP về SỐ LIỆU / TRẠNG THÁI HIỆN TẠI (vd "độ ẩm đất bao nhiêu", "nhiệt độ hiện tại", "lịch sử cảm biến") → dùng {"type":"tool","tool":"get_latest_sensor"|"get_sensor_history",...}. Đây là tool [ĐỌC · hỏi trước]: hệ thống vẫn hỏi xác nhận rồi mới đọc.',
+    '   - Câu hỏi TRỰC TIẾP về SỐ LIỆU / TRẠNG THÁI HIỆN TẠI (vd "độ ẩm đất bao nhiêu", "nhiệt độ hiện tại", "đọc/xem thông số cảm biến", "lịch sử cảm biến") → dùng {"type":"tool","message":"<nêu SẼ đọc gì và để làm gì>","tool":"get_latest_sensor"|"get_sensor_history","args":{...}}. Hệ thống sẽ đọc cảm biến NGAY rồi đưa số liệu lại cho bạn phân tích; KHÔNG hỏi xác nhận và KHÔNG nói đã có số liệu trước khi đọc.',
     '   - Yêu cầu ĐIỀU KHIỂN → dùng tool điều khiển tương ứng.',
-    '4. Tool [ĐỌC] nội bộ (list_devices, get_device_info, get_*_rule, get_pending_commands) được hệ thống TỰ CHẠY và trả kết quả lại cho bạn để phân tích tiếp.',
-    '5. Tool [ĐỌC · hỏi trước] (cảm biến) và tool [ĐIỀU KHIỂN] sẽ KHÔNG chạy ngay — hệ thống hỏi xác nhận người dùng trước. Vì vậy TUYỆT ĐỐI không nói rằng đã có số liệu hay đã thực hiện xong; chỉ chọn đúng tool + tham số.',
+    '4. Tool [ĐỌC] (list_devices, get_device_info, get_*_rule, get_pending_commands, và cảm biến get_latest_sensor/get_sensor_history khi người dùng hỏi trực tiếp) được hệ thống TỰ CHẠY và trả kết quả lại cho bạn để phân tích tiếp.',
+    '5. Tool [ĐIỀU KHIỂN] sẽ KHÔNG chạy ngay — hệ thống hỏi xác nhận người dùng trước. Vì vậy TUYỆT ĐỐI không nói đã thực hiện xong; chỉ chọn đúng tool + tham số. (Đề xuất kiểm tra cảm biến KÈM trên một câu tư vấn cũng được hỏi xác nhận trước — xem quy tắc 3.)',
     '6. Nếu cần device_id mà chưa biết, hãy gọi list_devices trước (tool ĐỌC).',
     '7. Khi tưới/chiếu sáng cho dâu, đặt ngưỡng theo khoảng tối ưu của dâu (vd độ ẩm đất mục tiêu ~75%), KHÔNG dùng giá trị mặc định chung.',
     '8. Chỉ dùng thông tin từ ngữ cảnh và kết quả tool; nếu không chắc, hãy nói rõ và hỏi lại.',
