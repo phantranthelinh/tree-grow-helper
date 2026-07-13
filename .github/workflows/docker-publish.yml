@@ -11,7 +11,11 @@ env:
   IMAGE_NAME: ${{ github.repository }} # -> <owner>/ai-server (lowercased by metadata-action)
 
 jobs:
+  test:
+    uses: ./.github/workflows/test.yml
+
   build-and-push:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
