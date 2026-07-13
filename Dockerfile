@@ -4,7 +4,9 @@
 FROM node:22-alpine AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN --mount=type=cache,target=/root/.npm npm ci
+# --omit=dev drops typescript/vitest/@types (test-only). tsx is a runtime dep
+# (the app runs TS directly), so it stays — keep it under "dependencies".
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
 # ---- runner: the image that actually ships ----
 # The app runs TypeScript directly via tsx (no compile step), so we carry
