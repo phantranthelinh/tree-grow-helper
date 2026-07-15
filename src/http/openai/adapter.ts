@@ -49,7 +49,7 @@ export function parseMessages(messages: OpenAiMessage[]): ParsedThread {
     throw new BadRequestError('messages must be a non-empty array')
   }
   const last = messages[messages.length - 1]
-  if (last.role !== 'user') {
+  if (!last || last.role !== 'user') {
     throw new BadRequestError('the last message must have role "user"')
   }
   const prev = messages[messages.length - 2]
