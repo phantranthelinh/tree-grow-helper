@@ -7,7 +7,7 @@ Nhận câu chat tiếng Việt về cây/tình trạng → hiểu bằng **LLM 
 Giai đoạn 1 **chỉ hỗ trợ cây dâu tây (strawberry)**; thêm cây khác = thêm 1 file profile JSON.
 
 ```
-Chat App ──HTTP──► AI Server ──► Orchestrator ─► LLM (LM Studio, qwen2.5-3b)
+Chat App ──HTTP──► AI Server ──► Orchestrator ─► LLM (LM Studio, gemma-4-e4b)
                                      │         ─► RAG (profile + tài liệu đã duyệt + KB bệnh; embeddings bge-m3)
                                      │         ─► Chẩn đoán bệnh theo triệu chứng (đối chiếu cảm biến)
                                      │         ─► Session memory (multi-turn)

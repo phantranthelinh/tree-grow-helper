@@ -13,7 +13,7 @@ export const config = {
     provider: (process.env.LLM_PROVIDER ?? 'lmstudio') as ProviderId,
     baseURL: process.env.LMSTUDIO_BASE_URL ?? 'http://localhost:1234/v1',
     apiKey: process.env.LMSTUDIO_API_KEY ?? 'lm-studio',
-    model: process.env.MODEL ?? 'qwen2.5-3b-instruct',
+    model: process.env.MODEL ?? 'google/gemma-4-e4b',
     embedModel: process.env.EMBED_MODEL ?? 'text-embedding-bge-m3',
   },
   setup: {
