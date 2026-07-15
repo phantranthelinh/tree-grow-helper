@@ -91,7 +91,7 @@ setup form; the live config comes from `/setup` → `data/llm-config.json`.
 | `LLM_PROVIDER`           | `lmstudio`                             | form: preselected provider    |
 | `LMSTUDIO_BASE_URL`      | `http://host.docker.internal:1234/v1`  | form prefill only             |
 | `LMSTUDIO_API_KEY`       | `lm-studio`                            | form prefill only             |
-| `MODEL`                  | `qwen2.5-3b-instruct`                  | form prefill only             |
+| `MODEL`                  | `google/gemma-4-e4b`                   | form prefill only             |
 | `EMBED_MODEL`            | `text-embedding-bge-m3`                | form prefill only             |
 | `LLM_CONFIG_PATH`        | `data/llm-config.json`                 | mount this as a volume        |
 | `SETUP_PROBE_TIMEOUT_MS` | `10000`                                | raise for Ollama cold-load    |
