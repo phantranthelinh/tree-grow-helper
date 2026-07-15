@@ -6,6 +6,7 @@ import type { Config } from '../config'
 import type { SetupDeps } from '../setup/init'
 import type { AppState } from '../setup/state'
 import { registerChatRoutes } from './routes.chat'
+import { registerOpenAiRoutes } from './routes.openai'
 import { registerSetupRoutes } from './routes.setup'
 
 export interface ServerContext {
@@ -42,6 +43,7 @@ export function buildServer(ctx: ServerContext): FastifyInstance {
       tags: [
         { name: 'setup', description: 'Cấu hình LLM khi khởi động' },
         { name: 'chat', description: 'Hội thoại với trợ lý & xác nhận hành động điều khiển' },
+        { name: 'openai', description: 'API tương thích OpenAI (/v1) — server khác gọi như LM Studio' },
         { name: 'system', description: 'Health check & thông tin server' },
       ],
     },
@@ -55,6 +57,7 @@ export function buildServer(ctx: ServerContext): FastifyInstance {
   app.register(async (instance) => {
     registerSetupRoutes(instance, ctx.state, ctx.config, ctx.setupDeps)
     registerChatRoutes(instance, ctx.state)
+    registerOpenAiRoutes(instance, ctx.state)
   })
 
   return app

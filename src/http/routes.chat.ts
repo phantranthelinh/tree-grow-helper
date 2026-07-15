@@ -92,6 +92,8 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
         { method: 'POST', path: '/chat' },
         { method: 'POST', path: '/chat/stream' },
         { method: 'POST', path: '/chat/confirm' },
+        { method: 'POST', path: '/v1/chat/completions' },
+        { method: 'GET', path: '/v1/models' },
         { method: 'GET', path: '/docs' },
       ],
     }),
