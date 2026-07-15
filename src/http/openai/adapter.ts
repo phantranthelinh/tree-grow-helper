@@ -1,5 +1,5 @@
 import { createPendingAction } from '../../agent/confirmation'
-import type { PendingActionView } from '../../agent/orchestrator'
+import type { ChatResult, PendingActionView } from '../../agent/orchestrator'
 import type { ChatMessage } from '../../llm'
 import type { PendingAction } from '../../memory/sessions'
 import { confirmsBeforeRead } from '../../mcp/policy'
@@ -83,3 +83,58 @@ export function recoverPending(priorAssistant: OpenAiMessage | null): PendingAct
 export function encodePending(p: PendingActionView): OpenAiToolCall[] {
   return [{ id: p.id, type: 'function', function: { name: p.tool, arguments: JSON.stringify(p.args) } }]
 }
+
+export const MODEL_ID = 'plant-assistant'
+
+function chunk(delta: Record<string, unknown>, finishReason: string | null, model: string, id: string, created: number) {
+  return {
+    id,
+    object: 'chat.completion.chunk' as const,
+    created,
+    model,
+    choices: [{ index: 0, delta, finish_reason: finishReason }],
+  }
+}
+
+/** Build the buffered `chat.completion` response from a finished agent turn. */
+export function toCompletion(result: ChatResult, model: string, id: string, created: number) {
+  const message: { role: 'assistant'; content: string; tool_calls?: OpenAiToolCall[] } = {
+    role: 'assistant',
+    content: result.reply,
+  }
+  if (result.pendingAction) message.tool_calls = encodePending(result.pendingAction)
+  return {
+    id,
+    object: 'chat.completion' as const,
+    created,
+    model,
+    choices: [{ index: 0, message, finish_reason: 'stop' as const }],
+    usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+  }
+}
+
+/** `GET /v1/models` payload — one synthetic model representing the whole agent. */
+export function modelsList(created: number) {
+  return { object: 'list' as const, data: [{ id: MODEL_ID, object: 'model' as const, created, owned_by: 'ai-server' }] }
+}
+
+export function roleChunk(model: string, id: string, created: number) {
+  return chunk({ role: 'assistant' }, null, model, id, created)
+}
+
+export function contentChunk(text: string, model: string, id: string, created: number) {
+  return chunk({ content: text }, null, model, id, created)
+}
+
+/** Terminal streaming chunk: carries the pending tool_call (if any) and finish_reason. */
+export function finalChunk(pending: PendingActionView | null, model: string, id: string, created: number) {
+  const delta = pending ? { tool_calls: [{ index: 0, ...encodePending(pending)[0] }] } : {}
+  return chunk(delta, 'stop', model, id, created)
+}
+
+/** Serialize an object as one OpenAI-style SSE data frame. */
+export function sseData(obj: unknown): string {
+  return `data: ${JSON.stringify(obj)}\n\n`
+}
+
+export const SSE_DONE = 'data: [DONE]\n\n'

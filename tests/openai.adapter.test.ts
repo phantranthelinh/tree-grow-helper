@@ -1,10 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
   BadRequestError,
+  contentChunk,
   encodePending,
   extractText,
+  finalChunk,
+  modelsList,
   parseMessages,
   recoverPending,
+  roleChunk,
+  SSE_DONE,
+  sseData,
+  toCompletion,
 } from '../src/http/openai/adapter'
 import { OpenAiChatRequestSchema } from '../src/http/openai/dto'
 
@@ -136,5 +143,67 @@ describe('encodePending', () => {
     expect(calls).toEqual([
       { id: 'abc', type: 'function', function: { name: 'send_command', arguments: '{"device_id":"d1"}' } },
     ])
+  })
+})
+
+describe('toCompletion', () => {
+  it('maps a plain reply to a chat.completion with no tool_calls', () => {
+    const c = toCompletion({ reply: 'Chào bạn!', pendingAction: null }, 'm', 'id1', 100) as any
+    expect(c.object).toBe('chat.completion')
+    expect(c.model).toBe('m')
+    expect(c.choices[0].message).toEqual({ role: 'assistant', content: 'Chào bạn!' })
+    expect(c.choices[0].finish_reason).toBe('stop')
+    expect(c.usage).toEqual({ prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 })
+  })
+  it('attaches tool_calls when a pending action is present', () => {
+    const c = toCompletion(
+      {
+        reply: 'Xác nhận? (Có/Không)',
+        pendingAction: { id: 'p', summary: 's', tool: 'send_command', args: { device_id: 'd1' } },
+      },
+      'm',
+      'id1',
+      100,
+    ) as any
+    expect(c.choices[0].message.tool_calls[0].function.name).toBe('send_command')
+    expect(c.choices[0].finish_reason).toBe('stop')
+  })
+})
+
+describe('modelsList', () => {
+  it('advertises the single synthetic model', () => {
+    const l = modelsList(100) as any
+    expect(l.object).toBe('list')
+    expect(l.data[0].id).toBe('plant-assistant')
+  })
+})
+
+describe('streaming builders', () => {
+  it('contentChunk carries a content delta and no finish_reason', () => {
+    const c = contentChunk('hi', 'm', 'id1', 100) as any
+    expect(c.object).toBe('chat.completion.chunk')
+    expect(c.choices[0].delta).toEqual({ content: 'hi' })
+    expect(c.choices[0].finish_reason).toBeNull()
+  })
+  it('roleChunk opens the stream with an assistant role delta', () => {
+    const c = roleChunk('m', 'id1', 100) as any
+    expect(c.choices[0].delta).toEqual({ role: 'assistant' })
+  })
+  it('finalChunk with a pending action emits an indexed tool_call and finish_reason stop', () => {
+    const c = finalChunk({ id: 'p', summary: 's', tool: 'send_command', args: { device_id: 'd1' } }, 'm', 'id1', 100) as any
+    expect(c.choices[0].delta.tool_calls[0]).toMatchObject({
+      index: 0,
+      function: { name: 'send_command', arguments: '{"device_id":"d1"}' },
+    })
+    expect(c.choices[0].finish_reason).toBe('stop')
+  })
+  it('finalChunk with no pending action emits an empty delta and finish_reason stop', () => {
+    const c = finalChunk(null, 'm', 'id1', 100) as any
+    expect(c.choices[0].delta).toEqual({})
+    expect(c.choices[0].finish_reason).toBe('stop')
+  })
+  it('sseData / SSE_DONE serialize in OpenAI SSE format', () => {
+    expect(sseData({ a: 1 })).toBe('data: {"a":1}\n\n')
+    expect(SSE_DONE).toBe('data: [DONE]\n\n')
   })
 })
