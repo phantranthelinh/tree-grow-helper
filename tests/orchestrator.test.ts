@@ -227,6 +227,17 @@ describe('Orchestrator', () => {
     expect(res.reply).toBe('Trả lời cuối cùng.') // from llm.complete fallback
     expect(llm.completeCalls).toBe(1)
   })
+
+  it('withSessions runs against the injected store, not the original', async () => {
+    const other = new SessionStore()
+    const scoped = orch.withSessions(other)
+    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    const res = await scoped.handleChat('u1', 's1', 'tưới đi')
+    // Pending landed in the injected store…
+    expect(other.getPending('u1', 's1')?.id).toBe(res.pendingAction?.id)
+    // …and NOT in the orchestrator's original store.
+    expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
+  })
 })
 
 describe('Orchestrator — arg sanitization against the tool schema', () => {
