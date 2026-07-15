@@ -141,6 +141,15 @@ export class Orchestrator {
   }
 
   /**
+   * Return a clone that runs against a different SessionStore, sharing every
+   * other dep. Lets the OpenAI facade drive the unchanged agent core with a
+   * per-request ephemeral store instead of the persistent one.
+   */
+  withSessions(sessions: SessionStore): Orchestrator {
+    return new Orchestrator({ ...this.deps, sessions })
+  }
+
+  /**
    * Run a confirmed pending action and return the Vietnamese reply. A control
    * action executes the device command; a user-facing read runs the sensor tool
    * then summarizes the result through one LLM turn.
