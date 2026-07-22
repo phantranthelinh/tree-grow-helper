@@ -60,7 +60,7 @@ Cấu hình được lưu vào `data/llm-config.json`.
 **Các lần sau:** app tự đọc `data/llm-config.json`, tự kiểm tra & kết nối lại — bỏ qua UI.
 Nếu kết nối lỗi (đổi máy, tắt LLM…) → quay lại `/setup` để cấu hình lại.
 
-- Trước khi cấu hình xong, `POST /chat` và `/chat/confirm` trả **503 `{ "error": "not_configured" }`**.
+- Trước khi cấu hình xong, các endpoint chat (`POST /v1/chat/completions`, `POST /chat/stream`) trả **503 `{ "error": "not_configured" }`**.
 - MCP offline khi khởi tạo → dùng catalog tool tĩnh (KNOWN_TOOLS); lệnh điều khiển báo lỗi cho tới khi MCP lên.
 - Embedding lỗi khi nạp RAG → chạy không có RAG (nhưng bước kiểm tra kết nối đã bắt lỗi embedding sớm).
 - `SETUP_OPEN_BROWSER=0` để không tự mở trình duyệt (mặc định trong Docker).
@@ -82,56 +82,61 @@ npm run scrape         # cào tài liệu từ allowlist vào data/staging để
 ### Swagger UI — tự test chat trong trình duyệt
 
 Mở **http://localhost:8787/docs** sau khi `npm start`. Đây là Swagger UI tương tác:
-bấm **Try it out** ở `POST /chat`, sửa body mẫu (đã điền sẵn `userId`/`sessionId`/`message`)
-rồi **Execute** để gọi thật. Nếu phản hồi có `pendingAction`, copy `pendingAction.id`
-sang `POST /chat/confirm` (đặt `approved: true`) để xác nhận thực thi.
+bấm **Try it out** ở `POST /v1/chat/completions`, sửa body mẫu (đã điền sẵn `model`/`messages`)
+rồi **Execute** để gọi thật. Khi cần xác nhận hành động điều khiển, giữ nguyên object assistant
+(kèm `tool_calls`) trong `messages[]` rồi gửi tiếp "có"/"không".
 
 Spec OpenAPI thô ở **http://localhost:8787/docs/json**.
 
-> Cần cấu hình LLM xong (qua `/setup`) để `/chat` trả lời được; MCP chỉ cần khi thực thi lệnh điều khiển.
+> Cần cấu hình LLM xong (qua `/setup`) để chat trả lời được; MCP chỉ cần khi thực thi lệnh điều khiển.
 
 ### `GET /health` → `{ "status": "ok", "phase": "ready" }`
 
 `phase`: `waiting_config` (chưa cấu hình) → `connecting` → `initializing` → `ready`.
 
-### `POST /chat`
+### `POST /v1/chat/completions` — endpoint chính (tương thích OpenAI)
+
+Endpoint **stateless** kiểu OpenAI: gửi cả `messages[]` mỗi lần, chạy qua toàn bộ agent (RAG +
+điều khiển IoT + xác nhận). `model` nhận mọi giá trị (server echo lại); `/v1/models` liệt kê
+`plant-assistant`.
+
 ```jsonc
 // request
-{ "userId": "u1", "sessionId": "s1", "message": "Tưới nước cho esp32-01 10 giây" }
+{ "model": "plant-assistant", "messages": [{ "role": "user", "content": "Tưới nước cho esp32-01 10 giây" }] }
 
-// response — khi cần điều khiển, trả pendingAction (CHƯA thực thi)
+// response — khi cần điều khiển, content là câu hỏi "(Có/Không)" kèm tool_calls mã hoá hành động
 {
-  "reply": "Bạn xác nhận thực hiện: \"Bật bơm nước thiết bị esp32-01 trong 10s\"? (Có/Không)",
-  "pendingAction": {
-    "id": "…", "summary": "Bật bơm nước thiết bị esp32-01 trong 10s",
-    "tool": "send_command", "args": { "device_id": "esp32-01", "command": "WATER_ON", "duration": 10000 }
-  }
+  "object": "chat.completion",
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "Bạn xác nhận thực hiện: \"Bật bơm nước thiết bị esp32-01 trong 10s\"? (Có/Không)",
+      "tool_calls": [{ "type": "function", "function": { "name": "send_command", "arguments": "{…}" } }]
+    }
+  }]
 }
 ```
 
-### `POST /chat/confirm`
-```jsonc
-{ "userId": "u1", "sessionId": "s1", "actionId": "<id từ pendingAction>", "approved": true }
-// -> { "reply": "Đã thực hiện. …", "pendingAction": null }
-```
+**Xác nhận (turnkey):** ở lượt sau, **giữ nguyên object assistant (kèm `tool_calls`)** trong
+`messages[]` rồi thêm câu trả lời của người dùng ("có"/"không") — server tái dựng và thực thi
+hoặc huỷ. Không giữ `tool_calls` thì "có" bị coi là yêu cầu mới (an toàn: không thực thi nhầm).
 
-App chat có thể render nút **Có/Không** (gọi `/chat/confirm`) **hoặc** chỉ gửi tiếp text
-("có"/"không") vào `/chat` — server nhận diện cả hai.
+**Streaming:** đặt `stream: true` để nhận `chat.completion.chunk` (SSE, kết `data: [DONE]`).
 
 ### `POST /chat/stream` — bản streaming (SSE)
 
-Giống hệt `POST /chat` (cùng body `userId`/`sessionId`/`message`) nhưng câu trả lời về theo thời
-gian thực dưới dạng `text/event-stream`. Swagger UI không hiển thị được — dùng `curl -N` hoặc
-`fetch` + `ReadableStream`. Mỗi frame là `event: <tên>` với `data` là JSON một dòng:
+Endpoint chat dạng streaming (body `userId`/`sessionId`/`message`, multi-turn theo `sessionId`):
+câu trả lời về theo thời gian thực dưới dạng `text/event-stream`. Swagger UI không hiển thị được —
+dùng `curl -N` hoặc `fetch` + `ReadableStream`. Mỗi frame là `event: <tên>` với `data` là JSON một dòng:
 
 - `token` `{ text }` — nối thêm vào câu trả lời đang hiện.
 - `tool_status` `{ tool, note }` — trạng thái tạm khi đọc dữ liệu (không thuộc câu trả lời).
 - `reset` `{}` — xóa phần đã hiện của lượt này (model thử lại).
-- `done` `{ reply, pendingAction }` — kết thúc; `reply` là bản chuẩn, cùng shape với `POST /chat`.
+- `done` `{ reply, pendingAction }` — kết thúc; `reply` là câu trả lời hoàn chỉnh, `pendingAction` khác null nếu cần xác nhận điều khiển (gửi tiếp "có"/"không" ở lượt sau).
 - `error` `{ message }` — kết thúc do lỗi.
 
 Chỉ phần `message` của câu trả lời được stream ra — `reasoning` và lời gọi tool không lên wire.
-Lỗi trước khi stream (400/503) vẫn trả JSON thường như `/chat`.
+Lỗi trước khi stream (400/503) vẫn trả JSON thường.
 
 ```bash
 curl -N -X POST localhost:8787/chat/stream \

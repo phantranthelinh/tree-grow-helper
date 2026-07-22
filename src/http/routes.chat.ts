@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { AppState } from '../setup/state'
-import { ChatRequestSchema, ConfirmRequestSchema } from './dto'
+import { ChatRequestSchema } from './dto'
 import { startHeartbeat, writeSseEvent, writeSseHead } from './sse'
 
 const SSE_ERROR_MESSAGE = 'Có lỗi xảy ra, bạn thử lại giúp mình nhé.'
@@ -10,28 +10,6 @@ const HEARTBEAT_MS = 15_000
 // These mirror the Zod DTOs. We keep Zod as the actual validator (via
 // `attachValidation: true`), so invalid bodies still return the existing
 // `{ error: 'invalid_request', details }` envelope instead of Fastify's default.
-
-const pendingActionSchema = {
-  type: 'object',
-  nullable: true,
-  description: 'Hành động điều khiển đang chờ xác nhận (null nếu không có).',
-  properties: {
-    id: { type: 'string' },
-    summary: { type: 'string' },
-    tool: { type: 'string' },
-    args: { type: 'object', additionalProperties: true },
-  },
-  additionalProperties: true,
-} as const
-
-const chatResultSchema = {
-  type: 'object',
-  additionalProperties: true,
-  properties: {
-    reply: { type: 'string', description: 'Câu trả lời (tiếng Việt) cho người dùng.' },
-    pendingAction: pendingActionSchema,
-  },
-} as const
 
 const errorSchema = {
   type: 'object',
@@ -59,19 +37,6 @@ const chatBodySchema = {
   },
 } as const
 
-const confirmBodySchema = {
-  type: 'object',
-  required: ['userId', 'sessionId', 'actionId', 'approved'],
-  additionalProperties: false,
-  properties: {
-    userId: { type: 'string', minLength: 1 },
-    sessionId: { type: 'string', minLength: 1 },
-    actionId: { type: 'string', minLength: 1, description: 'Lấy từ `pendingAction.id` của phản hồi /chat.' },
-    approved: { type: 'boolean', description: 'true = thực thi, false = huỷ.' },
-  },
-  example: { userId: 'u1', sessionId: 's1', actionId: '<pendingAction.id từ /chat>', approved: true },
-} as const
-
 export function registerChatRoutes(app: FastifyInstance, state: AppState): void {
   app.get(
     '/',
@@ -89,9 +54,7 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
       endpoints: [
         { method: 'GET', path: '/setup' },
         { method: 'GET', path: '/health' },
-        { method: 'POST', path: '/chat' },
         { method: 'POST', path: '/chat/stream' },
-        { method: 'POST', path: '/chat/confirm' },
         { method: 'POST', path: '/v1/chat/completions' },
         { method: 'GET', path: '/v1/models' },
         { method: 'GET', path: '/docs' },
@@ -114,42 +77,6 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
   )
 
   app.post(
-    '/chat',
-    {
-      attachValidation: true,
-      schema: {
-        tags: ['chat'],
-        summary: 'Gửi một câu chat và nhận câu trả lời',
-        description:
-          'Trả về `reply`. Nếu yêu cầu là hành động **điều khiển thiết bị**, `pendingAction` sẽ khác null ' +
-          '(chưa thực thi) — copy `pendingAction.id` sang `POST /chat/confirm` để xác nhận.',
-        body: chatBodySchema,
-        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema, 503: errorSchema },
-      },
-    },
-    async (req, reply) => {
-      const orch = state.orchestrator
-      if (!orch) {
-        reply.code(503)
-        return { error: 'not_configured', phase: state.phase, setup: '/setup' }
-      }
-      const parsed = ChatRequestSchema.safeParse(req.body)
-      if (!parsed.success) {
-        reply.code(400)
-        return { error: 'invalid_request', details: parsed.error.flatten() }
-      }
-      const { userId, sessionId, message } = parsed.data
-      try {
-        return await orch.handleChat(userId, sessionId, message)
-      } catch (err) {
-        req.log.error(err)
-        reply.code(500)
-        return { error: 'internal_error', message: (err as Error).message }
-      }
-    },
-  )
-
-  app.post(
     '/chat/stream',
     {
       attachValidation: true,
@@ -157,12 +84,12 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
         tags: ['chat'],
         summary: 'Gửi một câu chat và nhận câu trả lời dạng streaming (SSE)',
         description:
-          'Phiên bản streaming của `POST /chat`. Phản hồi 200 là `text/event-stream` (Swagger UI không hiển thị ' +
+          'Endpoint chat dạng streaming. Phản hồi 200 là `text/event-stream` (Swagger UI không hiển thị ' +
           'được — dùng `curl -N` hoặc fetch + ReadableStream). Các frame `event: <tên>` với `data` là JSON một dòng:\n\n' +
           '- `token` `{text}` — nối vào câu trả lời đang hiện\n' +
           '- `tool_status` `{tool, note}` — trạng thái tạm khi đọc dữ liệu, không thuộc câu trả lời\n' +
           '- `reset` `{}` — xóa phần đã hiện của lượt này (model phải thử lại)\n' +
-          '- `done` `{reply, pendingAction}` — kết thúc; `reply` là bản chuẩn (cùng shape với `POST /chat`)\n' +
+          '- `done` `{reply, pendingAction}` — kết thúc; `reply` là câu trả lời hoàn chỉnh\n' +
           '- `error` `{message}` — kết thúc lỗi\n\n' +
           'Dòng chú thích `: ping` được gửi định kỳ để giữ kết nối. Lỗi trước khi stream (400/503) trả JSON thường.',
         body: chatBodySchema,
@@ -230,40 +157,6 @@ export function registerChatRoutes(app: FastifyInstance, state: AppState): void 
         finished = true
         stopHeartbeat()
         if (!raw.writableEnded) raw.end()
-      }
-    },
-  )
-
-  app.post(
-    '/chat/confirm',
-    {
-      attachValidation: true,
-      schema: {
-        tags: ['chat'],
-        summary: 'Xác nhận / huỷ một hành động điều khiển đang chờ',
-        description: 'Dùng `actionId` lấy từ `pendingAction.id` của phản hồi `/chat`.',
-        body: confirmBodySchema,
-        response: { 200: chatResultSchema, 400: errorSchema, 500: errorSchema, 503: errorSchema },
-      },
-    },
-    async (req, reply) => {
-      const orch = state.orchestrator
-      if (!orch) {
-        reply.code(503)
-        return { error: 'not_configured', phase: state.phase, setup: '/setup' }
-      }
-      const parsed = ConfirmRequestSchema.safeParse(req.body)
-      if (!parsed.success) {
-        reply.code(400)
-        return { error: 'invalid_request', details: parsed.error.flatten() }
-      }
-      const { userId, sessionId, actionId, approved } = parsed.data
-      try {
-        return await orch.confirm(userId, sessionId, actionId, approved)
-      } catch (err) {
-        req.log.error(err)
-        reply.code(500)
-        return { error: 'internal_error', message: (err as Error).message }
       }
     },
   )

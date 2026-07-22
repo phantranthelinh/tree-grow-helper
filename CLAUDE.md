@@ -64,8 +64,9 @@ index → assemble the `Orchestrator` → mark ready.
 
 - **READ tools run automatically** and their result is fed back into the message loop.
 - **CONTROL tools never execute inline** — they create a `pendingAction` and the loop returns,
-  asking the user to confirm. Execution happens only on `/chat/confirm` (or a free-text "có"/"không",
-  detected by `detectConfirmation` in [src/agent/confirmation.ts](src/agent/confirmation.ts)).
+  asking the user to confirm. Execution happens only on the next turn, when the user confirms with a
+  free-text "có"/"không" (detected by `detectConfirmation` in
+  [src/agent/confirmation.ts](src/agent/confirmation.ts)).
 - Classification lives in [src/mcp/policy.ts](src/mcp/policy.ts) and is **fail-safe**: unknown tools
   default to `control` (require confirmation) unless they start with a read-style prefix. When adding
   MCP tools, update the `READ_ONLY`/`CONTROL` sets there.
@@ -128,23 +129,25 @@ one big token frame.
 
 [src/http/server.ts](src/http/server.ts) wires CORS (`@fastify/cors`, reflective origin — browser
 chat apps POST from other origins), Swagger UI at `/docs`, then registers setup + chat routes.
-Endpoints: `POST /chat`, `POST /chat/stream` (SSE), `POST /chat/confirm`
-([routes.chat.ts](src/http/routes.chat.ts)), the `/setup` UI + `/api/setup/*`
+Endpoints: `POST /chat/stream` (SSE) ([routes.chat.ts](src/http/routes.chat.ts)), the
+OpenAI-compatible `POST /v1/chat/completions` + `GET /v1/models`
+([routes.openai.ts](src/http/routes.openai.ts)), the `/setup` UI + `/api/setup/*`
 ([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`. `POST /api/setup/rag/rebuild`
 re-ingests the RAG store at runtime and hot-swaps store+profile into the live orchestrator
 (synchronous; **build-then-swap** — a failed ingest keeps the old store; MCP/LLM/sessions untouched;
 503 not_configured / 409 busy|rag_disabled / 502 embed_failed).
-Before config completes, `/chat` returns **503 `{error:"not_configured"}`**. Validation uses Zod DTOs
+Before config completes, the chat endpoints return **503 `{error:"not_configured"}`**. Validation uses Zod DTOs
 ([src/http/dto.ts](src/http/dto.ts)) with `attachValidation: true` so failures return the
 `{error:"invalid_request", details}` envelope rather than Fastify's default.
 
-`POST /chat/stream` is the streaming twin of `/chat`: same body, but the reply arrives as SSE frames
-(`token`/`tool_status`/`reset`/`done`/`error` — contract documented on the route's Swagger
-description). It rides `Orchestrator.handleChatStream`, which shares one event-generator core with
+`POST /chat/stream` is the streaming chat endpoint (body `{userId, sessionId, message}`): the reply
+arrives as SSE frames (`token`/`tool_status`/`reset`/`done`/`error` — contract documented on the
+route's Swagger description). It rides `Orchestrator.handleChatStream`, which shares one event-generator core with
 the buffered path; the decision JSON is scanned incrementally
 ([src/agent/streamParser.ts](src/agent/streamParser.ts)) so only the `message` field streams out —
 `reasoning` and tool calls never reach the wire, and no token is emitted before the decision `type`
-is known. The buffered `/chat` still uses the non-streaming LLM calls (provider behavior unchanged).
+is known. The buffered path (`Orchestrator.handleChat`, used by non-stream `/v1/chat/completions`)
+still uses the non-streaming LLM calls (provider behavior unchanged).
 Pre-stream failures (400/503) stay plain JSON; smoke-test streaming with
 `curl -N -X POST localhost:8787/chat/stream -H 'content-type: application/json' -d '{"userId":"u1","sessionId":"s1","message":"..."}'`.
 

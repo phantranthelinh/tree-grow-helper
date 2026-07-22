@@ -35,9 +35,9 @@ export function buildServer(ctx: ServerContext): FastifyInstance {
         title: 'AI Server API',
         description:
           'Trợ lý chăm cây (LLM local qua LM Studio) + điều khiển thiết bị IoT qua MCP.\n\n' +
-          'Dùng **Try it out** ở endpoint `POST /chat` để tự test hội thoại. ' +
-          'Khi câu trả lời có `pendingAction` (hành động điều khiển cần xác nhận), copy `pendingAction.id` ' +
-          'sang `POST /chat/confirm` để xác nhận hoặc huỷ.',
+          'Dùng **Try it out** ở endpoint `POST /v1/chat/completions` (tương thích OpenAI) để tự test hội thoại. ' +
+          'Khi cần xác nhận hành động điều khiển, giữ nguyên object assistant (kèm `tool_calls`) trong ' +
+          '`messages[]` rồi gửi tiếp "có"/"không". Bản streaming SSE ở `POST /chat/stream`.',
         version: '0.1.0',
       },
       tags: [

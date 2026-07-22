@@ -70,48 +70,4 @@ describe('HTTP API', () => {
     expect(res.json()).toMatchObject({ status: 'ok' })
     await app.close()
   })
-
-  it('POST /chat validates the body', async () => {
-    const app = makeApp(llm, mcp)
-    const res = await app.inject({ method: 'POST', url: '/chat', payload: { userId: 'u1' } })
-    expect(res.statusCode).toBe(400)
-    await app.close()
-  })
-
-  it('POST /chat returns a reply', async () => {
-    llm.jsonQueue = ['{"type":"reply","message":"Chào bạn!"}']
-    const app = makeApp(llm, mcp)
-    const res = await app.inject({
-      method: 'POST',
-      url: '/chat',
-      payload: { userId: 'u1', sessionId: 's1', message: 'hi' },
-    })
-    expect(res.statusCode).toBe(200)
-    expect(res.json().reply).toBe('Chào bạn!')
-    expect(res.json().pendingAction).toBeNull()
-    await app.close()
-  })
-
-  it('POST /chat -> pendingAction, then /chat/confirm executes', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
-    const app = makeApp(llm, mcp)
-    const chat = await app.inject({
-      method: 'POST',
-      url: '/chat',
-      payload: { userId: 'u1', sessionId: 's1', message: 'tưới đi' },
-    })
-    const pending = chat.json().pendingAction
-    expect(pending).not.toBeNull()
-    expect(mcp.calls).toHaveLength(0)
-
-    const confirm = await app.inject({
-      method: 'POST',
-      url: '/chat/confirm',
-      payload: { userId: 'u1', sessionId: 's1', actionId: pending.id, approved: true },
-    })
-    expect(confirm.statusCode).toBe(200)
-    expect(confirm.json().reply).toContain('Đã thực hiện')
-    expect(mcp.calls).toEqual(['send_command'])
-    await app.close()
-  })
 })

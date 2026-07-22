@@ -108,11 +108,11 @@ describe('setup routes', () => {
     state = new AppState()
   })
 
-  it('POST /chat before ready returns 503 not_configured', async () => {
+  it('POST /chat/stream before ready returns 503 not_configured', async () => {
     const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
     const res = await app.inject({
       method: 'POST',
-      url: '/chat',
+      url: '/chat/stream',
       payload: { userId: 'u1', sessionId: 's1', message: 'hi' },
     })
     expect(res.statusCode).toBe(503)
@@ -131,7 +131,7 @@ describe('setup routes', () => {
     await app.close()
   })
 
-  it('connect happy path: saves config, reaches ready, then /chat works', async () => {
+  it('connect happy path: saves config, reaches ready, then /v1/chat/completions works', async () => {
     const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
     const res = await app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
     expect(res.statusCode).toBe(200)
@@ -144,11 +144,11 @@ describe('setup routes', () => {
 
     const chat = await app.inject({
       method: 'POST',
-      url: '/chat',
-      payload: { userId: 'u1', sessionId: 's1', message: 'hi' },
+      url: '/v1/chat/completions',
+      payload: { model: 'plant-assistant', messages: [{ role: 'user', content: 'hi' }] },
     })
     expect(chat.statusCode).toBe(200)
-    expect(chat.json().reply).toBe('Chào bạn!')
+    expect(chat.json().choices[0].message.content).toBe('Chào bạn!')
     await app.close()
   })
 
