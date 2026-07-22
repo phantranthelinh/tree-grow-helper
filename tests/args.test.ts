@@ -3,25 +3,26 @@ import { sanitizeArgs } from '../src/mcp/args'
 import type { McpTool } from '../src/mcp/client'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 
-const sendCommand = KNOWN_TOOLS.find((t) => t.name === 'send_command')!
+const setLight = KNOWN_TOOLS.find((t) => t.name === 'set_light')!
+const setPump = KNOWN_TOOLS.find((t) => t.name === 'set_pump')!
 const listDevices = KNOWN_TOOLS.find((t) => t.name === 'list_devices')!
 
 describe('sanitizeArgs', () => {
   it('drops args not declared in the tool schema (the leaked decision message)', () => {
-    const out = sanitizeArgs(sendCommand, {
+    const out = sanitizeArgs(setLight, {
       device_id: 'esp32-01',
-      command: 'LIGHT_ON',
-      duration: 60000,
-      message: 'Mình sẽ bật đèn thiết bị esp32-01 trong 60s.',
+      on: true,
+      pwm: 200,
+      message: 'Mình sẽ bật đèn thiết bị esp32-01.',
     })
-    expect(out).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON', duration: 60000 })
+    expect(out).toEqual({ device_id: 'esp32-01', on: true, pwm: 200 })
     expect(out).not.toHaveProperty('message')
   })
 
   it('keeps only declared keys and preserves their values', () => {
-    expect(sanitizeArgs(sendCommand, { device_id: 'd1', command: 'WATER_ON', bogus: true })).toEqual({
+    expect(sanitizeArgs(setPump, { device_id: 'd1', on: true, bogus: true })).toEqual({
       device_id: 'd1',
-      command: 'WATER_ON',
+      on: true,
     })
   })
 
