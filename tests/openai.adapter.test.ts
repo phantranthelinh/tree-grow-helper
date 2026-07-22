@@ -44,7 +44,7 @@ describe('OpenAiChatRequestSchema', () => {
         {
           role: 'assistant',
           content: 'Xác nhận? (Có/Không)',
-          tool_calls: [{ id: 'x', type: 'function', function: { name: 'send_command', arguments: '{}' } }],
+          tool_calls: [{ id: 'x', type: 'function', function: { name: 'set_pump', arguments: '{}' } }],
         },
         { role: 'user', content: 'có' },
       ],
@@ -82,7 +82,7 @@ describe('parseMessages', () => {
       {
         role: 'assistant',
         content: 'Xác nhận? (Có/Không)',
-        tool_calls: [{ id: 'x', type: 'function', function: { name: 'send_command', arguments: '{}' } }],
+        tool_calls: [{ id: 'x', type: 'function', function: { name: 'set_pump', arguments: '{}' } }],
       },
       { role: 'user', content: 'có' },
     ])
@@ -100,7 +100,7 @@ describe('recoverPending', () => {
     expect(recoverPending(null)).toBeNull()
     expect(recoverPending({ role: 'assistant', content: 'hi' })).toBeNull()
   })
-  it('rebuilds a control pending from a send_command tool_call', () => {
+  it('rebuilds a control pending from a set_pump tool_call', () => {
     const p = recoverPending({
       role: 'assistant',
       content: 'q',
@@ -108,13 +108,13 @@ describe('recoverPending', () => {
         {
           id: 'x',
           type: 'function',
-          function: { name: 'send_command', arguments: '{"device_id":"d1","command":"WATER_ON"}' },
+          function: { name: 'set_pump', arguments: '{"device_id":"d1","on":true}' },
         },
       ],
     })
-    expect(p?.tool).toBe('send_command')
+    expect(p?.tool).toBe('set_pump')
     expect(p?.kind).toBe('control')
-    expect(p?.args).toEqual({ device_id: 'd1', command: 'WATER_ON' })
+    expect(p?.args).toEqual({ device_id: 'd1', on: true })
     expect(p?.summary).toContain('Bật bơm nước')
   })
   it('derives kind="read" for a confirm-before-read sensor tool', () => {
@@ -131,7 +131,7 @@ describe('recoverPending', () => {
     const p = recoverPending({
       role: 'assistant',
       content: 'q',
-      tool_calls: [{ id: 'x', type: 'function', function: { name: 'send_command', arguments: '{not json' } }],
+      tool_calls: [{ id: 'x', type: 'function', function: { name: 'set_pump', arguments: '{not json' } }],
     })
     expect(p).toBeNull()
   })
@@ -139,9 +139,9 @@ describe('recoverPending', () => {
 
 describe('encodePending', () => {
   it('encodes a pending view as a single OpenAI tool_call', () => {
-    const calls = encodePending({ id: 'abc', summary: 's', tool: 'send_command', args: { device_id: 'd1' } })
+    const calls = encodePending({ id: 'abc', summary: 's', tool: 'set_pump', args: { device_id: 'd1' } })
     expect(calls).toEqual([
-      { id: 'abc', type: 'function', function: { name: 'send_command', arguments: '{"device_id":"d1"}' } },
+      { id: 'abc', type: 'function', function: { name: 'set_pump', arguments: '{"device_id":"d1"}' } },
     ])
   })
 })
@@ -159,13 +159,13 @@ describe('toCompletion', () => {
     const c = toCompletion(
       {
         reply: 'Xác nhận? (Có/Không)',
-        pendingAction: { id: 'p', summary: 's', tool: 'send_command', args: { device_id: 'd1' } },
+        pendingAction: { id: 'p', summary: 's', tool: 'set_pump', args: { device_id: 'd1' } },
       },
       'm',
       'id1',
       100,
     ) as any
-    expect(c.choices[0].message.tool_calls[0].function.name).toBe('send_command')
+    expect(c.choices[0].message.tool_calls[0].function.name).toBe('set_pump')
     expect(c.choices[0].finish_reason).toBe('stop')
   })
 })
@@ -190,10 +190,10 @@ describe('streaming builders', () => {
     expect(c.choices[0].delta).toEqual({ role: 'assistant' })
   })
   it('finalChunk with a pending action emits an indexed tool_call and finish_reason stop', () => {
-    const c = finalChunk({ id: 'p', summary: 's', tool: 'send_command', args: { device_id: 'd1' } }, 'm', 'id1', 100) as any
+    const c = finalChunk({ id: 'p', summary: 's', tool: 'set_pump', args: { device_id: 'd1' } }, 'm', 'id1', 100) as any
     expect(c.choices[0].delta.tool_calls[0]).toMatchObject({
       index: 0,
-      function: { name: 'send_command', arguments: '{"device_id":"d1"}' },
+      function: { name: 'set_pump', arguments: '{"device_id":"d1"}' },
     })
     expect(c.choices[0].finish_reason).toBe('stop')
   })

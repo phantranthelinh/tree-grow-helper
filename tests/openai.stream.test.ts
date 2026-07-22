@@ -99,7 +99,7 @@ describe('OpenAI-compatible API (streaming)', () => {
   })
 
   it('carries a control pending action as a tool_call in the terminal chunk', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const app = makeApp(llm, mcp)
     const res = await app.inject({
       method: 'POST',
@@ -108,7 +108,7 @@ describe('OpenAI-compatible API (streaming)', () => {
     })
     const frames = parseOpenAiSse(res.body)
     const toolChunk = frames.find((f) => f !== '[DONE]' && f.choices?.[0]?.delta?.tool_calls)
-    expect(toolChunk.choices[0].delta.tool_calls[0].function.name).toBe('send_command')
+    expect(toolChunk.choices[0].delta.tool_calls[0].function.name).toBe('set_pump')
     expect(contentOf(frames)).toContain('Có/Không')
     expect(mcp.calls).toHaveLength(0)
     await app.close()

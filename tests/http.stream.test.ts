@@ -138,7 +138,7 @@ describe('POST /chat/stream', () => {
   })
 
   it('carries the pendingAction of a control tool through the done frame', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const app = makeApp(llm, mcp)
     const res = await app.inject({
       method: 'POST',
@@ -148,7 +148,7 @@ describe('POST /chat/stream', () => {
     const frames = parseSse(res.body)
     const done = frames[frames.length - 1]
     expect(done?.event).toBe('done')
-    expect(done?.data.pendingAction.tool).toBe('send_command')
+    expect(done?.data.pendingAction.tool).toBe('set_pump')
     expect(done?.data.reply).toContain('Có/Không')
     expect(mcp.calls).toHaveLength(0)
     await app.close()

@@ -128,14 +128,14 @@ describe('OpenAI-compatible API (buffered)', () => {
 
   it('control round-trip: turn 1 offers a tool_call, turn 2 (echo + "có") executes', async () => {
     const app = makeApp(llm, mcp)
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const turn1 = await app.inject({
       method: 'POST',
       url: '/v1/chat/completions',
       payload: { model: 'm', messages: [{ role: 'user', content: 'tưới đi' }] },
     })
     const msg1 = turn1.json().choices[0].message
-    expect(msg1.tool_calls[0].function.name).toBe('send_command')
+    expect(msg1.tool_calls[0].function.name).toBe('set_pump')
     expect(msg1.content).toContain('Có/Không')
     expect(mcp.calls).toHaveLength(0)
 
@@ -152,7 +152,7 @@ describe('OpenAI-compatible API (buffered)', () => {
       },
     })
     expect(turn2.json().choices[0].message.content).toContain('Đã thực hiện')
-    expect(mcp.calls).toEqual(['send_command'])
+    expect(mcp.calls).toEqual(['set_pump'])
     await app.close()
   })
 
@@ -358,7 +358,7 @@ describe('OpenAI-compatible API (session memory)', () => {
 
   it('confirms a control action server-side: "có" on a later request executes it', async () => {
     const app = makeApp(llm, mcp)
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const turn1 = await app.inject({
       method: 'POST',
       url: '/v1/chat/completions',
@@ -373,7 +373,7 @@ describe('OpenAI-compatible API (session memory)', () => {
       payload: { model: 'm', session_id: 'cf-1', messages: [{ role: 'user', content: 'có' }] },
     })
     expect(turn2.json().choices[0].message.content).toContain('Đã thực hiện')
-    expect(mcp.calls).toEqual(['send_command'])
+    expect(mcp.calls).toEqual(['set_pump'])
     await app.close()
   })
 })
