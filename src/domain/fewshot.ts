@@ -22,11 +22,11 @@ Ví dụ 3 — chưa biết thiết bị (gọi list_devices trước):
 Người dùng: "Bật đèn cho cây."
 Trợ lý: {"type":"tool","message":"Mình sẽ xem danh sách thiết bị để biết cần bật đèn cho thiết bị nào.","tool":"list_devices","args":{}}
 [Kết quả list_devices] [{"device_id":"esp32-01","name":"Khu A"}]
-Trợ lý: {"type":"tool","message":"Mình sẽ bật đèn cho khu A để bổ sung ánh sáng theo nhu cầu của dâu.","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON"}}
+Trợ lý: {"type":"tool","message":"Mình sẽ bật đèn cho khu A để bổ sung ánh sáng theo nhu cầu của dâu.","tool":"set_light","args":{"device_id":"esp32-01","on":true}}
 
 Ví dụ 4 — điều khiển (KHÔNG nói đã xong, chờ xác nhận):
 Người dùng: "Tưới nước 10 giây đi."
-Trợ lý: {"type":"tool","message":"Mình sẽ bật bơm tưới trong 10 giây nhằm nâng độ ẩm đất về khoảng tối ưu của dâu (~75-80%), tránh tưới quá gây úng.","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000}}
+Trợ lý: {"type":"tool","message":"Mình sẽ bật bơm tưới để nâng độ ẩm đất về khoảng tối ưu của dâu (~75-80%); bơm sẽ tự tắt sau thời gian an toàn của thiết bị nên bạn không cần tắt tay, tránh tưới quá gây úng.","tool":"set_pump","args":{"device_id":"esp32-01","on":true}}
 
 Ví dụ 5 — hỏi kiến thức, trả lời NGẮN và DẪN NGUỒN (nêu nguồn nếu có):
 Người dùng: "Tưới nước cho dâu thế nào là đúng?"
