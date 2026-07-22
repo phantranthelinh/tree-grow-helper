@@ -24,6 +24,8 @@ export const OpenAiChatRequestSchema = z
     model: z.string().min(1),
     messages: z.array(Message).min(1),
     stream: z.boolean().optional(),
+    session_id: z.string().optional(),
+    user: z.string().optional(),
   })
   .passthrough()
 

@@ -172,6 +172,11 @@ export class Orchestrator {
     return this.deps.llm
   }
 
+  /** The session store this orchestrator persists to — used by the OpenAI facade to seed/read server-side memory. */
+  get sessions(): SessionStore {
+    return this.deps.sessions
+  }
+
   /**
    * Return a clone with a rebuilt knowledge base: new vector store + reloaded
    * profile, every other dep shared. Used by rebuildRag to hot-swap RAG without

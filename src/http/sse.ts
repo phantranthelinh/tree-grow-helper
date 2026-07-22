@@ -5,12 +5,13 @@ import type { ServerResponse } from 'node:http'
  * `no-transform` and `X-Accel-Buffering: no` keep reverse proxies (nginx…)
  * from buffering the stream.
  */
-export function writeSseHead(raw: ServerResponse): void {
+export function writeSseHead(raw: ServerResponse, extraHeaders?: Record<string, string>): void {
   raw.writeHead(200, {
     'content-type': 'text/event-stream; charset=utf-8',
     'cache-control': 'no-cache, no-transform',
     connection: 'keep-alive',
     'x-accel-buffering': 'no',
+    ...extraHeaders,
   })
   // light-my-request's mock response has no flushHeaders.
   if (typeof raw.flushHeaders === 'function') raw.flushHeaders()

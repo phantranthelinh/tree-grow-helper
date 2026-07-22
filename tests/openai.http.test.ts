@@ -184,4 +184,30 @@ describe('OpenAI-compatible API (buffered)', () => {
     expect(mcp.calls).toEqual(['get_latest_sensor'])
     await app.close()
   })
+
+  it('Orchestrator exposes its session store via a getter', () => {
+    const sessions = new SessionStore()
+    const orch = new Orchestrator({
+      llm,
+      mcp,
+      store: new InMemoryVectorStore(),
+      sessions,
+      profile: loadProfile('strawberry'),
+      tools: [],
+      maxToolSteps: 3,
+      ragTopK: 4,
+    })
+    expect(orch.sessions).toBe(sessions)
+  })
+
+  it('exposes X-Session-Id to browsers via CORS', async () => {
+    const app = makeApp(llm, mcp)
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/models',
+      headers: { origin: 'http://example.com' },
+    })
+    expect(res.headers['access-control-expose-headers']).toContain('X-Session-Id')
+    await app.close()
+  })
 })

@@ -23,7 +23,11 @@ export function buildServer(ctx: ServerContext): FastifyInstance {
 
   // Browser chat apps live on another origin and must POST /chat/stream with
   // fetch (EventSource can't POST), which triggers a preflight — allow it.
-  app.register(fastifyCors, { origin: true, methods: ['GET', 'POST', 'OPTIONS'] })
+  app.register(fastifyCors, {
+    origin: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    exposedHeaders: ['X-Session-Id'],
+  })
 
   // OpenAPI spec + interactive UI at /docs so you can self-test the chat in a browser.
   // Registered BEFORE the routes: @fastify/swagger installs an `onRoute` hook that must
