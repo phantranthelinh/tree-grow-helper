@@ -64,6 +64,24 @@ const FALLBACK_REPLY = 'Xin lỗi, mình chưa xử lý được yêu cầu. B�
 const READ_SUMMARY_FALLBACK = 'Mình đã đọc số liệu nhưng chưa tóm tắt được, bạn thử lại giúp mình nhé.'
 const EXHAUSTED_FALLBACK = 'Mình đã xem dữ liệu nhưng chưa thể kết luận, bạn hỏi cụ thể hơn nhé.'
 const RETRY_NUDGE = 'Chỉ trả về đúng MỘT JSON hợp lệ theo schema, không thêm chữ nào khác.'
+const PROSE_ANSWER_INSTRUCTION =
+  'Hãy trả lời người dùng bằng tiếng Việt thành MỘT đoạn văn liền mạch, ngắn gọn (2-5 câu), ' +
+  'KHÔNG dùng gạch đầu dòng hay danh sách, và KHÔNG kết thúc bằng dấu hai chấm.'
+
+/**
+ * True when a reply decision's `message` shows the documented small-model
+ * failure: the model crammed the whole answer into the JSON string and
+ * abandoned it — empty, or a dangling-colon lead-in ("… gồm:") with no body
+ * (finish_reason=stop, not a token cutoff). The prompt's prose rule asks the
+ * model not to do this; this is the structural net for when it does anyway, so
+ * the fix does not depend on any one model honoring that rule. Such a reply is
+ * regenerated as unconstrained prose instead of being shipped.
+ */
+export function isTruncatedReply(message: string): boolean {
+  const t = message.trim()
+  if (t === '') return true
+  return t.endsWith(':') || t.endsWith('：')
+}
 
 /**
  * Emit whatever part of the final reply the live stream didn't already cover.
@@ -147,6 +165,20 @@ export class Orchestrator {
    */
   withSessions(sessions: SessionStore): Orchestrator {
     return new Orchestrator({ ...this.deps, sessions })
+  }
+
+  /** LLM engine this orchestrator serves with — reused by a RAG rebuild (no new engine). */
+  get engine(): LlmEngine {
+    return this.deps.llm
+  }
+
+  /**
+   * Return a clone with a rebuilt knowledge base: new vector store + reloaded
+   * profile, every other dep shared. Used by rebuildRag to hot-swap RAG without
+   * touching MCP, the LLM engine, or sessions.
+   */
+  withRag(store: InMemoryVectorStore, profile: PlantProfile): Orchestrator {
+    return new Orchestrator({ ...this.deps, store, profile })
   }
 
   /**
@@ -313,7 +345,32 @@ export class Orchestrator {
           yield* emitRemainder(finalReply, emittedText)
           break
         }
-        finalReply = decision.message || FALLBACK_REPLY
+        const message = decision.message ?? ''
+        if (isTruncatedReply(message)) {
+          // The model abandoned its answer inside the JSON "message" string
+          // (empty or a dangling-colon lead-in). Regenerate a clean, flowing
+          // prose answer with an UNCONSTRAINED call at replyTemp (0.3) instead of
+          // shipping the fragment — decisionTemp (0.1) + JSON constraint is what
+          // produced the stub. In stream mode the fragment already went out, so
+          // reset the client before re-speaking.
+          const proseMessages: ChatMessage[] = [...messages, { role: 'user', content: PROSE_ANSWER_INSTRUCTION }]
+          if (mode === 'stream') {
+            if (emittedText) yield { type: 'reset' }
+            let text = ''
+            for await (const delta of llm.completeStream(proseMessages, { temperature: this.deps.replyTemp, signal })) {
+              text += delta
+              yield { type: 'token', text: delta }
+            }
+            finalReply = text || FALLBACK_REPLY
+            if (!text) yield { type: 'token', text: finalReply }
+          } else {
+            const text = await llm.complete(proseMessages, { temperature: this.deps.replyTemp })
+            finalReply = text || FALLBACK_REPLY
+            yield { type: 'token', text: finalReply }
+          }
+          break
+        }
+        finalReply = message || FALLBACK_REPLY
         yield* emitRemainder(finalReply, emittedText)
         break
       }

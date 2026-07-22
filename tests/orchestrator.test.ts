@@ -1,6 +1,6 @@
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Orchestrator, type OrchestratorDeps } from '../src/agent/orchestrator'
+import { Orchestrator, isTruncatedReply, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
 import type { ChatMessage, CompleteOptions, LlmEngine, StreamOptions } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
@@ -238,6 +238,18 @@ describe('Orchestrator', () => {
     // …and NOT in the orchestrator's original store.
     expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
   })
+
+  it('engine getter returns the injected LlmEngine', () => {
+    expect(orch.engine).toBe(llm)
+  })
+
+  it('withRag returns a new Orchestrator that carries the swapped store', () => {
+    const store = new InMemoryVectorStore()
+    store.add([{ id: 'x', text: 'ngưỡng ẩm đất dâu tây 75-80%', embedding: [1, 0, 0] }])
+    const swapped = orch.withRag(store, loadProfile('strawberry'))
+    expect(swapped).not.toBe(orch)
+    expect(store.size()).toBe(1)
+  })
 })
 
 describe('Orchestrator — arg sanitization against the tool schema', () => {
@@ -443,5 +455,59 @@ describe('Orchestrator — user-facing sensor reads (run direct, offer on reply)
     expect(mcp.calls).toHaveLength(1)
     expect(mcp.calls[0]?.name).toBe('get_sensor_history')
     expect(res.pendingAction).toBeNull()
+  })
+})
+
+// The "cụt/đứt đoạn" reply bug is model-agnostic: any small model, forced to put
+// the whole answer inside the decision JSON's "message" string, can abandon it —
+// empty, or a dangling-colon lead-in with no body. The prose rule in the prompt
+// asks the model not to; this is the structural safety net for when it does anyway.
+describe('isTruncatedReply', () => {
+  it('flags empty / whitespace / dangling-colon messages', () => {
+    expect(isTruncatedReply('')).toBe(true)
+    expect(isTruncatedReply('   \n ')).toBe(true)
+    expect(isTruncatedReply('Các nguyên nhân gồm:')).toBe(true)
+    expect(isTruncatedReply('Dưới đây là các bước ：')).toBe(true) // full-width colon
+  })
+
+  it('passes a normal flowing-prose answer', () => {
+    expect(isTruncatedReply('Lá dâu vàng thường do úng nước hoặc thiếu đạm; bạn kiểm tra thoát nước.')).toBe(false)
+    expect(isTruncatedReply('Độ ẩm đất 62%.')).toBe(false)
+  })
+})
+
+describe('Orchestrator — truncated reply repair', () => {
+  let llm: FakeLlm
+  let mcp: FakeMcp
+  let orch: Orchestrator
+
+  beforeEach(() => {
+    llm = new FakeLlm()
+    mcp = new FakeMcp()
+    llm.completeReturn = 'Câu trả lời hoàn chỉnh bằng văn xuôi.'
+    orch = new Orchestrator(makeDeps({ llm, mcp, replyTemp: 0.3 }))
+  })
+
+  it('regenerates a dangling-colon reply as unconstrained prose at replyTemp', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Các nguyên nhân khiến lá dâu vàng gồm:"}']
+    const res = await orch.handleChat('u1', 's1', 'vì sao lá dâu vàng?')
+    expect(res.reply).toBe('Câu trả lời hoàn chỉnh bằng văn xuôi.')
+    expect(llm.completeCalls).toBe(1) // fell back to plain-text generation
+    expect(llm.lastCompleteOpts?.temperature).toBe(0.3) // uses replyTemp, not decisionTemp
+    expect(res.pendingAction).toBeNull()
+  })
+
+  it('regenerates an empty reply message rather than shipping the fallback fragment', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":""}']
+    const res = await orch.handleChat('u1', 's1', 'tư vấn giúp mình')
+    expect(res.reply).toBe('Câu trả lời hoàn chỉnh bằng văn xuôi.')
+    expect(llm.completeCalls).toBe(1)
+  })
+
+  it('does NOT regenerate a well-formed reply (no extra LLM call)', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Lá vàng thường do úng nước; bạn kiểm tra thoát nước."}']
+    const res = await orch.handleChat('u1', 's1', 'vì sao lá vàng?')
+    expect(res.reply).toBe('Lá vàng thường do úng nước; bạn kiểm tra thoát nước.')
+    expect(llm.completeCalls).toBe(0)
   })
 })
