@@ -121,28 +121,28 @@ describe('Orchestrator', () => {
   })
 
   it('runs a read-only tool automatically then replies', async () => {
-    // Uses an internal read (get_moisture_rule) that stays auto-run; the
+    // Uses an internal read (get_device_config) that stays auto-run; the
     // user-facing sensor reads are confirm-before-read (covered separately below).
     mcp.result = { text: 'threshold=75', isError: false }
     llm.jsonQueue = [
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"esp32-01"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"esp32-01"}}',
       '{"type":"reply","message":"Ngưỡng tưới hiện tại là 75%."}',
     ]
     const res = await orch.handleChat('u1', 's1', 'ngưỡng tưới đang đặt bao nhiêu?')
     expect(mcp.calls).toHaveLength(1)
-    expect(mcp.calls[0]?.name).toBe('get_moisture_rule')
+    expect(mcp.calls[0]?.name).toBe('get_device_config')
     expect(res.reply).toContain('75%')
     expect(res.pendingAction).toBeNull()
   })
 
   it('does NOT execute a control tool; returns a pending action for confirmation', async () => {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000}}',
+      '{"type":"tool","tool":"set_pump","args":{"device_id":"esp32-01","on":true}}',
     ]
     const res = await orch.handleChat('u1', 's1', 'tưới nước cho cây đi')
     expect(mcp.calls).toHaveLength(0)
     expect(res.pendingAction).not.toBeNull()
-    expect(res.pendingAction?.tool).toBe('send_command')
+    expect(res.pendingAction?.tool).toBe('set_pump')
     expect(res.pendingAction?.summary).toContain('Bật bơm nước')
     expect(res.reply).toContain('Có/Không')
     expect(deps.sessions.getPending('u1', 's1')?.id).toBe(res.pendingAction?.id)
@@ -150,31 +150,31 @@ describe('Orchestrator', () => {
 
   it('executes the pending action after explicit confirm', async () => {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"WATER_ON","duration":10000}}',
+      '{"type":"tool","tool":"set_pump","args":{"device_id":"esp32-01","on":true}}',
     ]
     const pending = await orch.handleChat('u1', 's1', 'tưới nước đi')
     const id = pending.pendingAction!.id
     mcp.result = { text: 'command queued', isError: false }
     const res = await orch.confirm('u1', 's1', id, true)
     expect(mcp.calls).toHaveLength(1)
-    expect(mcp.calls[0]?.name).toBe('send_command')
+    expect(mcp.calls[0]?.name).toBe('set_pump')
     expect(res.reply).toContain('Đã thực hiện')
     expect(deps.sessions.getPending('u1', 's1')).toBeUndefined()
   })
 
   it('executes the pending action after a free-text "có"', async () => {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"auto_water","args":{"device_id":"esp32-01","threshold":75}}',
+      '{"type":"tool","tool":"set_mode","args":{"device_id":"esp32-01","auto":true}}',
     ]
     await orch.handleChat('u1', 's1', 'bật tưới tự động')
     const res = await orch.handleChat('u1', 's1', 'có')
     expect(mcp.calls).toHaveLength(1)
-    expect(mcp.calls[0]?.name).toBe('auto_water')
+    expect(mcp.calls[0]?.name).toBe('set_mode')
     expect(res.reply).toContain('Đã thực hiện')
   })
 
   it('cancels the pending action after a free-text "không"', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     await orch.handleChat('u1', 's1', 'tưới đi')
     const res = await orch.handleChat('u1', 's1', 'không')
     expect(mcp.calls).toHaveLength(0)
@@ -182,10 +182,10 @@ describe('Orchestrator', () => {
   })
 
   it('surfaces an MCP route error directly instead of feeding it back to the LLM', async () => {
-    // get_moisture_rule is an internal auto-run read, so it reaches the MCP in the loop.
+    // get_device_config is an internal auto-run read, so it reaches the MCP in the loop.
     mcp.error = new Error('Error POSTing to endpoint (HTTP 404): Not Found')
     llm.jsonQueue = [
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}',
       // A second decision would only be reached if the loop kept going — it must NOT.
       '{"type":"reply","message":"che lỗi"}',
     ]
@@ -197,8 +197,8 @@ describe('Orchestrator', () => {
   })
 
   it('surfaces a not-found tool error reported via isError', async () => {
-    mcp.result = { text: 'Unknown tool: get_moisture_rule', isError: true }
-    llm.jsonQueue = ['{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}']
+    mcp.result = { text: 'Unknown tool: get_device_config', isError: true }
+    llm.jsonQueue = ['{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}']
     const res = await orch.handleChat('u1', 's1', 'ngưỡng tưới bao nhiêu?')
     expect(res.reply).toContain('Unknown tool')
     expect(res.reply).toMatch(/route sai|không tìm thấy/)
@@ -206,10 +206,10 @@ describe('Orchestrator', () => {
   })
 
   it('surfaces a route error when executing a confirmed control action', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const pending = await orch.handleChat('u1', 's1', 'tưới đi')
     const id = pending.pendingAction!.id
-    mcp.error = new McpError(ErrorCode.MethodNotFound, 'Unknown tool: send_command')
+    mcp.error = new McpError(ErrorCode.MethodNotFound, 'Unknown tool: set_pump')
     const res = await orch.confirm('u1', 's1', id, true)
     expect(res.reply).toContain('-32601')
     expect(res.reply).toMatch(/route/)
@@ -217,10 +217,10 @@ describe('Orchestrator', () => {
 
   it('bounds read-tool loops to maxToolSteps then forces a text reply', async () => {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
-      '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}',
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}',
     ]
     const res = await orch.handleChat('u1', 's1', 'kiểm tra liên tục')
     expect(mcp.calls).toHaveLength(3) // capped
@@ -231,7 +231,7 @@ describe('Orchestrator', () => {
   it('withSessions runs against the injected store, not the original', async () => {
     const other = new SessionStore()
     const scoped = orch.withSessions(other)
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']
     const res = await scoped.handleChat('u1', 's1', 'tưới đi')
     // Pending landed in the injected store…
     expect(other.getPending('u1', 's1')?.id).toBe(res.pendingAction?.id)
@@ -267,20 +267,20 @@ describe('Orchestrator — arg sanitization against the tool schema', () => {
 
   it('drops undeclared args (leaked decision message) from a control pending action', async () => {
     llm.jsonQueue = [
-      '{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON","duration":60000,"message":"Mình sẽ bật đèn thiết bị esp32-01 trong 60s."},"message":"Bật đèn nhé."}',
+      '{"type":"tool","tool":"set_light","args":{"device_id":"esp32-01","on":true,"pwm":200,"message":"Mình sẽ bật đèn thiết bị esp32-01."},"message":"Bật đèn nhé."}',
     ]
     const res = await orch.handleChat('u1', 's1', 'bật đèn cho cây thiết bị esp32-01')
-    expect(res.pendingAction?.tool).toBe('send_command')
-    expect(res.pendingAction?.args).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON', duration: 60000 })
+    expect(res.pendingAction?.tool).toBe('set_light')
+    expect(res.pendingAction?.args).toEqual({ device_id: 'esp32-01', on: true, pwm: 200 })
     expect(res.pendingAction?.args).not.toHaveProperty('message')
   })
 
   it('sends only schema-declared args to the MCP when the control action is confirmed', async () => {
-    llm.jsonQueue = ['{"type":"tool","tool":"send_command","args":{"device_id":"esp32-01","command":"LIGHT_ON","message":"x"}}']
+    llm.jsonQueue = ['{"type":"tool","tool":"set_light","args":{"device_id":"esp32-01","on":true,"message":"x"}}']
     const offer = await orch.handleChat('u1', 's1', 'bật đèn esp32-01')
     await orch.confirm('u1', 's1', offer.pendingAction!.id, true)
     expect(mcp.calls).toHaveLength(1)
-    expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01', command: 'LIGHT_ON' })
+    expect(mcp.calls[0]?.args).toEqual({ device_id: 'esp32-01', on: true })
   })
 
   it('sanitizes args on a directly-requested sensor read before running it', async () => {
@@ -385,7 +385,7 @@ describe('Orchestrator — user-facing sensor reads (run direct, offer on reply)
 
   it('offers get_sensor_history too when carried on a reply decision', async () => {
     llm.jsonQueue = [
-      '{"type":"reply","message":"Để đánh giá xu hướng, mình có thể xem lịch sử cảm biến.","tool":"get_sensor_history","args":{"device_id":"esp32-01","hours":24}}',
+      '{"type":"reply","message":"Để đánh giá xu hướng, mình có thể xem lịch sử cảm biến.","tool":"get_sensor_history","args":{"device_id":"esp32-01","limit":24}}',
     ]
     const res = await orch.handleChat('u1', 's1', 'cây dạo này thế nào?')
     expect(res.pendingAction?.tool).toBe('get_sensor_history')
@@ -422,7 +422,7 @@ describe('Orchestrator — user-facing sensor reads (run direct, offer on reply)
 
   it('never anchors a control tool named on a reply decision', async () => {
     llm.jsonQueue = [
-      '{"type":"reply","message":"Mình gợi ý tưới thêm cho cây.","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}',
+      '{"type":"reply","message":"Mình gợi ý tưới thêm cho cây.","tool":"set_pump","args":{"device_id":"d1","on":true}}',
     ]
     const res = await orch.handleChat('u1', 's1', 'cây khô quá')
 
@@ -448,7 +448,7 @@ describe('Orchestrator — user-facing sensor reads (run direct, offer on reply)
   it('runs a directly-requested get_sensor_history inline too', async () => {
     mcp.result = { text: 'history 24h', isError: false }
     llm.jsonQueue = [
-      '{"type":"tool","tool":"get_sensor_history","args":{"device_id":"esp32-01","hours":24}}',
+      '{"type":"tool","tool":"get_sensor_history","args":{"device_id":"esp32-01","limit":24}}',
       '{"type":"reply","message":"Trong 24h qua độ ẩm ổn định."}',
     ]
     const res = await orch.handleChat('u1', 's1', 'cho mình xem lịch sử cảm biến 24h')

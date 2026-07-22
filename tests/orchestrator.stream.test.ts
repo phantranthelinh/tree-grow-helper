@@ -139,15 +139,15 @@ describe('Orchestrator — handleChatStream', () => {
   it('never streams the message of a tool decision', async () => {
     mcp.result = { text: 'threshold=75', isError: false }
     llm.jsonScripts = [
-      ['{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"},"message":"leak?"}'],
+      ['{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"},"message":"leak?"}'],
       ['{"type":"reply","message":"Ngưỡng là 75%."}'],
     ]
     const events = await collect(orch.handleChatStream('u1', 's1', 'ngưỡng tưới?'))
     expect(tokens(events)).toBe('Ngưỡng là 75%.')
     expect(events).toContainEqual({
       type: 'tool_status',
-      tool: 'get_moisture_rule',
-      note: 'Đang đọc dữ liệu (get_moisture_rule)…',
+      tool: 'get_device_config',
+      note: 'Đang đọc dữ liệu (get_device_config)…',
     })
     expect(mcp.calls).toHaveLength(1)
     expect(doneOf(events).reply).toBe('Ngưỡng là 75%.')
@@ -172,7 +172,7 @@ describe('Orchestrator — handleChatStream', () => {
 
   it('emits a control confirmation as a single composed token without calling MCP', async () => {
     llm.jsonScripts = [
-      ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"},"message":"Mình sẽ bật bơm."}'],
+      ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true},"message":"Mình sẽ bật bơm."}'],
     ]
     const events = await collect(orch.handleChatStream('u1', 's1', 'tưới đi'))
     const tokenEvents = events.filter((e) => e.type === 'token')
@@ -180,7 +180,7 @@ describe('Orchestrator — handleChatStream', () => {
     expect(tokens(events)).toBe(doneOf(events).reply)
     expect(doneOf(events).reply).toContain('Bạn xác nhận thực hiện')
     expect(doneOf(events).reply).toContain('Mình sẽ bật bơm.')
-    expect(doneOf(events).pendingAction?.tool).toBe('send_command')
+    expect(doneOf(events).pendingAction?.tool).toBe('set_pump')
     expect(mcp.calls).toHaveLength(0)
   })
 
@@ -234,7 +234,7 @@ describe('Orchestrator — handleChatStream', () => {
   })
 
   it('streams the forced text answer when tool steps run out', async () => {
-    const toolScript = '{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}'
+    const toolScript = '{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}'
     llm.jsonScripts = [[toolScript], [toolScript], [toolScript]]
     llm.streamScripts = [['Trả lời ', 'cuối.']]
     const events = await collect(orch.handleChatStream('u1', 's1', 'kiểm tra liên tục'))
@@ -266,7 +266,7 @@ describe('Orchestrator — handleChatStream', () => {
   })
 
   it('executes a confirmed control action as a single token', async () => {
-    llm.jsonScripts = [['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']]
+    llm.jsonScripts = [['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']]
     await collect(orch.handleChatStream('u1', 's1', 'tưới đi'))
     const events = await collect(orch.handleChatStream('u1', 's1', 'có'))
     expect(mcp.calls).toHaveLength(1)
@@ -275,7 +275,7 @@ describe('Orchestrator — handleChatStream', () => {
   })
 
   it('cancels a pending action on "không" with a single token', async () => {
-    llm.jsonScripts = [['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"}}']]
+    llm.jsonScripts = [['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true}}']]
     await collect(orch.handleChatStream('u1', 's1', 'tưới đi'))
     const events = await collect(orch.handleChatStream('u1', 's1', 'không'))
     expect(mcp.calls).toHaveLength(0)
@@ -307,7 +307,7 @@ describe('Orchestrator — buffered/stream equivalence', () => {
     {
       name: 'read tool then reply',
       jsonScripts: [
-        ['{"type":"tool","tool":"get_moisture_rule","args":{"device_id":"d1"}}'],
+        ['{"type":"tool","tool":"get_device_config","args":{"device_id":"d1"}}'],
         ['{"type":"reply","message":"Ngưỡng là 75%."}'],
       ],
       mcpText: 'threshold=75',
@@ -315,7 +315,7 @@ describe('Orchestrator — buffered/stream equivalence', () => {
     {
       name: 'control tool confirmation',
       jsonScripts: [
-        ['{"type":"tool","tool":"send_command","args":{"device_id":"d1","command":"WATER_ON"},"message":"Mình sẽ bật bơm."}'],
+        ['{"type":"tool","tool":"set_pump","args":{"device_id":"d1","on":true},"message":"Mình sẽ bật bơm."}'],
       ],
     },
     {
