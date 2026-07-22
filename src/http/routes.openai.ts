@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto'
 import type { FastifyInstance } from 'fastify'
-import { SessionStore } from '../memory/sessions'
 import type { AppState } from '../setup/state'
 import {
   BadRequestError,
@@ -18,9 +17,8 @@ import {
 import { OpenAiChatRequestSchema } from './openai/dto'
 import { writeSseHead } from './sse'
 
-// The ephemeral store is per-request, so a constant key is safe (no cross-talk).
-const UID = 'openai'
-const SID = 'openai'
+// User namespace when the OpenAI `user` field is omitted. Sessions key on (user, session_id).
+const DEFAULT_USER = 'openai'
 
 function oaiError(message: string, type: string, code: string) {
   return { error: { message, type, code, param: null } }
@@ -37,9 +35,17 @@ const chatBodySchema = {
     },
     messages: { type: 'array', items: { type: 'object', additionalProperties: true } },
     stream: { type: 'boolean' },
+    session_id: {
+      type: 'string',
+      description:
+        'Định danh phiên để server NHỚ hội thoại (như ChatGPT). Trống/thiếu → server tự sinh uuid ' +
+        'và trả về ở header `X-Session-Id` (và field `session_id` khi không streaming) để dùng cho lượt sau.',
+    },
+    user: { type: 'string', description: 'Định danh người dùng (chuẩn OpenAI); mặc định "openai".' },
   },
   example: {
     model: 'plant-assistant',
+    session_id: 's1',
     messages: [{ role: 'user', content: 'Cây dâu của mình bị vàng lá, nên làm gì?' }],
   },
 } as const
@@ -57,14 +63,17 @@ export function registerOpenAiRoutes(app: FastifyInstance, state: AppState): voi
       attachValidation: true,
       schema: {
         tags: ['openai'],
-        summary: 'Chat completions tương thích OpenAI (chạy toàn bộ agent)',
+        summary: 'Chat completions tương thích OpenAI (chạy toàn bộ agent, nhớ theo session_id)',
         description:
-          'Endpoint OpenAI-compatible, **stateless**: gửi cả `messages[]` mỗi lần. Chạy qua toàn bộ agent ' +
-          '(RAG + điều khiển IoT + xác nhận).\n\n' +
-          '**Điều khiển thiết bị (turnkey):** khi cần xác nhận, response trả `content` là câu hỏi "(Có/Không)" ' +
-          '**và** một `tool_calls` mã hoá hành động. Ở lượt sau, **giữ nguyên object assistant (kèm `tool_calls`)** ' +
-          'trong `messages[]` rồi thêm câu trả lời của người dùng ("có"/"không") — server sẽ thực thi hoặc huỷ. ' +
-          'Nếu không giữ `tool_calls`, "có" sẽ bị coi là yêu cầu mới (an toàn: không thực thi nhầm).\n\n' +
+          'Endpoint OpenAI-compatible chạy qua toàn bộ agent (RAG + điều khiển IoT + xác nhận).\n\n' +
+          '**Trí nhớ server-side (như ChatGPT):** đính `session_id` và chỉ gửi **message mới** mỗi lượt — ' +
+          'server tự nhớ phần còn lại. Thiếu/trống `session_id` → server sinh uuid và trả về ở header ' +
+          '`X-Session-Id` (kèm field `session_id` trong body khi không streaming); dùng lại giá trị đó cho lượt sau. ' +
+          '`user` (chuẩn OpenAI) là namespace người dùng, mặc định "openai".\n\n' +
+          '**Tương thích ngược:** với một session MỚI (chưa có lịch sử), nếu client gửi cả `messages[]` ' +
+          '(kiểu OpenAI cũ) thì toàn bộ thread được nạp làm lịch sử ban đầu; từ lượt sau chỉ message cuối được dùng.\n\n' +
+          '**Điều khiển thiết bị:** khi cần xác nhận, response hỏi "(Có/Không)". Ở lượt sau chỉ cần gửi ' +
+          '"có"/"không" cùng `session_id` — server nhớ hành động đang chờ (không cần giữ `tool_calls`).\n\n' +
           '**Streaming:** đặt `stream:true` để nhận `chat.completion.chunk` (SSE, kết `data: [DONE]`). ' +
           '`finish_reason` luôn là `stop`. `usage` báo 0 (không đếm token).',
         body: chatBodySchema,
@@ -93,21 +102,29 @@ export function registerOpenAiRoutes(app: FastifyInstance, state: AppState): voi
         throw err
       }
 
-      // Stateless: rebuild a throwaway session from the thread, then run the
-      // unchanged agent core against it.
-      const ephemeral = new SessionStore()
-      if (thread.history.length) ephemeral.append(UID, SID, ...thread.history)
-      const pending = recoverPending(thread.priorAssistant)
-      if (pending) ephemeral.setPending(UID, SID, pending)
-      const scoped = orch.withSessions(ephemeral)
+      // Server-authoritative memory. Resolve identity, minting a session when absent.
+      const userId = body.user ?? DEFAULT_USER
+      const sessionId = body.session_id?.trim() || randomUUID()
+
+      // Seed ONLY a brand-new session from the caller's thread — this keeps legacy
+      // full-history OpenAI clients working (and recovers an echoed pending action).
+      // Once the session has history, the caller's prior turns are ignored and only
+      // the last user message runs against server memory.
+      const sessions = orch.sessions
+      if (sessions.getHistory(userId, sessionId).length === 0) {
+        if (thread.history.length) sessions.append(userId, sessionId, ...thread.history)
+        const pending = recoverPending(thread.priorAssistant)
+        if (pending) sessions.setPending(userId, sessionId, pending)
+      }
 
       const id = `chatcmpl-${randomUUID()}`
       const created = Math.floor(Date.now() / 1000)
 
       if (!body.stream) {
         try {
-          const result = await scoped.handleChat(UID, SID, thread.lastUserMessage)
-          return toCompletion(result, body.model, id, created)
+          reply.header('X-Session-Id', sessionId)
+          const result = await orch.handleChat(userId, sessionId, thread.lastUserMessage)
+          return { ...toCompletion(result, body.model, id, created), session_id: sessionId }
         } catch (err) {
           req.log.error(err)
           reply.code(500)
@@ -118,7 +135,7 @@ export function registerOpenAiRoutes(app: FastifyInstance, state: AppState): voi
       // Streaming (OpenAI SSE). From here Fastify hands off the raw socket.
       reply.hijack()
       const raw = reply.raw
-      writeSseHead(raw)
+      writeSseHead(raw, { 'X-Session-Id': sessionId })
       const abort = new AbortController()
       let finished = false
       req.raw.on('close', () => {
@@ -130,7 +147,7 @@ export function registerOpenAiRoutes(app: FastifyInstance, state: AppState): voi
       try {
         raw.write(sseData(roleChunk(body.model, id, created)))
         let pendingView = null
-        for await (const event of scoped.handleChatStream(UID, SID, thread.lastUserMessage, {
+        for await (const event of orch.handleChatStream(userId, sessionId, thread.lastUserMessage, {
           signal: abort.signal,
         })) {
           if (event.type === 'token') {

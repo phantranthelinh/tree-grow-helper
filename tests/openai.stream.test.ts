@@ -114,6 +114,31 @@ describe('OpenAI-compatible API (streaming)', () => {
     await app.close()
   })
 
+  it('returns a generated session_id in the X-Session-Id header', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Chào!"}']
+    const app = makeApp(llm, mcp)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/chat/completions',
+      payload: { model: 'm', stream: true, messages: [{ role: 'user', content: 'hi' }] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.headers['x-session-id']).toBeTruthy()
+    await app.close()
+  })
+
+  it('echoes a provided session_id in the streaming X-Session-Id header', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Chào!"}']
+    const app = makeApp(llm, mcp)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/chat/completions',
+      payload: { model: 'm', stream: true, session_id: 'st-1', messages: [{ role: 'user', content: 'hi' }] },
+    })
+    expect(res.headers['x-session-id']).toBe('st-1')
+    await app.close()
+  })
+
   it('returns plain JSON 503 (not SSE) before the server is configured', async () => {
     const app = buildServer({ state: new AppState(), config })
     const res = await app.inject({
