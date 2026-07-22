@@ -110,8 +110,8 @@ Endpoint **stateless** kiểu OpenAI: gửi cả `messages[]` mỗi lần, chạ
   "choices": [{
     "message": {
       "role": "assistant",
-      "content": "Bạn xác nhận thực hiện: \"Bật bơm nước thiết bị esp32-01 trong 10s\"? (Có/Không)",
-      "tool_calls": [{ "type": "function", "function": { "name": "send_command", "arguments": "{…}" } }]
+      "content": "Bạn xác nhận thực hiện: \"Bật bơm nước thiết bị esp32-01\"? (Có/Không)",
+      "tool_calls": [{ "type": "function", "function": { "name": "set_pump", "arguments": "{\"device_id\":\"esp32-01\",\"on\":true}" } }]
     }
   }]
 }
