@@ -43,6 +43,8 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'get-light-rule', message: 'Xem luật chiếu sáng hiện tại của esp32-01.', expect: { type: 'tool', tool: 'get_device_config', safety: 'read' } },
   { id: 'auto-light', message: 'Bật đèn tự động cho esp32-01 khi trời tối.', expect: { type: 'tool', tool: 'set_mode', safety: 'control' } },
   { id: 'set-light-rule', message: 'Đặt luật bật đèn khi ánh sáng dưới 300 lux cho esp32-01.', expect: { type: 'tool', tool: 'set_device_config', safety: 'control' } },
+  { id: 'show-message', message: 'Hiển thị dòng chữ "Chào mừng" lên màn hình thiết bị esp32-01.', expect: { type: 'tool', tool: 'show_message', safety: 'control' } },
+  { id: 'refresh-config', message: 'Yêu cầu esp32-01 nạp lại cấu hình mới nhất.', expect: { type: 'tool', tool: 'refresh_device_config', safety: 'control' } },
 
   // --- A2: phrasing variants of already-covered tools ---
   { id: 'sensor-temp', message: 'Nhiệt độ hiện tại của esp32-01 là bao nhiêu?', expect: { type: 'tool', tool: 'get_latest_sensor', safety: 'read' } },
