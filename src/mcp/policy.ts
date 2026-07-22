@@ -12,17 +12,17 @@ const READ_ONLY = new Set<string>([
   'get_device_info',
   'get_latest_sensor',
   'get_sensor_history',
-  'get_pending_commands',
-  'get_moisture_rule',
-  'get_light_rule',
+  'get_recent_commands',
+  'get_device_config',
 ])
 
 const CONTROL = new Set<string>([
-  'send_command',
-  'auto_water',
-  'auto_light',
-  'set_moisture_rule',
-  'set_light_rule',
+  'set_pump',
+  'set_light',
+  'set_mode',
+  'show_message',
+  'set_device_config',
+  'refresh_device_config',
 ])
 
 const READ_PREFIXES = ['get_', 'list_', 'read_', 'fetch_', 'query_']

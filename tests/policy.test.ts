@@ -6,12 +6,11 @@ const READ = [
   'get_device_info',
   'get_latest_sensor',
   'get_sensor_history',
-  'get_pending_commands',
-  'get_moisture_rule',
-  'get_light_rule',
+  'get_recent_commands',
+  'get_device_config',
 ]
 
-const CONTROL = ['send_command', 'auto_water', 'auto_light', 'set_moisture_rule', 'set_light_rule']
+const CONTROL = ['set_pump', 'set_light', 'set_mode', 'show_message', 'set_device_config', 'refresh_device_config']
 
 describe('tool policy', () => {
   it('classifies the read-only tools', () => {
@@ -43,10 +42,10 @@ describe('confirmsBeforeRead', () => {
   })
 
   it('does not flag internal reads or control tools', () => {
-    for (const n of ['list_devices', 'get_device_info', 'get_moisture_rule', 'get_light_rule', 'get_pending_commands']) {
+    for (const n of ['list_devices', 'get_device_info', 'get_recent_commands', 'get_device_config']) {
       expect(confirmsBeforeRead(n)).toBe(false)
     }
-    expect(confirmsBeforeRead('send_command')).toBe(false)
+    expect(confirmsBeforeRead('set_pump')).toBe(false)
   })
 
   it('keeps sensor reads classified as read (over-confirm is a UX layer, not a safety reclassification)', () => {
