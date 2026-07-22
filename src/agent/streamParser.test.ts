@@ -45,9 +45,9 @@ describe('JsonStringFieldStreamer', () => {
   })
 
   it('ignores a "message" key nested inside args', () => {
-    const { events } = collect(['{"args":{"message":"decoy"},"type":"tool","tool":"send_command","message":"thật"}'])
+    const { events } = collect(['{"args":{"message":"decoy"},"type":"tool","tool":"set_pump","message":"thật"}'])
     expect(joinedMessage(events)).toBe('thật')
-    expect(events).toContainEqual({ kind: 'field', key: 'tool', value: 'send_command' })
+    expect(events).toContainEqual({ kind: 'field', key: 'tool', value: 'set_pump' })
   })
 
   it('ignores "message" appearing as another field\'s string value', () => {

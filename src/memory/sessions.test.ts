@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { SessionStore } from './sessions'
 import type { PendingAction } from './sessions'
 
-const action = (id: string): PendingAction => ({ id, tool: 'send_command', args: {}, summary: 's' })
+const action = (id: string): PendingAction => ({ id, tool: 'set_pump', args: {}, summary: 's' })
 
 describe('SessionStore pendingAction TTL', () => {
   it('trả pending khi còn trong hạn', () => {
