@@ -1,17 +1,12 @@
-import { resolve } from 'node:path'
 import { Orchestrator } from '../agent/orchestrator'
 import type { Config } from '../config'
-import { loadDiseases } from '../domain/diseases'
 import { getFewshot } from '../domain/fewshot'
 import { loadProfile } from '../domain/profiles'
 import { OpenAICompatEngine, type LlmEngine } from '../llm'
 import { PlantMcpClient, type McpGateway, type McpTool } from '../mcp/client'
 import { KNOWN_TOOLS } from '../mcp/knownTools'
 import { SessionStore } from '../memory/sessions'
-import { loadEmbedCache, saveEmbedCache } from '../rag/embedCache'
-import { ingestProfile } from '../rag/ingest'
-import { ingestDiseases } from '../rag/ingestDiseases'
-import { ingestDocs, readReviewedDocs } from '../rag/ingestDocs'
+import { ingestAll } from '../rag/buildStore'
 import { InMemoryVectorStore } from '../rag/store'
 import type { LlmConfig } from './llmConfig'
 import { saveLlmConfig } from './llmConfig'
@@ -97,7 +92,7 @@ async function runInitPipeline(
   const profile = loadProfile(appCfg.defaultPlant)
   const llm = deps.buildEngine(cfg)
   const mcp = deps.buildMcp(mcpUrl)
-  const store = new InMemoryVectorStore()
+  let store = new InMemoryVectorStore()
   const sessions = new SessionStore({
     path: appCfg.memory.sessionsPath,
     pendingTtlMs: appCfg.memory.pendingTtlMs,
@@ -127,46 +122,11 @@ async function runInitPipeline(
     console.log(`[rag] ${msg}`)
   } else {
     try {
-      const cachePath = resolve(process.cwd(), appCfg.rag.embedCachePath)
-      const cache = loadEmbedCache(cachePath)
-
-      const embedModel = cfg.embedModel
-
-      const nProfile = await ingestProfile(store, llm, profile, {
-        cache,
-        embedModel,
-        chunkSize: appCfg.rag.chunkSize,
-        chunkOverlap: appCfg.rag.chunkOverlap,
-        minChunkLen: appCfg.rag.minChunkLen,
-      })
-
-      const docs = readReviewedDocs(resolve(process.cwd(), appCfg.rag.docsDir))
-      const nDocs = await ingestDocs(store, llm, docs, {
-        plant: profile.plant,
-        cache,
-        embedModel,
-        chunkSize: appCfg.rag.chunkSize,
-        chunkOverlap: appCfg.rag.chunkOverlap,
-        minChunkLen: appCfg.rag.minChunkLen,
-      })
-
-      let nDiseases = 0
-      try {
-        nDiseases = await ingestDiseases(store, llm, loadDiseases(profile.plant), {
-          plant: profile.plant,
-          cache,
-          embedModel,
-        })
-      } catch (err) {
-        console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
-      }
-
-      saveEmbedCache(cachePath, cache)
-      const mixed = store.uniformDims() ? '' : ' ⚠ CHIỀU EMBEDDING KHÔNG ĐỒNG NHẤT — một số chunk sẽ không truy hồi được; xóa cache cũ.'
-      const detail = `${nProfile} profile + ${nDocs} doc + ${nDiseases} disease (store=${store.size()})${mixed}`
+      const { store: built, detail } = await ingestAll(llm, appCfg, profile, cfg.embedModel)
+      store = built
       state.setStep('rag', 'done', detail)
       console.log(`[rag] ingested ${detail}`)
-      if (mixed) console.warn(`[rag]${mixed}`)
+      if (!store.uniformDims()) console.warn('[rag] ⚠ chiều embedding không đồng nhất — xóa cache cũ.')
     } catch (err) {
       const msg = `Nạp RAG thất bại (${(err as Error).message}) — chạy KHÔNG có RAG.`
       state.setStep('rag', 'failed', msg)
