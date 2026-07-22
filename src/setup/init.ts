@@ -152,3 +152,44 @@ async function runInitPipeline(
   state.setReady(orch)
   console.log(`[setup] sẵn sàng — provider=${cfg.provider} model=${cfg.model}`)
 }
+
+export type RebuildResult =
+  | { ok: true; profile: number; docs: number; diseases: number; storeSize: number; ms: number }
+  | { ok: false; code: 'not_configured' | 'busy' | 'rag_disabled' | 'embed_failed'; message: string }
+
+/**
+ * Rebuild ONLY the RAG knowledge at runtime: re-read profile + data/docs + diseases,
+ * ingest into a fresh store, and hot-swap store+profile into the running orchestrator.
+ * Reuses the orchestrator's LLM engine (no new engine); MCP and sessions are untouched.
+ * Build-then-swap: on any ingest error the old orchestrator keeps serving.
+ */
+export async function rebuildRag(state: AppState, appCfg: Config): Promise<RebuildResult> {
+  const orch = state.orchestrator
+  if (!orch) {
+    return { ok: false, code: 'not_configured', message: 'Chưa cấu hình LLM — mở /setup trước.' }
+  }
+  if (appCfg.rag.disabled) {
+    return { ok: false, code: 'rag_disabled', message: 'RAG đang tắt (RAG_DISABLED).' }
+  }
+  if (state.isBusy() || state.isRebuilding()) {
+    return { ok: false, code: 'busy', message: 'Đang xử lý cấu hình/nạp lại khác, vui lòng đợi.' }
+  }
+
+  state.beginRebuild()
+  const t0 = Date.now()
+  try {
+    const profile = loadProfile(appCfg.defaultPlant)
+    const { store, counts, detail } = await ingestAll(orch.engine, appCfg, profile, state.embedModel())
+    state.orchestrator = orch.withRag(store, profile) // atomic swap AFTER a full build
+    state.setStep('rag', 'done', detail)
+    console.log(`[rag] rebuilt ${detail}`)
+    return { ok: true, ...counts, storeSize: store.size(), ms: Date.now() - t0 }
+  } catch (err) {
+    const message = `Nạp lại RAG thất bại (${(err as Error).message}) — giữ tri thức cũ.`
+    state.setStep('rag', 'failed', message)
+    console.warn(`[rag] ${message}`)
+    return { ok: false, code: 'embed_failed', message }
+  } finally {
+    state.endRebuild()
+  }
+}
