@@ -109,7 +109,9 @@ The scrape → review → ingest flow is deliberate: `npm run scrape` writes **r
 scraped touches the store automatically. Embeddings are cached on disk
 ([src/rag/embedCache.ts](src/rag/embedCache.ts)) and near-duplicates are dropped
 ([src/rag/dedupe.ts](src/rag/dedupe.ts)). Cross-lingual retrieval (Vietnamese query, English docs)
-relies on the `bge-m3` embedding model.
+relies on the `bge-m3` embedding model. The shared builder is `ingestAll`
+([src/rag/buildStore.ts](src/rag/buildStore.ts)), used by both init and the runtime
+`POST /api/setup/rag/rebuild` (edit a profile / drop docs into `data/docs/`, then rebuild — no restart).
 
 ### LLM provider abstraction
 
@@ -128,7 +130,10 @@ one big token frame.
 chat apps POST from other origins), Swagger UI at `/docs`, then registers setup + chat routes.
 Endpoints: `POST /chat`, `POST /chat/stream` (SSE), `POST /chat/confirm`
 ([routes.chat.ts](src/http/routes.chat.ts)), the `/setup` UI + `/api/setup/*`
-([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`.
+([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`. `POST /api/setup/rag/rebuild`
+re-ingests the RAG store at runtime and hot-swaps store+profile into the live orchestrator
+(synchronous; **build-then-swap** — a failed ingest keeps the old store; MCP/LLM/sessions untouched;
+503 not_configured / 409 busy|rag_disabled / 502 embed_failed).
 Before config completes, `/chat` returns **503 `{error:"not_configured"}`**. Validation uses Zod DTOs
 ([src/http/dto.ts](src/http/dto.ts)) with `attachValidation: true` so failures return the
 `{error:"invalid_request", details}` envelope rather than Fastify's default.
