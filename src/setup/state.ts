@@ -64,6 +64,28 @@ export class AppState {
     return this._phase === 'connecting' || this._phase === 'initializing'
   }
 
+  private ragRebuilding = false
+
+  isRebuilding(): boolean {
+    return this.ragRebuilding
+  }
+
+  /** Lock a RAG rebuild and mark the rag step running (phase stays ready). */
+  beginRebuild(): void {
+    this.ragRebuilding = true
+    this.setStep('rag', 'running')
+  }
+
+  /** Release the rebuild lock (step status is set by the caller on success/failure). */
+  endRebuild(): void {
+    this.ragRebuilding = false
+  }
+
+  /** Embedding model of the running config (cache-key namespace for a rebuild). */
+  embedModel(): string {
+    return this.currentConfig?.embedModel ?? ''
+  }
+
   beginConnecting(): void {
     this.steps = freshSteps()
     this.error = null
