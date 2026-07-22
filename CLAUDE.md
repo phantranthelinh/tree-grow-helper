@@ -131,7 +131,11 @@ one big token frame.
 chat apps POST from other origins), Swagger UI at `/docs`, then registers setup + chat routes.
 Endpoints: `POST /chat/stream` (SSE) ([routes.chat.ts](src/http/routes.chat.ts)), the
 OpenAI-compatible `POST /v1/chat/completions` + `GET /v1/models`
-([routes.openai.ts](src/http/routes.openai.ts)), the `/setup` UI + `/api/setup/*`
+([routes.openai.ts](src/http/routes.openai.ts)) — **stateful**: keys the persistent `SessionStore` on
+`(body.user ?? 'openai', body.session_id)`, minting a `uuidv4` when `session_id` is absent and returning
+it via the `X-Session-Id` response header (a brand-new session is seeded from the caller's `messages[]`,
+so legacy full-history clients still work; control confirmations live server-side — a later "có"/"không"
+runs them, no `tool_calls` echo needed) — the `/setup` UI + `/api/setup/*`
 ([routes.setup.ts](src/http/routes.setup.ts)), `GET /health`. `POST /api/setup/rag/rebuild`
 re-ingests the RAG store at runtime and hot-swaps store+profile into the live orchestrator
 (synchronous; **build-then-swap** — a failed ingest keeps the old store; MCP/LLM/sessions untouched;
