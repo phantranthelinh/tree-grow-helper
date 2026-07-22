@@ -3,38 +3,28 @@ import type { McpGateway } from '../mcp/client'
 import { describeMcpError, isRouteErrorText } from '../mcp/errors'
 import type { PendingAction } from '../memory/sessions'
 
-const COMMAND_LABELS: Record<string, string> = {
-  WATER_ON: 'Bật bơm nước',
-  WATER_OFF: 'Tắt bơm nước',
-  LIGHT_ON: 'Bật đèn',
-  LIGHT_OFF: 'Tắt đèn',
-  FAN_ON: 'Bật quạt',
-  FAN_OFF: 'Tắt quạt',
-}
-
 /** Build a human-readable Vietnamese summary of an action for confirmation (control + user-facing reads). */
 export function summarizeAction(tool: string, args: Record<string, unknown>): string {
   const dev = args.device_id ? ` thiết bị ${String(args.device_id)}` : ''
   switch (tool) {
-    case 'send_command': {
-      const cmd = String(args.command ?? '')
-      const label = COMMAND_LABELS[cmd] ?? cmd
-      const dur = args.duration ? ` trong ${Number(args.duration) / 1000}s` : ''
-      return `${label}${dev}${dur}`
-    }
-    case 'auto_water':
-      return `Bật tưới tự động${dev} (ngưỡng độ ẩm đất ${args.threshold ?? '?'}%)`
-    case 'auto_light':
-      return `Bật đèn tự động${dev} (ngưỡng ${args.threshold ?? '?'} lux)`
-    case 'set_moisture_rule':
-      return `Đặt luật độ ẩm${dev}: ${JSON.stringify(args)}`
-    case 'set_light_rule':
-      return `Đặt luật ánh sáng${dev}: ${JSON.stringify(args)}`
+    case 'set_pump':
+      return `${args.on ? 'Bật' : 'Tắt'} bơm nước${dev}`
+    case 'set_light':
+      if (args.pwm !== undefined) return `Đặt độ sáng đèn${dev} = ${Number(args.pwm)}`
+      return `${args.on ? 'Bật' : 'Tắt'} đèn${dev}`
+    case 'set_mode':
+      return `Chuyển${dev} sang chế độ ${args.auto ? 'tự động (auto)' : 'thủ công (manual)'}`
+    case 'show_message':
+      return `Hiển thị lên màn hình${dev}: ${String(args.text ?? '')}`
+    case 'set_device_config':
+      return `Đổi cấu hình ngưỡng${dev}: ${JSON.stringify(args)}`
+    case 'refresh_device_config':
+      return `Làm mới cấu hình${dev}`
     case 'get_latest_sensor':
       return `kiểm tra số liệu cảm biến mới nhất${dev} (độ ẩm, nhiệt độ, ánh sáng)`
     case 'get_sensor_history': {
-      const hours = args.hours ? ` ${Number(args.hours)}h gần đây` : ''
-      return `xem lịch sử cảm biến${dev}${hours}`
+      const n = args.limit ? ` ${Number(args.limit)} bản ghi gần nhất` : ''
+      return `xem lịch sử cảm biến${dev}${n}`
     }
     default:
       return `Chạy ${tool}${dev} với tham số ${JSON.stringify(args)}`

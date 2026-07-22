@@ -8,13 +8,11 @@ import {
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
 
 describe('summarizeAction', () => {
-  it('describes a water command in Vietnamese', () => {
-    expect(summarizeAction('send_command', { device_id: 'esp32-01', command: 'WATER_ON', duration: 10000 })).toBe(
-      'Bật bơm nước thiết bị esp32-01 trong 10s',
-    )
+  it('describes a pump command in Vietnamese', () => {
+    expect(summarizeAction('set_pump', { device_id: 'esp32-01', on: true })).toBe('Bật bơm nước thiết bị esp32-01')
   })
-  it('describes auto_water with threshold', () => {
-    expect(summarizeAction('auto_water', { device_id: 'esp32-01', threshold: 75 })).toContain('ngưỡng độ ẩm đất 75%')
+  it('describes set_mode auto', () => {
+    expect(summarizeAction('set_mode', { device_id: 'esp32-01', auto: true })).toContain('auto')
   })
   it('describes a latest-sensor read in Vietnamese', () => {
     expect(summarizeAction('get_latest_sensor', { device_id: 'esp32-01' })).toContain('cảm biến')
@@ -23,14 +21,14 @@ describe('summarizeAction', () => {
 
 describe('createPendingAction', () => {
   it('creates unique ids and attaches a summary', () => {
-    const a = createPendingAction('send_command', { device_id: 'd1', command: 'LIGHT_ON' })
-    const b = createPendingAction('send_command', { device_id: 'd1', command: 'LIGHT_ON' })
+    const a = createPendingAction('set_light', { device_id: 'd1', on: true })
+    const b = createPendingAction('set_light', { device_id: 'd1', on: true })
     expect(a.id).not.toBe(b.id)
     expect(a.summary).toBe('Bật đèn thiết bị d1')
   })
 
   it('defaults kind to control', () => {
-    const a = createPendingAction('send_command', { device_id: 'd1', command: 'WATER_ON' })
+    const a = createPendingAction('set_pump', { device_id: 'd1', on: true })
     expect(a.kind).toBe('control')
   })
 
@@ -64,14 +62,14 @@ describe('executeAction', () => {
   })
 
   it('reports success', async () => {
-    const action = createPendingAction('send_command', { device_id: 'd1', command: 'WATER_ON' })
+    const action = createPendingAction('set_pump', { device_id: 'd1', on: true })
     const res = await executeAction(fakeMcp({ text: 'queued', isError: false }), action)
     expect(res.ok).toBe(true)
     expect(res.text).toContain('Đã thực hiện')
   })
 
   it('reports MCP errors without claiming success', async () => {
-    const action = createPendingAction('send_command', { device_id: 'd1', command: 'WATER_ON' })
+    const action = createPendingAction('set_pump', { device_id: 'd1', on: true })
     const res = await executeAction(fakeMcp({ text: 'device offline', isError: true }), action)
     expect(res.ok).toBe(false)
     expect(res.text).toContain('Không thực hiện được')
