@@ -303,4 +303,27 @@ describe('setup routes', () => {
     expect(existsSync(mcpPath)).toBe(false)
     await app.close()
   })
+
+  it('POST /api/setup/rag/rebuild before ready returns 503 not_configured', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    const res = await app.inject({ method: 'POST', url: '/api/setup/rag/rebuild' })
+    expect(res.statusCode).toBe(503)
+    expect(res.json().error).toBe('not_configured')
+    await app.close()
+  })
+
+  it('POST /api/setup/rag/rebuild after ready returns 200 with counts', async () => {
+    const app = buildServer({ state, config: testConfig, setupDeps: baseDeps(okProbe) })
+    await app.inject({ method: 'POST', url: '/api/setup/connect', payload: connectBody })
+    await state.initPromise
+    expect(state.phase).toBe('ready')
+
+    const res = await app.inject({ method: 'POST', url: '/api/setup/rag/rebuild' })
+    expect(res.statusCode).toBe(200)
+    const body = res.json()
+    expect(body.ok).toBe(true)
+    expect(body).toHaveProperty('storeSize')
+    expect(body).toHaveProperty('ms')
+    await app.close()
+  })
 })

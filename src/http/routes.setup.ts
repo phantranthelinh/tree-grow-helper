@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import type { Config } from '../config'
 import { resolveApiKey } from '../llm/providers'
-import { applyLlmConfig, defaultSetupDeps, type SetupDeps } from '../setup/init'
+import { applyLlmConfig, defaultSetupDeps, rebuildRag, type SetupDeps } from '../setup/init'
 import type { LlmConfig } from '../setup/llmConfig'
 import { testMcpConnection } from '../setup/probe'
 import { renderSetupPage } from '../setup/page'
@@ -62,6 +62,19 @@ const mcpTestBodySchema = {
   additionalProperties: false,
   properties: {
     url: { type: 'string' },
+  },
+} as const
+
+const rebuildResponseSchema = {
+  type: 'object',
+  additionalProperties: true,
+  properties: {
+    ok: { type: 'boolean' },
+    profile: { type: 'number' },
+    docs: { type: 'number' },
+    diseases: { type: 'number' },
+    storeSize: { type: 'number' },
+    ms: { type: 'number' },
   },
 } as const
 
@@ -178,6 +191,27 @@ export function registerSetupRoutes(
         return { error: res.code, message: res.message }
       }
       return { ok: true, toolCount: res.toolCount, tools: res.tools }
+    },
+  )
+
+  app.post(
+    '/api/setup/rag/rebuild',
+    {
+      schema: {
+        tags: ['setup'],
+        summary: 'Nạp lại RAG (profile + data/docs + diseases)',
+        description:
+          'Re-ingest tri thức vào store mới rồi hot-swap vào orchestrator đang chạy (đồng bộ). ' +
+          'Không đụng MCP/LLM/session. 503 nếu chưa cấu hình, 409 nếu bận/RAG tắt, 502 nếu embed lỗi.',
+        response: { 200: rebuildResponseSchema, 409: errorSchema, 502: errorSchema, 503: errorSchema },
+      },
+    },
+    async (_req, reply) => {
+      const res = await rebuildRag(state, appCfg)
+      if (res.ok) return res
+      const status = res.code === 'not_configured' ? 503 : res.code === 'embed_failed' ? 502 : 409
+      reply.code(status)
+      return { error: res.code, message: res.message }
     },
   )
 }
