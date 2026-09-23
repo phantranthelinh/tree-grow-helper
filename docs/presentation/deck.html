@@ -1,0 +1,1139 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bộ não quyết định</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground: #F1F3F0;
+    --surface: #FBFCFA;
+    --surface-2: #E9EDE7;
+    --line: #D6DDD5;
+    --line-soft: #E3E8E1;
+    --ink: #131E19;
+    --ink-2: #4B584F;
+    --ink-3: #7B8880;
+    --read: #157F4C;
+    --read-soft: #E2F0E6;
+    --control: #B0243D;
+    --control-soft: #F8E4E7;
+    --signal: #9A6800;
+    --signal-soft: #F6EEDA;
+    --code-bg: #10201B;
+    --code-ink: #DCE7DF;
+    --code-key: #8FD3AC;
+    --code-str: #E8B37E;
+    --code-dim: #6E8C7D;
+
+    --stage-max: 1180px;
+    --f-display: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
+    --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0D1311;
+      --surface: #141D19;
+      --surface-2: #1B2621;
+      --line: #27332E;
+      --line-soft: #1F2B26;
+      --ink: #E7EDE8;
+      --ink-2: #A2AFA6;
+      --ink-3: #76837B;
+      --read: #55CE90;
+      --read-soft: #14291F;
+      --control: #FF7089;
+      --control-soft: #2C171C;
+      --signal: #DFA841;
+      --signal-soft: #2A2213;
+      --code-bg: #091210;
+      --code-ink: #D6E3D9;
+      --code-key: #7FCEA3;
+      --code-str: #DFA871;
+      --code-dim: #5D7A6C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0D1311;
+    --surface: #141D19;
+    --surface-2: #1B2621;
+    --line: #27332E;
+    --line-soft: #1F2B26;
+    --ink: #E7EDE8;
+    --ink-2: #A2AFA6;
+    --ink-3: #76837B;
+    --read: #55CE90;
+    --read-soft: #14291F;
+    --control: #FF7089;
+    --control-soft: #2C171C;
+    --signal: #DFA841;
+    --signal-soft: #2A2213;
+    --code-bg: #091210;
+    --code-ink: #D6E3D9;
+    --code-key: #7FCEA3;
+    --code-str: #DFA871;
+    --code-dim: #5D7A6C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .deck {
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: 1fr auto;
+  }
+
+  .stage {
+    display: flex;
+    justify-content: center;
+    padding: clamp(20px, 4vh, 52px) clamp(18px, 4vw, 56px) 8px;
+    overflow-y: auto;
+  }
+
+  .slide {
+    display: none;
+    width: 100%;
+    max-width: var(--stage-max);
+    flex-direction: column;
+    gap: clamp(14px, 2.2vh, 26px);
+    animation: rise .28s ease-out;
+  }
+  .slide.is-active { display: flex; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .slide { animation: none; }
+  }
+
+  /* ---------- typography ---------- */
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow b { color: var(--read); font-weight: 500; }
+  .eyebrow .bar { flex: 1; height: 1px; background: var(--line); }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 800;
+    font-size: clamp(38px, 6.2vw, 76px);
+    line-height: 1.02;
+    letter-spacing: -.025em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(25px, 3.5vw, 41px);
+    line-height: 1.1;
+    letter-spacing: -.02em;
+    margin: 0;
+    max-width: 22ch;
+    text-wrap: balance;
+  }
+  h2 .em { color: var(--read); }
+  h2 code { font-size: .82em; font-family: var(--f-mono); font-weight: 500; }
+
+  .lede {
+    font-size: clamp(16px, 1.35vw, 19px);
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  ul.points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 11px; }
+  ul.points li {
+    position: relative;
+    padding-left: 20px;
+    max-width: 66ch;
+    font-size: 15.5px;
+    color: var(--ink-2);
+  }
+  ul.points li::before {
+    content: "";
+    position: absolute;
+    left: 2px; top: .62em;
+    width: 7px; height: 1.5px;
+    background: var(--read);
+  }
+  ul.points li strong { color: var(--ink); font-weight: 600; }
+  ul.points li.warn::before { background: var(--control); }
+
+  code, .mono { font-family: var(--f-mono); font-size: .9em; }
+  p code, li code, td code, th code {
+    background: var(--surface-2);
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: .06em .3em;
+    font-size: .84em;
+  }
+
+  /* ---------- layout helpers ---------- */
+  .cols { display: grid; gap: clamp(16px, 2.4vw, 34px); align-items: start; }
+  .cols.c2 { grid-template-columns: 1fr 1fr; }
+  .cols.c2-wide { grid-template-columns: 1.05fr .95fr; }
+  .cols.c3 { grid-template-columns: repeat(3, 1fr); }
+  .cols.c4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 900px) {
+    .cols.c2, .cols.c2-wide, .cols.c3, .cols.c4 { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .card .k {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .card h3 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: 17px;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+  .card p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+  /* ---------- code ---------- */
+  .code {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--code-bg) 70%, var(--ink) 30%);
+    overflow-x: auto;
+  }
+  .code .src {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--code-dim);
+    padding: 9px 14px 0;
+  }
+  .code pre {
+    margin: 0;
+    padding: 8px 14px 14px;
+    font-family: var(--f-mono);
+    font-size: clamp(11.5px, 1.02vw, 13.5px);
+    line-height: 1.62;
+    white-space: pre;
+  }
+  .code .c { color: var(--code-dim); }
+  .code .k { color: var(--code-key); }
+  .code .s { color: var(--code-str); }
+
+  /* ---------- table ---------- */
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 13px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td strong { font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---------- chips / metrics ---------- */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: .04em;
+    padding: 4px 9px;
+    border-radius: 3px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .chip.read { color: var(--read); background: var(--read-soft); border-color: color-mix(in srgb, var(--read) 30%, transparent); }
+  .chip.ctrl { color: var(--control); background: var(--control-soft); border-color: color-mix(in srgb, var(--control) 30%, transparent); }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .metric { background: var(--surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .metric .v {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(22px, 2.6vw, 32px);
+    letter-spacing: -.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric .l { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+  .metric.read .v { color: var(--read); }
+  .metric.ctrl .v { color: var(--control); }
+
+  .callout {
+    border-left: 2px solid var(--signal);
+    background: var(--signal-soft);
+    padding: 11px 15px;
+    border-radius: 0 4px 4px 0;
+    font-size: 14px;
+    color: var(--ink-2);
+    max-width: 76ch;
+  }
+  .callout b { color: var(--ink); }
+
+  /* ---------- flow diagram ---------- */
+  .flow { display: flex; flex-direction: column; gap: 7px; }
+  .flow-row { display: flex; align-items: stretch; gap: 7px; flex-wrap: wrap; }
+  .node {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 9px 12px;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .node .t { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .node .d { color: var(--ink); font-weight: 500; }
+  .node.q { border-style: dashed; }
+  .node.read { border-color: color-mix(in srgb, var(--read) 45%, var(--line)); background: var(--read-soft); }
+  .node.read .t { color: var(--read); }
+  .node.ctrl { border-color: color-mix(in srgb, var(--control) 45%, var(--line)); background: var(--control-soft); }
+  .node.ctrl .t { color: var(--control); }
+  .node.grow { flex: 1; }
+  .arrow { display: flex; align-items: center; color: var(--ink-3); font-family: var(--f-mono); font-size: 15px; padding: 0 1px; }
+  .loopback {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--read);
+    border: 1px dashed color-mix(in srgb, var(--read) 45%, var(--line));
+    border-radius: 4px;
+    padding: 6px 11px;
+    background: var(--read-soft);
+  }
+
+  /* ---------- pipeline (slide 2) ---------- */
+  .pipe { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pipe .box {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 12px 15px;
+    min-width: 0;
+  }
+  .pipe .box .t { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-3); }
+  .pipe .box .d { font-weight: 600; font-size: 14.5px; }
+  .pipe .box .s { font-size: 12.5px; color: var(--ink-2); }
+  .pipe .box.hero { border-color: color-mix(in srgb, var(--read) 50%, var(--line)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--read) 18%, transparent); }
+
+  /* ---------- steps (demo) ---------- */
+  .step { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+  .step .n {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--read);
+    border: 1px solid color-mix(in srgb, var(--read) 40%, var(--line));
+    border-radius: 3px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    background: var(--read-soft);
+  }
+  .step .body { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+  .step .h { font-weight: 600; font-size: 14.5px; }
+  .step .exp { font-size: 13px; color: var(--ink-2); }
+
+  /* ---------- title slide ---------- */
+  .title-slide { justify-content: center; gap: 26px; min-height: 62vh; }
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--read);
+  }
+
+  /* ---------- notes ---------- */
+  .notes {
+    display: none;
+    border-top: 1px dashed var(--line);
+    padding-top: 12px;
+    font-size: 13.5px;
+    color: var(--ink-2);
+    max-width: 84ch;
+  }
+  .notes b { color: var(--ink); font-weight: 600; }
+  .notes .tag {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--signal);
+    display: block;
+    margin-bottom: 4px;
+  }
+  body.show-notes .slide.is-active .notes { display: block; }
+
+  /* ---------- footer / nav ---------- */
+  .bar {
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    padding: 9px clamp(14px, 3vw, 30px);
+    display: flex;
+    align-items: center;
+    gap: clamp(10px, 2vw, 22px);
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+  }
+  .acts { display: flex; gap: 14px; flex: 1; min-width: 0; flex-wrap: wrap; }
+  .act { display: flex; align-items: center; gap: 6px; }
+  .act .nm { letter-spacing: .1em; text-transform: uppercase; }
+  .act.on .nm { color: var(--read); }
+  .ticks { display: flex; gap: 3px; }
+  .tick { width: 13px; height: 3px; background: var(--line); border: none; padding: 0; cursor: pointer; border-radius: 1px; }
+  .tick:hover { background: var(--ink-3); }
+  .tick.on { background: var(--read); }
+  .tick:focus-visible { outline: 2px solid var(--read); outline-offset: 2px; }
+  .counter { font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .keys { display: flex; gap: 10px; }
+  .keys kbd {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 3px;
+    padding: 1px 5px;
+    background: var(--ground);
+    color: var(--ink-2);
+  }
+  .navbtns { display: flex; gap: 5px; }
+  .navbtns button {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    background: var(--ground);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    border-radius: 3px;
+    width: 28px; height: 24px;
+    cursor: pointer;
+  }
+  .navbtns button:hover { color: var(--ink); border-color: var(--ink-3); }
+  .navbtns button:focus-visible { outline: 2px solid var(--read); outline-offset: 2px; }
+
+  @media (max-width: 720px) {
+    .keys { display: none; }
+    table { min-width: 520px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="deck">
+  <div class="stage" id="stage">
+
+    <!-- ============ 1 ============ -->
+    <section class="slide title-slide is-active" data-act="0">
+      <div class="kicker">AI Server · plant-tree IoT</div>
+      <h1>LLM local làm<br>bộ não quyết định</h1>
+      <p class="lede">Cách lắp harness cho một model 3–4B chạy trên máy nhà, để nó biết khi nào trả lời, khi nào gọi tool, và khi nào phải xin phép trước khi bơm nước vào vườn dâu.</p>
+      <div class="chips">
+        <span class="chip">gemma-4-e4b · qwen2.5-3b</span>
+        <span class="chip">OpenAI-compatible local</span>
+        <span class="chip">MCP · 12 tool</span>
+        <span class="chip">RAG bge-m3</span>
+        <span class="chip">263 test</span>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Mở bài bằng một câu: <b>đây không phải bài về fine-tuning</b>. Đây là bài về việc dựng khung (harness) quanh một model nhỏ để nó dùng được vào việc thật — điều khiển thiết bị. Nhấn <kbd>N</kbd> ẩn/hiện notes, <kbd>F</kbd> toàn màn hình.
+      </div>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section class="slide" data-act="0">
+      <div class="eyebrow"><b>Bối cảnh</b><span class="bar"></span><span>02</span></div>
+      <h2>Chat tiếng Việt, đầu kia là <span class="em">thiết bị thật</span></h2>
+      <div class="pipe">
+        <div class="box">
+          <div class="t">Client</div>
+          <div class="d">Chat app</div>
+          <div class="s">"tưới nước cho cây đi"</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="box hero">
+          <div class="t">Chỗ tôi làm</div>
+          <div class="d">AI Server</div>
+          <div class="s">LLM local + RAG + harness</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="box">
+          <div class="t">Protocol</div>
+          <div class="d">MCP server</div>
+          <div class="s">12 tool đọc / điều khiển</div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="box">
+          <div class="t">Hardware</div>
+          <div class="d">ESP32</div>
+          <div class="s">bơm, đèn, cảm biến</div>
+        </div>
+      </div>
+      <ul class="points">
+        <li>Toàn bộ suy luận chạy <strong>trên máy local</strong> qua lớp OpenAI-compatible (LM Studio / Ollama) — không gọi cloud, không gửi dữ liệu vườn ra ngoài.</li>
+        <li>Model phải chọn: trả lời từ kiến thức cây trồng, hay gọi tool để đọc cảm biến / bật thiết bị.</li>
+        <li class="warn">Ràng buộc thật: model chỉ 3–4B, và một quyết định sai không phải là một câu trả lời xấu — mà là <strong>bơm nước sai thời điểm</strong>.</li>
+        <li>Mọi text người dùng thấy đều là tiếng Việt: prompt, quy tắc, câu xác nhận, log.</li>
+      </ul>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Đây là slide đặt ranh giới quan trọng nhất của cả bài: <b>model chỉ quyết định, harness mới là bên thực thi</b>. Mọi thứ ở các slide sau đều là hệ quả của ranh giới này.
+      </div>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness</b><span class="bar"></span><span>03</span></div>
+      <h2>Không dùng <code>tools[]</code> native — dùng <span class="em">một JSON quyết định</span></h2>
+      <div class="cols c2-wide">
+        <ul class="points">
+          <li>Mỗi lượt LLM trả về <strong>đúng một object</strong>: <code>{type:"reply"}</code> hoặc <code>{type:"tool"}</code>. Không có <code>tool_calls[]</code>, không multi-call trong một lượt.</li>
+          <li>Ép cấu trúc bằng <code>response_format: json_schema</code>. Trên LM Studio / llama.cpp đây là <strong>grammar-constrained decoding</strong>: model bị chặn ở từng token, không thể sinh JSON sai cú pháp.</li>
+          <li>Cú pháp <code>tool_calls</code> native phức tạp hơn nên model nhỏ dễ lệch — và không có chỗ tự nhiên để nhét <code>reasoning</code> hay để một <code>reply</code> mang kèm đề xuất tool.</li>
+          <li>Thứ tự field trong schema là <strong>đòn bẩy prompt</strong> cho model nhỏ (slide 06). Với <code>tool_calls</code>, thứ tự đó do SDK serialize — không control được.</li>
+          <li><code>strict: false</code> có chủ đích: đổi lấy tương thích rộng với LM Studio, Ollama, Gemini-compat.</li>
+        </ul>
+        <div class="code">
+          <div class="src">src/llm/index.ts:68</div>
+<pre><span class="k">const</span> res = <span class="k">await</span> <span class="k">this</span>.client.chat.completions.create({
+  model: <span class="k">this</span>.opts.model,
+  messages,
+  temperature: opts?.temperature ?? <span class="s">0.1</span>,
+  response_format: {
+    type: <span class="s">'json_schema'</span>,
+    json_schema: {
+      name: schemaName,
+      strict: <span class="k">false</span>,
+      schema: jsonSchema,
+    },
+  },
+})
+<span class="c">// không bao giờ dùng tools / tool_choice</span></pre>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Nếu bị hỏi "sao không dùng function-calling chuẩn?": ở tầng HTTP <code>/v1/chat/completions</code> server <b>vẫn</b> trả <code>tool_calls[]</code> cho client OpenAI — nhưng đó chỉ là encode lại <code>pendingAction</code> <b>sau khi</b> orchestrator đã quyết định xong, không phải cách gọi model local.
+      </div>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness</b><span class="bar"></span><span>04</span></div>
+      <h2>Harness làm 4 việc — model chỉ làm 1</h2>
+      <div class="cols c4">
+        <div class="card">
+          <div class="k">01 · Mô tả thế giới</div>
+          <h3>Có tool gì, ngưỡng nào</h3>
+          <p>Tool catalog + ngưỡng số của cây dâu được render thành text và bơm vào system prompt mỗi lượt.</p>
+        </div>
+        <div class="card">
+          <div class="k">02 · Ép định dạng</div>
+          <h3>JSON schema + Zod</h3>
+          <p>Grammar-constrained lúc sinh, Zod validate lúc nhận, một lần nudge nếu parse fail, rồi fallback tĩnh.</p>
+        </div>
+        <div class="card">
+          <div class="k">03 · Điều phối</div>
+          <h3>Vòng lặp ≤ 3 bước</h3>
+          <p>Tool đọc chạy xong thì nạp kết quả lại vào messages để model quyết định tiếp — không tự do vô hạn.</p>
+        </div>
+        <div class="card">
+          <div class="k">04 · Chặn hành động</div>
+          <h3>Xác nhận trước khi làm</h3>
+          <p>Đọc thì tự chạy; điều khiển thì tạo pendingAction và chờ người dùng nói "có". Tool lạ mặc định là điều khiển.</p>
+        </div>
+      </div>
+      <div class="callout">Việc duy nhất của model: <b>chọn một trong hai nhánh và điền tham số</b>. Nó không được phép chạy gì, không được phép nhớ gì, không được phép quyết định thời điểm thực thi.</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Slide này là bản đồ cho phần còn lại: 4 ô tương ứng slide 05, 06, 07, 08. Nếu thiếu thời gian, đây là slide không được bỏ.
+      </div>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness · 01</b><span class="bar"></span><span>05</span></div>
+      <h2>Dạy model biết có tool gì: catalog dịch thành text</h2>
+      <div class="cols c2-wide">
+        <ul class="points">
+          <li>Mỗi tool = <strong>một dòng</strong>: tên, tham số lấy từ <code>inputSchema</code>, nhãn an toàn, mô tả tiếng Việt. Không đưa JSON schema thô của MCP cho model đọc.</li>
+          <li>Nhãn <span class="chip read">ĐỌC</span> <span class="chip ctrl">ĐIỀU KHIỂN</span> nhúng thẳng vào catalog — model thấy ngay tool nào phải xin phép, không phải tự suy luận.</li>
+          <li>Thứ tự block cố định: vai trò → phạm vi (chỉ cây dâu) → khoảng tối ưu từ profile → catalog → 12 quy tắc → few-shot → <strong>quy tắc văn xuôi đặt cuối cùng</strong>.</li>
+          <li>Prompt được build lại <strong>mỗi lượt chat</strong>, không cache: đổi profile hay rebuild RAG là có hiệu lực ngay lượt sau.</li>
+          <li>MCP chết lúc khởi động → fallback catalog tĩnh 12 tool. Điều khiển sẽ báo lỗi, nhưng model vẫn "biết đường".</li>
+        </ul>
+        <div>
+          <div class="code">
+            <div class="src">src/llm/prompt.ts:7</div>
+<pre><span class="k">return</span> tools.map((t) =&gt; {
+  <span class="k">const</span> props = t.inputSchema?.properties ?? {}
+  <span class="k">const</span> params = Object.keys(props).join(<span class="s">', '</span>)
+    || <span class="s">'không tham số'</span>
+  <span class="k">const</span> safety = classifyTool(t.name) === <span class="s">'read'</span>
+    ? <span class="s">'ĐỌC'</span> : <span class="s">'ĐIỀU KHIỂN'</span>
+  <span class="k">return</span> <span class="s">`- ${t.name}(${params}) [${safety}]: ${t.description}`</span>
+}).join(<span class="s">'\n'</span>)</pre>
+          </div>
+          <div class="metrics" style="margin-top:12px">
+            <div class="metric"><span class="v">5.146</span><span class="l">ký tự prompt</span></div>
+            <div class="metric"><span class="v">7.751</span><span class="l">có few-shot</span></div>
+            <div class="metric read"><span class="v">12</span><span class="l">tool trong catalog</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Con số 5.146 / 7.751 ký tự (≈ 1.900–2.000 token) là đo thật bằng <code>buildSystemPrompt</code> lúc runtime. Đáng nói vì với model nhỏ, context là tài nguyên đắt — mọi dòng trong prompt phải trả giá.
+      </div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness · 02</b><span class="bar"></span><span>06</span></div>
+      <h2>Hợp đồng duy nhất giữa harness và model</h2>
+      <div class="cols c2-wide">
+        <ul class="points">
+          <li>Hai schema tách biệt: <strong>JSON Schema</strong> định hướng lúc sinh, <strong>Zod</strong> validate lúc nhận. Không dùng chung một cái cho hai việc.</li>
+          <li><code>reasoning</code> liệt kê <strong>đầu tiên</strong>: backend sinh theo thứ tự schema, nên model buộc phải viết vài token suy nghĩ trước khi chốt <code>type</code> — chain-of-thought giá rẻ, và <strong>không bao giờ</strong> lộ ra người dùng.</li>
+          <li><code>required: ['type']</code> — schema lỏng có chủ đích, chấp nhận model bỏ field khác thay vì fail cả request.</li>
+          <li>Parse fail → nudge đúng <strong>một lần</strong> ("chỉ trả về đúng một JSON hợp lệ") → fail nữa thì trả câu fallback tĩnh. Không có vòng lặp vô hạn.</li>
+          <li>Hai nhiệt độ khác nhau: <code>0.1</code> cho quyết định, <code>0.3</code> cho câu văn.</li>
+        </ul>
+        <div class="code">
+          <div class="src">src/agent/decision.ts:21</div>
+<pre><span class="k">export const</span> AGENT_DECISION_JSON_SCHEMA = {
+  type: <span class="s">'object'</span>,
+  properties: {
+    <span class="c">// Đặt ĐẦU TIÊN để backend sinh theo thứ tự</span>
+    <span class="c">// schema nghĩ vài token trước khi quyết định.</span>
+    reasoning: { type: <span class="s">'string'</span> },
+    type:      { type: <span class="s">'string'</span>, enum: [<span class="s">'reply'</span>, <span class="s">'tool'</span>] },
+    message:   { type: <span class="s">'string'</span> },
+    tool:      { type: <span class="s">'string'</span> },
+    args:      { type: <span class="s">'object'</span> },
+  },
+  required: [<span class="s">'type'</span>],
+}</pre>
+        </div>
+      </div>
+      <div class="callout">Có test khoá cứng invariant "<b><code>reasoning</code> phải đứng đầu <code>properties</code></b>" — vì nếu ai đó sắp xếp lại field cho "gọn", CoT mất im lặng mà không có lỗi runtime nào báo.</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Lưu ý cho Q&amp;A: thứ tự field chỉ có tác dụng với backend sinh theo đúng thứ tự schema (LM Studio / llama.cpp). Đây là mẹo phụ thuộc backend, không phải tính chất của mọi provider.
+      </div>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness · 03</b><span class="bar"></span><span>07</span></div>
+      <h2>Vòng lặp: đọc thì tự chạy, điều khiển thì <span class="em">dừng lại</span></h2>
+      <div class="flow">
+        <div class="flow-row">
+          <div class="node grow"><span class="t">input</span><span class="d">Tin nhắn người dùng</span></div>
+          <div class="arrow">→</div>
+          <div class="node q grow"><span class="t">bước 0</span><span class="d">Có pendingAction treo?</span></div>
+          <div class="arrow">→</div>
+          <div class="node grow"><span class="t">có</span><span class="d">detectConfirmation → chạy / huỷ</span></div>
+        </div>
+        <div class="flow-row">
+          <div class="node grow"><span class="t">không · bước 1</span><span class="d">buildSystemPrompt + RAG retrieve + history</span></div>
+          <div class="arrow">→</div>
+          <div class="node q grow"><span class="t">bước 2 · ≤ 3 lần</span><span class="d">decide() → JSON quyết định</span></div>
+        </div>
+        <div class="flow-row">
+          <div class="node grow"><span class="t">type = reply</span><span class="d">Trả lời, thoát loop</span></div>
+          <div class="node read grow"><span class="t">type = tool · ĐỌC</span><span class="d">Chạy MCP ngay, nạp <code>[Kết quả …]</code> vào messages</span></div>
+          <div class="node ctrl grow"><span class="t">type = tool · ĐIỀU KHIỂN</span><span class="d">Tạo pendingAction, thoát loop, hỏi (Có/Không)</span></div>
+        </div>
+        <div class="flow-row">
+          <div class="loopback">↑ chỉ nhánh ĐỌC quay lại bước 2 — model đọc kết quả rồi quyết định tiếp</div>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric"><span class="v">3</span><span class="l">MAX_TOOL_STEPS</span></div>
+        <div class="metric"><span class="v">1</span><span class="l">lần retry parse</span></div>
+        <div class="metric"><span class="v">0,1</span><span class="l">decision temp</span></div>
+        <div class="metric"><span class="v">30′</span><span class="l">TTL pendingAction</span></div>
+        <div class="metric"><span class="v">20</span><span class="l">turn lịch sử</span></div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Hết 3 bước mà chưa có câu trả lời → harness ép một lượt <code>complete()</code> không ràng buộc JSON để chốt câu văn. Có test: 4 quyết định tool liên tiếp bị chặn còn đúng 3 lần gọi MCP.
+      </div>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness · 04</b><span class="bar"></span><span>08</span></div>
+      <h2>Bốn lớp lưới an toàn quanh một model không đáng tin</h2>
+      <div class="cols c2-wide">
+        <ul class="points">
+          <li class="warn"><strong>Phân loại fail-safe:</strong> 6 tool đọc / 6 tool điều khiển ghi cứng; tool lạ chỉ được coi là đọc nếu khớp prefix <code>get_ list_ read_ fetch_ query_</code> — <strong>còn lại mặc định là điều khiển</strong>. Thà hỏi thừa hơn chạy nhầm.</li>
+          <li><strong>pendingAction có TTL 30 phút:</strong> gõ "có" sau ba tiếng thì lệnh cũ đã hết hiệu lực, không thực thi.</li>
+          <li><strong>Xác nhận free-text tiếng Việt:</strong> regex neo đầu chuỗi với boundary lookahead — bắt "có / ừ / ok / đồng ý / làm đi" và "không / hủy / đừng / thôi". Không khớp gì → xoá pending, coi là yêu cầu mới.</li>
+          <li><strong>sanitizeArgs:</strong> chỉ giữ key có trong <code>inputSchema</code> của tool — chặn tham số model bịa ra trước khi tới MCP.</li>
+          <li><strong>isTruncatedReply:</strong> câu trả lời rỗng hoặc kết thúc bằng dấu <code>:</code> thì regenerate, không đẩy mảnh vụn cho người dùng.</li>
+        </ul>
+        <div class="code">
+          <div class="src">src/mcp/policy.ts:39</div>
+<pre><span class="k">export function</span> classifyTool(name) {
+  <span class="k">if</span> (READ_ONLY.has(name))  <span class="k">return</span> <span class="s">'read'</span>
+  <span class="k">if</span> (CONTROL.has(name))    <span class="k">return</span> <span class="s">'control'</span>
+  <span class="k">if</span> (READ_PREFIXES.some((p) =&gt; name.startsWith(p)))
+    <span class="k">return</span> <span class="s">'read'</span>
+  <span class="k">return</span> <span class="s">'control'</span>   <span class="c">// fail-safe</span>
+}</pre>
+        </div>
+      </div>
+      <div class="callout">An toàn (<code>classifyTool</code>) tách khỏi trải nghiệm xác nhận: hai tool đọc cảm biến vẫn là <b>read</b>, nhưng khi model chỉ <i>đề xuất</i> đo thì harness hỏi trước; còn khi người dùng hỏi thẳng "độ ẩm bao nhiêu?" thì chạy ngay — chính câu hỏi đó là sự đồng ý.</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Test có tên thẳng: "fails safe: unknown tool defaults to control", dùng <code>reboot_everything</code> làm ví dụ. Đây là slide nên chậm lại nếu khán giả có lead/PM: nó là lý do dự án dám nối LLM vào thiết bị thật.
+      </div>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section class="slide" data-act="1">
+      <div class="eyebrow"><b>Harness · streaming</b><span class="bar"></span><span>09</span></div>
+      <h2>Chỉ field <code>message</code> được lên wire</h2>
+      <div class="cols c2">
+        <ul class="points">
+          <li>Decision JSON được scan <strong>tăng dần từng ký tự</strong> bằng parser tự viết: track độ sâu object/array, trạng thái trong-chuỗi, escape, <code>\uXXXX</code>.</li>
+          <li>Gate ba trạng thái: <strong>giữ</strong> text cho tới khi biết <code>type</code> → <code>reply</code> thì mở gate và xả phần đã giữ, <code>tool</code> thì đóng vĩnh viễn cho lượt đó.</li>
+          <li><code>reasoning</code>, <code>args</code>, và cả <code>message</code> giả mà model nhét trong <code>args</code> đều bị chặn — không token nào ra ngoài trước khi biết loại quyết định.</li>
+          <li>Frame <code>reset</code> cho phép "xoá cái vừa hiện" khi phải sinh lại — tự phục hồi giữa stream.</li>
+          <li>11 test fuzz mọi điểm cắt chunk, kể cả emoji 🍓 bị cắt ngang cặp surrogate.</li>
+        </ul>
+        <div class="code">
+          <div class="src">POST /chat/stream · SSE</div>
+<pre><span class="c">event: token</span>
+data: {<span class="s">"text"</span>: <span class="s">"Lá dâu vàng thường do "</span>}
+
+<span class="c">event: token</span>
+data: {<span class="s">"text"</span>: <span class="s">"tưới quá nhiều hoặc thiếu đạm."</span>}
+
+<span class="c">event: done</span>
+data: {<span class="s">"reply"</span>: <span class="s">"Lá dâu vàng thường do…"</span>,
+       <span class="s">"pendingAction"</span>: <span class="k">null</span>}
+
+<span class="c">// 5 loại frame: token · tool_status · reset · done · error</span></pre>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Đây là slide có thể bỏ nếu chỉ có 10 phút. Nếu giữ, điểm cần nhấn: streaming một JSON có cấu trúc <b>không</b> giống streaming text thường — phải tự viết parser vì cần biết đang ở field nào trước khi dám phát ra ngoài.
+      </div>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section class="slide" data-act="2">
+      <div class="eyebrow"><b>Dữ liệu</b><span class="bar"></span><span>10</span></div>
+      <h2>Nói thẳng: <span class="em">không fine-tune</span> một dòng nào</h2>
+      <p class="lede">Không LoRA, không QLoRA, không checkpoint, không train script. Grep toàn repo cho <code>lora|unsloth|axolotl|peft|sft|gguf</code>: không có kết quả nào liên quan tới weights.</p>
+      <div class="cols c4">
+        <div class="card">
+          <div class="k">Lớp 1</div>
+          <h3>Prompt engineering</h3>
+          <p>12 quy tắc đánh số, vị trí đặt quy tắc tính theo recency của model nhỏ.</p>
+        </div>
+        <div class="card">
+          <div class="k">Lớp 2</div>
+          <h3>Few-shot in-context</h3>
+          <p>6 ví dụ cố định, nạp lại mỗi lượt gọi — đây là "training set" thật.</p>
+        </div>
+        <div class="card">
+          <div class="k">Lớp 3</div>
+          <h3>RAG + domain profile</h3>
+          <p>Kiến thức và ngưỡng số nằm ngoài trọng số model, sửa file JSON là xong.</p>
+        </div>
+        <div class="card">
+          <div class="k">Lớp 4</div>
+          <h3>Eval-driven iteration</h3>
+          <p>45 case đo tool-selection và grounding; sửa prompt theo số đo, không theo cảm giác.</p>
+        </div>
+      </div>
+      <div class="callout">Với model 3–4B chạy local, bốn lớp này <b>rẻ hơn và lặp nhanh hơn</b> fine-tuning: mọi thay đổi nằm trong git, đọc được bằng mắt, và test lại trong vài giây thay vì vài giờ GPU.</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Nói câu này ngay đầu phần 2 để không ai hiểu lầm — nếu để đến Q&amp;A mới nói thì mất uy tín. Khung đúng: "tôi không dạy lại model, tôi dựng môi trường để model nhỏ vẫn ra quyết định đúng".
+      </div>
+    </section>
+
+    <!-- ============ 11 ============ -->
+    <section class="slide" data-act="2">
+      <div class="eyebrow"><b>Dữ liệu · lớp 2</b><span class="bar"></span><span>11</span></div>
+      <h2>Training set thật: 6 ví dụ, nạp lại mỗi lượt</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Người dùng nói</th><th>Quyết định model học</th><th>Dạy điều gì</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">1</td><td>"Cây dâu bị vàng lá, nên làm gì?"</td><td><code>reply</code> + đề xuất đo cảm biến</td><td>Câu hỏi triệu chứng thì <strong>tư vấn trước</strong>, không đi đọc cảm biến ngay</td></tr>
+            <tr><td class="num">2</td><td>"Độ ẩm đất thế nào?"</td><td><code>tool</code> · <span class="chip read">get_latest_sensor</span></td><td>Hỏi thẳng số liệu thì đọc ngay, không giả vờ đã biết</td></tr>
+            <tr><td class="num">3</td><td>"Bật đèn cho cây."</td><td><code>tool</code> · <span class="chip read">list_devices</span> → <span class="chip ctrl">set_light</span></td><td>Chưa biết <code>device_id</code> thì resolve bằng tool đọc trước</td></tr>
+            <tr><td class="num">4</td><td>"Tưới nước 10 giây đi."</td><td><code>tool</code> · <span class="chip ctrl">set_pump</span>, message nêu mục đích</td><td>Control luôn chờ xác nhận; message <strong>không được nói là đã xong</strong></td></tr>
+            <tr><td class="num">5</td><td>"Tưới nước cho dâu thế nào là đúng?"</td><td><code>reply</code> ngắn, có dẫn nguồn</td><td>Trả lời kiến thức thì ngắn và có citation</td></tr>
+            <tr><td class="num">6</td><td>"Thân dâu có đốm đen, quả lõm nâu…"</td><td><code>reasoning</code> → <code>reply</code> chẩn đoán</td><td>Ca chẩn đoán bệnh: nghĩ ngắn trước, rồi trả lời có nguồn</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="chips">
+        <span class="chip">2.597 ký tự few-shot</span>
+        <span class="chip">nạp lại mỗi lượt gọi LLM</span>
+        <span class="chip">mỗi ví dụ = một bug đã quan sát được</span>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Điểm đáng nhấn: không ví dụ nào được nghĩ ra trên giấy. Ví dụ 1 sinh ra vì model thật đi gọi <code>get_latest_sensor</code> cho câu hỏi "vàng lá", đọc lỗi, rồi xin lỗi thay vì tư vấn. Ví dụ 2–4 đổi thứ tự field vì message hay bị rỗng.
+      </div>
+    </section>
+
+    <!-- ============ 12 ============ -->
+    <section class="slide" data-act="2">
+      <div class="eyebrow"><b>Dữ liệu · lớp 3</b><span class="bar"></span><span>12</span></div>
+      <h2>Domain data <span class="em">thắng</span> default của tool</h2>
+      <div class="cols c2-wide">
+        <div style="display:flex; flex-direction:column; gap:12px">
+          <div class="metrics">
+            <div class="metric ctrl"><span class="v">30%</span><span class="l">default của MCP</span></div>
+            <div class="metric read"><span class="v">75–80%</span><span class="l">profile cây dâu</span></div>
+            <div class="metric"><span class="v">2,5×</span><span class="l">chênh lệch</span></div>
+          </div>
+          <ul class="points">
+            <li><code>soil_moisture_range: [75, 80]</code> trong <code>strawberry.json</code> → <code>deriveControlThresholds</code> lấy cận dưới làm ngưỡng bật bơm.</li>
+            <li><code>summarizeRanges</code> render thành câu tiếng Việt chèn thẳng vào prompt mỗi lượt: "độ ẩm đất 75–80%; nhiệt độ 10–27°C; ánh sáng 200–800 lux; pH 5,5–6,5".</li>
+            <li>Quy tắc khi xung đột: tài liệu RAG trái với range số thì <strong>range thắng</strong> — có eval case cấm chuỗi "30%" xuất hiện trong câu trả lời về độ ẩm tối ưu.</li>
+            <li><strong>Thêm cây mới = thêm một file JSON.</strong> Không sửa code.</li>
+          </ul>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px">
+          <div class="code">
+            <div class="src">RAG pipeline</div>
+<pre>chunk 600 / overlap 80
+   ↓
+embed <span class="s">bge-m3</span>  <span class="c">// cross-lingual:</span>
+   ↓              <span class="c">// hỏi tiếng Việt, đọc doc tiếng Anh</span>
+cache đĩa <span class="c">(namespace theo tên model)</span>
+   ↓
+dedupe cosine &gt; 0,95
+   ↓
+cosine brute-force in-memory
+   <span class="c">// zero native deps, vài trăm chunk</span></pre>
+          </div>
+          <ul class="points">
+            <li>Ba nguồn vào store: profile (11 field) + KB bệnh (10 bệnh/sâu hại) + docs đã có người duyệt.</li>
+            <li class="warn">Cào web <strong>không</strong> tự vào store: <code>npm run scrape</code> ghi ra <code>data/staging</code>, người đọc và cắt, rồi mới copy sang <code>data/docs</code>.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Đây là "aha moment" của phần dữ liệu: model nhỏ tự nó không biết dâu tây cần ẩm 75–80%; nó chỉ biết cái default 30% mà tool cung cấp. Ta ghi đè bằng cách chèn <b>số liệu tường minh vào prompt</b>, không phải bằng train. Trung thực nếu bị hỏi: <code>data/docs</code> hiện đang trống — pipeline có, dữ liệu duyệt thì chưa.
+      </div>
+    </section>
+
+    <!-- ============ 13 ============ -->
+    <section class="slide" data-act="2">
+      <div class="eyebrow"><b>Dữ liệu · trước / sau</b><span class="bar"></span><span>13</span></div>
+      <h2>Trước và sau, bằng số đo được</h2>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th>Hiện tượng</th><th>Model local, harness thô</th><th>Sau khi sửa</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Trả lời dạng danh sách</td>
+              <td>Viết "đây là danh sách:" rồi <strong>đóng JSON luôn</strong> — danh sách không bao giờ xuất hiện. <code>finish_reason=stop</code>, không phải hết token.</td>
+              <td class="num">Ép văn xuôi, cấm dấu <code>:</code> cuối câu → <strong>0/18</strong> câu bị cụt</td>
+            </tr>
+            <tr>
+              <td>Vị trí quy tắc trong prompt</td>
+              <td>Đặt giữa prompt: model <strong>bỏ qua</strong> (recency bias)</td>
+              <td class="num">Đặt ở dòng cuối cùng mới có tác dụng — có test khoá vị trí</td>
+            </tr>
+            <tr>
+              <td>Message kèm quyết định tool</td>
+              <td>Gần như luôn rỗng (~<strong>0/12</strong>): model đóng JSON ngay sau <code>args</code></td>
+              <td class="num">Đảo few-shot thành <code>message</code> trước <code>tool</code> → <strong>12/12</strong> có lời dẫn</td>
+            </tr>
+            <tr>
+              <td>Câu hỏi "cây bị vàng lá"</td>
+              <td>Tự gọi <code>get_latest_sensor</code>, đọc lỗi, rồi xin lỗi vì "không truy cập được cảm biến"</td>
+              <td>Trả lời từ RAG + đề xuất đo, có xác nhận</td>
+            </tr>
+            <tr>
+              <td>Ngưỡng tưới</td>
+              <td>30% — default chung của tool, không phân biệt loại cây</td>
+              <td class="num">75–80% từ profile cây dâu</td>
+            </tr>
+            <tr>
+              <td>Cách biết là tốt hơn</td>
+              <td>Cảm giác khi thử tay</td>
+              <td class="num">45 eval case, 3 chỉ số, 263 test khoá hành vi</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Hai dòng đầu là chỗ đắt nhất của bài: cả hai đều <b>đo được</b> (0/18, 12/12) và cả hai đều là loại lỗi <b>im lặng</b> — không exception, không log, chỉ là câu trả lời tệ hơn. Đó là lý do mỗi quy tắc kỳ lạ đều phải có test khoá lại.
+      </div>
+    </section>
+
+    <!-- ============ 14 ============ -->
+    <section class="slide" data-act="2">
+      <div class="eyebrow"><b>Dữ liệu · lớp 4</b><span class="bar"></span><span>14</span></div>
+      <h2>Đo, chứ không đoán: 45 case tiếng Việt</h2>
+      <div class="cols c2-wide">
+        <ul class="points">
+          <li><strong>Exact accuracy</strong> — đúng cả <code>type</code> và đúng tên tool cụ thể.</li>
+          <li><strong>Safety-class accuracy</strong> — tách riêng vì chọn sai tool nhưng cùng lớp <em>đọc</em> khác hẳn về mức nguy hiểm với việc chọn nhầm sang <em>điều khiển</em>.</li>
+          <li><strong>Grounding</strong> — heuristic xác định, không dùng LLM-judge: có dẫn nguồn không, số bắt buộc có xuất hiện không, số <em>sai</em> có bị cấm không (ví dụ "30%").</li>
+          <li>Eval chạy <strong>có RAG context thật</strong>, gọi LLM thật — giống production, nên cần LM Studio sống và không chạy được trong CI.</li>
+          <li><code>npm test</code> (263 test) chỉ kiểm <strong>cấu trúc</strong> dataset: đủ case, phủ hết 12 tool, nhãn an toàn đúng.</li>
+        </ul>
+        <div>
+          <div class="tablewrap">
+            <table style="min-width:auto">
+              <thead><tr><th>Nhóm case</th><th>Số</th></tr></thead>
+              <tbody>
+                <tr><td>Tool · đọc <span class="chip read">read</span></td><td class="num">11</td></tr>
+                <tr><td>Tool · điều khiển <span class="chip ctrl">control</span></td><td class="num">10</td></tr>
+                <tr><td>Reply · kiến thức cây trồng</td><td class="num">8</td></tr>
+                <tr><td>Reply · chẩn đoán bệnh</td><td class="num">4</td></tr>
+                <tr><td>Reply · chit-chat / bẫy</td><td class="num">4</td></tr>
+                <tr><td>Reply · triệu chứng</td><td class="num">3</td></tr>
+                <tr><td>Reply · công dụng</td><td class="num">2</td></tr>
+                <tr><td><strong>Tổng</strong></td><td class="num"><strong>45</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="callout"><b>Cần làm trước buổi present:</b> chạy <code>npm run eval</code> với LM Studio đang bật để có số % thật. Repo không lưu sẵn con số accuracy nào — nói "chưa đo lại" thì được, bịa số thì mất tất cả.</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Nếu chưa chạy kịp, chỉ nói về <b>cấu trúc và độ phủ</b> của bộ eval (45 case, phủ đủ 12 tool, 3 chỉ số) — đừng đưa % nào. Có test riêng bắt buộc mọi tool MCP phải có ít nhất một case, nên độ phủ là claim an toàn.
+      </div>
+    </section>
+
+    <!-- ============ 15 ============ -->
+    <section class="slide" data-act="3">
+      <div class="eyebrow"><b>Demo</b><span class="bar"></span><span>15</span></div>
+      <h2>Ba bước, chứng minh cả hai điều quan trọng</h2>
+      <div class="cols c2">
+        <div class="step">
+          <div class="n">1</div>
+          <div class="body">
+            <div class="h">Trả lời từ RAG, token chảy theo thời gian thực</div>
+            <div class="code">
+<pre>curl -N -X POST localhost:8787/chat/stream \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"userId":"demo","sessionId":"d1",
+       "message":"Cây dâu bị vàng lá, nên làm gì?"}'</span></pre>
+            </div>
+            <div class="exp">Kỳ vọng: nhiều frame <code>event: token</code> chảy dần, rồi một <code>event: done</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="n">2</div>
+          <div class="body">
+            <div class="h">Yêu cầu điều khiển — server hỏi lại, tool <em>chưa</em> chạy</div>
+            <div class="code">
+<pre>curl -s -X POST localhost:8787/v1/chat/completions \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"model":"plant-assistant","session_id":"d2",
+       "messages":[{"role":"user",
+       "content":"Tưới nước cho esp32-01 10 giây"}]}'</span></pre>
+            </div>
+            <div class="exp">Kỳ vọng: content chứa <code>(Có/Không)</code>, <code>tool_calls[0].function.name = set_pump</code> — <strong>và log MCP im lặng</strong>.</div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div class="body">
+          <div class="h">Xác nhận bằng đúng hai chữ — không cần echo lại gì</div>
+          <div class="code">
+<pre>curl -s -X POST localhost:8787/v1/chat/completions \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{"model":"plant-assistant","session_id":"d2","messages":[{"role":"user","content":"có"}]}'</span></pre>
+          </div>
+          <div class="exp">Kỳ vọng: <code>"Đã thực hiện"</code> — đây là lúc <code>set_pump</code> thật sự chạy qua MCP. Đổi thành <code>"không"</code> → <code>"Đã hủy"</code>, không lệnh nào được gửi.</div>
+        </div>
+      </div>
+      <div class="callout">Bước 3 chứng minh cùng lúc hai thứ: <b>an toàn hành động</b> (control không tự chạy) và <b>session server-side</b> (client chỉ gửi "có" + <code>session_id</code>, không phải echo lại <code>tool_calls</code> — thứ mà client rất dễ làm sai).</div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Nếu MCP chưa sẵn sàng lúc demo, bước 3 vẫn trả 200 nhưng nội dung sẽ báo lỗi route (404 / -32601). <b>Đó cũng là behavior đáng demo</b>: hệ thống không giả vờ thành công. Nói trước câu đó thì sự cố thành điểm cộng.
+      </div>
+    </section>
+
+    <!-- ============ 16 ============ -->
+    <section class="slide" data-act="3">
+      <div class="eyebrow"><b>Kết</b><span class="bar"></span><span>16</span></div>
+      <h2>Điều đáng mang về</h2>
+      <div class="cols c2">
+        <ul class="points">
+          <li><strong>Model nhỏ không cần thông minh hơn — cần một hợp đồng chặt hơn.</strong> Một JSON, hai nhánh, năm field.</li>
+          <li><strong>Ép cấu trúc ở tầng decoding đáng tin hơn dặn dò trong prompt.</strong> Grammar-constrained thắng "hãy trả về JSON nhé".</li>
+          <li><strong>Quyết định thì để model, thực thi thì để code.</strong> An toàn nằm đúng ở ranh giới đó, không nằm trong prompt.</li>
+          <li><strong>Mọi mẹo cho model nhỏ phải có test khoá lại</strong> — vì regression ở đây im lặng: không exception, chỉ là câu trả lời tệ dần.</li>
+        </ul>
+        <div class="card">
+          <div class="k">Giới hạn đang biết</div>
+          <p>Retrieval còn là cosine brute-force: chưa có BM25 hybrid, chưa có reranker, <code>RAG_MIN_SCORE</code> vẫn đang tắt.</p>
+          <p><code>data/docs</code> hiện chưa có record nào — pipeline review đã xong nhưng dữ liệu duyệt thì chưa.</p>
+          <p>Chưa có tracing / observability cho từng quyết định của model.</p>
+          <p>Catalog tĩnh có thể lệch với MCP thật — cần đối chiếu bằng <code>npm run mcp:catalog</code>.</p>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric read"><span class="v">263</span><span class="l">test đang xanh</span></div>
+        <div class="metric"><span class="v">36</span><span class="l">test file</span></div>
+        <div class="metric"><span class="v">12</span><span class="l">tool MCP</span></div>
+        <div class="metric"><span class="v">45</span><span class="l">eval case</span></div>
+        <div class="metric"><span class="v">0</span><span class="l">dòng fine-tune</span></div>
+      </div>
+      <div class="notes">
+        <span class="tag">Speaker notes</span>
+        Đóng bài bằng ô "giới hạn" — chủ động nói ra chỗ chưa tốt luôn mạnh hơn để khán giả tìm ra. Con số <b>0 dòng fine-tune</b> đặt cạnh 263 test là câu chốt: giá trị nằm ở harness, không ở trọng số.
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="bar" aria-label="Điều hướng slide">
+    <div class="acts" id="acts"></div>
+    <span class="counter"><span id="cur">1</span> / <span id="tot">16</span></span>
+    <div class="keys">
+      <kbd>←</kbd><kbd>→</kbd>
+      <span>slide</span>
+      <kbd>N</kbd><span>notes</span>
+      <kbd>F</kbd><span>full</span>
+    </div>
+    <div class="navbtns">
+      <button type="button" id="prev" aria-label="Slide trước">‹</button>
+      <button type="button" id="next" aria-label="Slide sau">›</button>
+    </div>
+  </nav>
+</div>
+
+<script>
+  (function () {
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var ACTS = ['Bối cảnh', 'Harness', 'Dữ liệu', 'Demo'];
+    var i = 0;
+
+    document.getElementById('tot').textContent = String(slides.length);
+
+    // build act groups with per-slide ticks
+    var actsEl = document.getElementById('acts');
+    var ticks = [];
+    ACTS.forEach(function (name, ai) {
+      var wrap = document.createElement('div');
+      wrap.className = 'act';
+      wrap.dataset.act = String(ai);
+      var nm = document.createElement('span');
+      nm.className = 'nm';
+      nm.textContent = name;
+      var group = document.createElement('div');
+      group.className = 'ticks';
+      slides.forEach(function (s, si) {
+        if (Number(s.dataset.act) !== ai) return;
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tick';
+        b.title = 'Slide ' + (si + 1);
+        b.setAttribute('aria-label', 'Tới slide ' + (si + 1));
+        b.addEventListener('click', function () { go(si); });
+        group.appendChild(b);
+        ticks.push({ el: b, idx: si });
+      });
+      wrap.appendChild(nm);
+      wrap.appendChild(group);
+      actsEl.appendChild(wrap);
+    });
+
+    function go(n) {
+      i = Math.max(0, Math.min(slides.length - 1, n));
+      slides.forEach(function (s, si) { s.classList.toggle('is-active', si === i); });
+      document.getElementById('cur').textContent = String(i + 1);
+      ticks.forEach(function (t) { t.el.classList.toggle('on', t.idx <= i); });
+      var act = slides[i].dataset.act;
+      Array.prototype.forEach.call(actsEl.children, function (c) {
+        c.classList.toggle('on', c.dataset.act === act);
+      });
+      document.getElementById('stage').scrollTop = 0;
+    }
+
+    document.getElementById('next').addEventListener('click', function () { go(i + 1); });
+    document.getElementById('prev').addEventListener('click', function () { go(i - 1); });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      var k = e.key;
+      if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'j') { go(i + 1); e.preventDefault(); }
+      else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'k') { go(i - 1); e.preventDefault(); }
+      else if (k === 'Home') { go(0); e.preventDefault(); }
+      else if (k === 'End') { go(slides.length - 1); e.preventDefault(); }
+      else if (k === 'n' || k === 'N') { document.body.classList.toggle('show-notes'); }
+      else if (k === 'f' || k === 'F') {
+        if (document.fullscreenElement) { document.exitFullscreen(); }
+        else if (document.documentElement.requestFullscreen) { document.documentElement.requestFullscreen(); }
+      }
+    });
+
+    go(0);
+  })();
+</script>
+</body>
+</html>
