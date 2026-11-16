@@ -64,6 +64,8 @@ interface Candidate {
   rec: ScoredRecord
   /** Relevance used by MMR, 0..1. */
   rel: number
+  /** BM25 rank (0 = best) when hybrid is on and the chunk shares a query term. */
+  lexRank?: number
 }
 
 function mmrSelect(cands: Candidate[], k: number, lambda: number): Candidate[] {
@@ -144,19 +146,25 @@ export async function retrieve(
       .forEach((x, rank) => lexRank.set(x.id, rank))
     const fused = byScore.map((rec, rank) => {
       const lr = lexRank.get(rec.id)
-      return { rec, f: 1 / (RRF_K + rank + 1) + (lr === undefined ? 0 : 1 / (RRF_K + lr + 1)) }
+      return { rec, lr, f: 1 / (RRF_K + rank + 1) + (lr === undefined ? 0 : 1 / (RRF_K + lr + 1)) }
     })
     fused.sort((a, b) => b.f - a.f)
     const maxF = fused[0]?.f ?? 1
-    ordered = fused.map((x) => ({ rec: x.rec, rel: x.f / maxF }))
+    ordered = fused.map((x) => ({ rec: x.rec, rel: x.f / maxF, lexRank: x.lr }))
   } else {
     ordered = byScore.map((rec) => ({ rec, rel: rec.score }))
   }
 
   const margin = opts.relMargin ?? 0
   const lambda = opts.mmrLambda ?? 1
+  // The margin is a cosine gate, so it would drop exactly the exact-term hits
+  // (Botrytis, EC, pH) hybrid exists to rescue; BM25's top-K skip it. minScore
+  // stays an absolute floor for every hit.
+  const lexicalRescue = (c: Candidate): boolean => c.lexRank !== undefined && c.lexRank < topK
   const gated = ordered.filter(
-    (c) => (minScore <= 0 || c.rec.score >= minScore) && (margin <= 0 || c.rec.score >= top1 - margin),
+    (c) =>
+      (minScore <= 0 || c.rec.score >= minScore) &&
+      (margin <= 0 || c.rec.score >= top1 - margin || lexicalRescue(c)),
   )
   const useMmr = lambda < 1
   const pool = gated.slice(0, useMmr ? topK * MMR_POOL_FACTOR : topK)

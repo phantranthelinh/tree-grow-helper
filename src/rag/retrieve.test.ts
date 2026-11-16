@@ -112,4 +112,31 @@ describe('retrieve gating and ranking', () => {
     const hybrid = await retrieve(store, new TableLlm(t) as never, 'bệnh botrytis', 1, 0, { hybrid: true })
     expect(hybrid.chunks[0]?.text).toBe('trị bệnh botrytis bằng cách cắt bỏ quả thối')
   })
+
+  it('hybrid keeps an exact-term match that the cosine margin alone would drop', async () => {
+    const t: Record<string, number[]> = {
+      'EC dung dịch': [1, 0, 0],
+      'dâu ưa khí hậu mát': [0.95, 0.31, 0],
+      'EC dung dịch giai đoạn ra hoa 1,5-1,8': [0.6, 0, 0.8],
+    }
+    const store = storeOf(t, ['dâu ưa khí hậu mát', 'EC dung dịch giai đoạn ra hoa 1,5-1,8'])
+    const dense = await retrieve(store, new TableLlm(t) as never, 'EC dung dịch', 2, 0, { relMargin: 0.15 })
+    expect(dense.chunks.map((c) => c.text)).toEqual(['dâu ưa khí hậu mát'])
+    const hybrid = await retrieve(store, new TableLlm(t) as never, 'EC dung dịch', 2, 0, {
+      relMargin: 0.15,
+      hybrid: true,
+    })
+    expect(hybrid.chunks.map((c) => c.text)).toContain('EC dung dịch giai đoạn ra hoa 1,5-1,8')
+  })
+
+  it('minScore still drops a lexical match below the absolute floor', async () => {
+    const t: Record<string, number[]> = {
+      'EC dung dịch': [1, 0, 0],
+      'dâu ưa khí hậu mát': [0.95, 0.31, 0],
+      'EC dung dịch giai đoạn ra hoa': [0.2, 0, 0.98],
+    }
+    const store = storeOf(t, ['dâu ưa khí hậu mát', 'EC dung dịch giai đoạn ra hoa'])
+    const res = await retrieve(store, new TableLlm(t) as never, 'EC dung dịch', 2, 0.5, { hybrid: true })
+    expect(res.chunks.map((c) => c.text)).toEqual(['dâu ưa khí hậu mát'])
+  })
 })
