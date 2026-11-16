@@ -170,19 +170,28 @@ curl -N -X POST localhost:8787/chat/stream \
 Pipeline có cổng review của con người, không nạp thẳng dữ liệu web vào bot:
 
 1. Thêm nguồn tin cậy (khuyến nông, `.edu.vn`, `.gov.vn`, viện nghiên cứu) vào `src/rag/scrape/sources.ts`
-   — mặc định rỗng; chỉ host trong allowlist mới được cào.
-2. `npm run scrape` → ghi bản thô ra `data/staging/*.raw.jsonl` (không đụng vào vector store).
-3. **Review/cắt rác** trong file staging, rồi copy các bản ghi tốt sang `data/docs/*.jsonl`.
-4. Lần khởi động sau, `ingestDocs` tự nạp mọi `.jsonl` trong `data/docs/` vào RAG.
+   kèm `plant` — chỉ host trong allowlist mới được cào. Nguồn PDF khai báo thêm `pdf: "<tên-file>.pdf"`.
+2. Bật Crawl4AI (render JS, lọc menu/quảng cáo): đặt `CRAWL4AI_API_TOKEN` trong `.env` rồi
+   `docker compose --profile scrape up -d crawl4ai`. Không bật thì scrape tự lùi về cheerio (chỉ HTML tĩnh).
+3. `npm run scrape` (hoặc `npm run scrape -- bean-sprout` cho một cây) → ghi bản thô ra
+   `data/staging/<plant>-docs.raw.jsonl` (không đụng vào vector store). PDF được tải một lần về
+   `data/pdf/<plant>/` (commit vào repo) và đọc bằng opendataloader-pdf — **cần Java 11+**.
+4. **Review/cắt rác** trong file staging, rồi copy các bản ghi tốt sang `data/docs/*.jsonl`.
+5. Lần khởi động sau (hoặc `POST /api/setup/rag/rebuild`), `ingestDocs` nạp các bản ghi có `plant`
+   trùng `DEFAULT_PLANT`.
 
-Mỗi bản ghi `.jsonl`: `{ "source_url", "category": "grow|uses|disease", "title?", "date?", "text", "plant?" }`.
+Mỗi bản ghi `.jsonl`: `{ "source_url", "plant", "category": "grow|uses|disease|safety", "title", "date", "scraped_at", "local_path?", "text" }`.
 Dữ liệu này **chỉ để tư vấn**, không bao giờ đặt ngưỡng điều khiển thiết bị.
 
 ## Thêm cây mới
 
 1. Tạo `src/domain/knowledge/<plant>.json` theo schema trong `src/domain/profiles.ts`.
 2. (Tùy chọn) Tạo `src/domain/knowledge/<plant>-diseases.json` cho luồng chẩn đoán (schema ở `src/domain/diseases.ts`).
-3. Đặt `DEFAULT_PLANT=<plant>` trong `.env`. Không cần đổi code.
+3. Đặt `DEFAULT_PLANT=<plant>` trong `.env`. Chạy được ngay mà không cần đổi code, nhưng model chỉ có
+   bộ ví dụ mẫu trung tính (log sẽ cảnh báo).
+4. Nên thêm bộ ví dụ mẫu riêng cho cây vào `BY_PLANT` trong `src/domain/fewshot.ts`: model nhỏ bắt chước
+   lời khuyên và hành động trong ví dụ, nên dùng ví dụ của cây khác sẽ tư vấn sai. Hiện có `strawberry`
+   và `bean-sprout`.
 
 ## Trạng thái & giới hạn
 

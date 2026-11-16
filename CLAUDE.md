@@ -21,7 +21,7 @@ npm test                  # vitest run — unit + integration, needs NO external
 npm run test:watch        # vitest watch
 npm run typecheck         # tsc --noEmit (the only "build" check; start/dev never compile)
 npm run eval              # measure the small model's tool-selection accuracy — needs a live LLM
-npm run scrape            # scrape allowlisted sources → data/staging (RAG pipeline, step 1)
+npm run scrape [plant]    # Crawl4AI + PDFs → data/staging/<plant>-docs.raw.jsonl (needs Crawl4AI container + Java)
 npm run mcp:catalog       # print the live MCP tool list — needs the MCP running
 ```
 
@@ -95,7 +95,11 @@ fields** (`care_notes`, `watering`, `diseases`…) are chunked + embedded for RA
 if sources conflict with the numeric optimal ranges, the ranges win.
 
 **Adding a plant**: drop `src/domain/knowledge/<plant>.json` (validated by `PlantProfileSchema`) and
-set `DEFAULT_PLANT=<plant>`. No code change.
+set `DEFAULT_PLANT=<plant>`. That runs with no code change, but on a format-only neutral few-shot set
+(init logs a warning). For real use also add a per-plant set to `BY_PLANT` in
+[src/domain/fewshot.ts](src/domain/fewshot.ts): the 3B copies the examples' advice and actions, so
+another plant's set teaches the wrong care (strawberry's "bật đèn" would ruin bean sprouts, which
+grow in the dark). Keep the message-before-tool field order in every set.
 
 ### RAG pipeline (human-review gate)
 
@@ -105,12 +109,15 @@ few hundred curated chunks, zero native deps. Data gets in three ways, all inges
    ([src/rag/ingestDiseases.ts](src/rag/ingestDiseases.ts)) — curated JSON, always loaded.
 2. Reviewed source docs from `data/docs/*.jsonl` ([src/rag/ingestDocs.ts](src/rag/ingestDocs.ts)).
 
-The scrape → review → ingest flow is deliberate: `npm run scrape` writes **raw** records to
-`data/staging/`, a **human trims/reviews** them, then copies good records into `data/docs/`. Nothing
-scraped touches the store automatically. Embeddings are cached on disk
+The scrape → review → ingest flow is deliberate: `npm run scrape [plant]` writes **raw** records to
+`data/staging/<plant>-docs.raw.jsonl`, a **human trims/reviews** them, then copies good records into
+`data/docs/`. Nothing scraped touches the store automatically. HTML goes through a self-hosted
+Crawl4AI (`docker compose --profile scrape up -d crawl4ai`, needs `CRAWL4AI_API_TOKEN`; falls back to
+cheerio when it is down). Sources marked `pdf` in [sources.ts](src/rag/scrape/sources.ts) are
+downloaded once into `data/pdf/<plant>/` (committed) and read with opendataloader-pdf, which needs
+Java 11+. Both paths fix the degree sign (`30oC`, and the PDF `300C` artifact for `30⁰C`) before staging. Embeddings are cached on disk
 ([src/rag/embedCache.ts](src/rag/embedCache.ts)) and near-duplicates are dropped
-([src/rag/dedupe.ts](src/rag/dedupe.ts)). Cross-lingual retrieval (Vietnamese query, English docs)
-relies on the `bge-m3` embedding model. The shared builder is `ingestAll`
+([src/rag/dedupe.ts](src/rag/dedupe.ts)). All sources are Vietnamese, and `bge-m3` handles Vietnamese queries well. Retrieval embeds the current message plus (when a previous user turn exists) `previous + current` in one call, merges hits by max score, drops hits more than `RAG_REL_MARGIN` (default 0.15) below the best, then picks the final top-K with MMR (`RAG_MMR_LAMBDA`, default 0.7; 1 = plain top-K). `RAG_MIN_SCORE` (default 0) is the absolute cosine floor — calibrate it from the score distribution `npm run eval` prints; `RAG_HYBRID=1` adds BM25 + reciprocal rank fusion. An embed failure at query time degrades to no RAG context for that turn. The embed cache is keyed by sha256 and pruned to the entries of the current build. The shared builder is `ingestAll`
 ([src/rag/buildStore.ts](src/rag/buildStore.ts)), used by both init and the runtime
 `POST /api/setup/rag/rebuild` (edit a profile / drop docs into `data/docs/`, then rebuild — no restart).
 
