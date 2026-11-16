@@ -120,10 +120,17 @@ export class OpenAICompatEngine implements LlmEngine {
 
   async embed(texts: string[]): Promise<number[][]> {
     if (texts.length === 0) return []
+    // Without an explicit format the SDK requests base64 and decodes it as float32;
+    // LM Studio ignores that and sends float arrays, which decode to zero vectors.
     const res = await this.client.embeddings.create({
       model: this.opts.embedModel,
       input: texts,
+      encoding_format: 'float',
     })
-    return [...res.data].sort((a, b) => a.index - b.index).map((d) => d.embedding as number[])
+    const vectors = [...res.data].sort((a, b) => a.index - b.index).map((d) => d.embedding as number[])
+    if (vectors.some((v) => v.length === 0 || v.every((x) => x === 0))) {
+      throw new Error(`embed model "${this.opts.embedModel}" trả về vector rỗng hoặc toàn số 0`)
+    }
+    return vectors
   }
 }
