@@ -6,6 +6,12 @@ function num(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) ? n : fallback
 }
 
+export function boolEnv(value: string | undefined, fallback: boolean): boolean {
+  if (value === '1') return true
+  if (value === '0') return false
+  return fallback
+}
+
 export const config = {
   port: num(process.env.PORT, 8787),
   // Defaults used ONLY to prefill the setup form — never to auto-connect.
@@ -42,7 +48,7 @@ export const config = {
     // answers from the system prompt alone (no [Tri thức tham khảo] block), so you
     // can A/B whether it stays accurate without the knowledge base.
     disabled: process.env.RAG_DISABLED === '1',
-    topK: num(process.env.RAG_TOP_K, 5),
+    topK: num(process.env.RAG_TOP_K, 4),
     // Drop retrieved chunks scoring below this cosine threshold. Default 0 = OFF
     // (keep all top-K, unchanged behavior). Raise (~0.3–0.4 for bge-m3) once the
     // grounding eval shows weak chunks are misleading the small model.
@@ -52,8 +58,9 @@ export const config = {
     relMargin: num(process.env.RAG_REL_MARGIN, 0.15),
     // MMR weight over a topK*3 candidate pool: 1 = plain top-K, lower = more diverse.
     mmrLambda: num(process.env.RAG_MMR_LAMBDA, 0.7),
-    // RAG_HYBRID=1 fuses BM25 (exact terms: Botrytis, PS8.10, EC, pH) with dense ranking.
-    hybrid: process.env.RAG_HYBRID === '1',
+    // On by default: BM25 recovers term/symptom queries that dense ranking misses on a single-topic
+    // corpus. RAG_HYBRID=0 = dense only.
+    hybrid: boolEnv(process.env.RAG_HYBRID, true),
     docsDir: process.env.RAG_DOCS_DIR ?? 'data/docs',
     stagingDir: process.env.RAG_STAGING_DIR ?? 'data/staging',
     // Source PDFs, committed to the repo so a re-scrape never depends on the site staying up.
