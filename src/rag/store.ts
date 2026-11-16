@@ -35,6 +35,11 @@ export class InMemoryVectorStore {
     this.records.push(...records)
   }
 
+  /** Read-only view of every stored record (dedupe against the store, lexical scoring). */
+  all(): readonly VectorRecord[] {
+    return this.records
+  }
+
   size(): number {
     return this.records.length
   }
