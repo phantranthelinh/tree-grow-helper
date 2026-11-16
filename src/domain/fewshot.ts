@@ -41,6 +41,10 @@ Trợ lý: {"type":"reply","message":"Dâu nên tưới nhỏ giọt để cấp
 Ví dụ 6 — chẩn đoán bệnh (nghĩ ngắn trước rồi nêu bệnh + xử lý + phòng ngừa, có nguồn):
 Người dùng: "Thân và cuống dâu có đốm đen, vài quả bị lõm nâu, cây bị bệnh gì?"
 Trợ lý: {"reasoning":"Đốm đen ở thân/cuống kèm vết lõm nâu trên quả khớp nhất với thán thư (Colletotrichum).","type":"reply","message":"Nhiều khả năng là bệnh thán thư (Colletotrichum spp.), phát mạnh khi nóng ẩm mưa nhiều. Xử lý: loại bỏ và tiêu hủy bộ phận bệnh, tránh thao tác khi cây ướt, phun thuốc phòng-trị theo khuyến cáo. Phòng ngừa: dùng cây giống sạch bệnh, phủ luống hạn chế nước bắn, thoát nước tốt (theo Chi cục BVTV Lâm Đồng)."}
+
+Ví dụ 7 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
+Người dùng: "Khu A đang cài tự động theo ngưỡng nào?"
+Trợ lý: {"type":"tool","message":"Mình sẽ xem cấu hình ngưỡng tự động hiện tại của thiết bị để biết khi nào bơm và đèn tự bật.","tool":"get_device_config","args":{"device_id":"esp32-01"}}
 `.trim()
 
 const BEAN_SPROUT = `
@@ -69,6 +73,10 @@ Trợ lý: {"type":"reply","message":"Nên ngâm đỗ xanh trong nước khoả
 Ví dụ 6 — chẩn đoán (nghĩ ngắn trước rồi nêu nguyên nhân + cách xử lý, có nguồn):
 Người dùng: "Giá nhà mình thân gầy, dài, nhiều rễ, ăn không giòn, bị sao vậy?"
 Trợ lý: {"reasoning":"Thân gầy dài, nhiều rễ sợi, kém giòn khớp với buồng ươm quá nóng, gieo quá thưa hoặc tưới thưa.","type":"reply","message":"Nhiều khả năng buồng ươm quá nóng khiến giá mọc nhanh nhưng ốm và nhiều rễ sợi, hoặc gieo quá thưa làm giá dài và gầy, hoặc tưới thưa nên giá kém giòn. Bạn giữ nhiệt độ 27–30°C, gieo khoảng 40 g hạt trên mỗi dm² khay và tưới đều khoảng 30 phút một lần (theo ĐH Cần Thơ và Tạp chí VAAS)."}
+
+Ví dụ 7 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
+Người dùng: "Khu A đang cài tự động theo ngưỡng nào?"
+Trợ lý: {"type":"tool","message":"Mình sẽ xem cấu hình ngưỡng tự động hiện tại của thiết bị để biết khi nào bơm tưới tự bật.","tool":"get_device_config","args":{"device_id":"esp32-01"}}
 `.trim()
 
 /**
@@ -94,6 +102,10 @@ Trợ lý: {"type":"tool","message":"Mình sẽ chuyển khu A sang chế độ 
 Ví dụ 4 — điều khiển (KHÔNG nói đã xong, chờ xác nhận):
 Người dùng: "Tưới nước 10 giây đi."
 Trợ lý: {"type":"tool","message":"Mình sẽ bật bơm tưới theo nhu cầu của ${name}; bơm sẽ tự tắt sau thời gian an toàn của thiết bị nên bạn không cần tắt tay.","tool":"set_pump","args":{"device_id":"esp32-01","on":true}}
+
+Ví dụ 5 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
+Người dùng: "Khu A đang cài tự động theo ngưỡng nào?"
+Trợ lý: {"type":"tool","message":"Mình sẽ xem cấu hình ngưỡng tự động hiện tại của thiết bị để biết khi nào thiết bị tự bật bơm hoặc đèn.","tool":"get_device_config","args":{"device_id":"esp32-01"}}
 `.trim()
 }
 

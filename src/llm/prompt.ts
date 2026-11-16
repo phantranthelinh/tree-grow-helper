@@ -55,6 +55,7 @@ export function buildSystemPrompt({ profile, tools, fewshot }: SystemPromptInput
     '   - Nếu số liệu cảm biến hiện tại sẽ giúp lời khuyên chính xác hơn, KÈM một đề xuất kiểm tra bằng cách thêm "tool":"get_latest_sensor","args":{"device_id":"..."} vào NGAY chính quyết định reply đó (vẫn để type="reply"). Hệ thống sẽ tự thêm câu hỏi xác nhận (Có/Không) và chỉ đọc cảm biến sau khi người dùng đồng ý. KHÔNG tự viết sẵn câu "Nếu muốn, mình có thể kiểm tra...".',
     '   - Câu hỏi TRỰC TIẾP về SỐ LIỆU / TRẠNG THÁI HIỆN TẠI (vd "độ ẩm đất bao nhiêu", "nhiệt độ hiện tại", "đọc/xem thông số cảm biến", "lịch sử cảm biến") → dùng {"type":"tool","message":"<nêu SẼ đọc gì và để làm gì>","tool":"get_latest_sensor"|"get_sensor_history","args":{...}}. Hệ thống sẽ đọc cảm biến NGAY rồi đưa số liệu lại cho bạn phân tích; KHÔNG hỏi xác nhận và KHÔNG nói đã có số liệu trước khi đọc.',
     '   - Yêu cầu ĐIỀU KHIỂN → dùng tool điều khiển tương ứng.',
+    '   - LUẬT/NGƯỠNG tự động: người dùng HỎI luật/ngưỡng đang cài ("đang ... thế nào/bao nhiêu?") → get_device_config (ĐỌC), không phải get_latest_sensor. Chỉ khi người dùng YÊU CẦU đặt/đổi ngưỡng kèm con số → set_device_config. Bật/tắt chế độ tự động → set_mode. set_pump/set_light chỉ bật/tắt NGAY một lần.',
     '4. Tool [ĐỌC] (list_devices, get_device_info, get_device_config, get_recent_commands, và cảm biến get_latest_sensor/get_sensor_history khi người dùng hỏi trực tiếp) được hệ thống TỰ CHẠY và trả kết quả lại cho bạn để phân tích tiếp.',
     '5. Tool [ĐIỀU KHIỂN] sẽ KHÔNG chạy ngay — hệ thống hỏi xác nhận người dùng trước. Vì vậy TUYỆT ĐỐI không nói đã thực hiện xong; chỉ chọn đúng tool + tham số. (Đề xuất kiểm tra cảm biến KÈM trên một câu tư vấn cũng được hỏi xác nhận trước — xem quy tắc 3.)',
     '6. Nếu cần device_id mà chưa biết, hãy gọi list_devices trước (tool ĐỌC).',
@@ -82,12 +83,18 @@ export interface AssembleInput {
   userMessage: string
 }
 
+// The 3B rewrites "h" quantities in Russian/Chinese; Vietnamese "giờ" it copies as is.
+// The lookahead keeps "ha", "1h30" and other letter/digit-suffixed tokens intact.
+export function normalizeHourUnits(text: string): string {
+  return text.replace(/(\d)\s?h(?![\p{L}\p{N}])/gu, '$1 giờ')
+}
+
 /** Build the full message array for one LLM turn. */
 export function assembleMessages({ system, history, ragContext, knowledgeLabel: label, userMessage }: AssembleInput): ChatMessage[] {
   const messages: ChatMessage[] = [{ role: 'system', content: system }]
   messages.push(...history)
   const content = ragContext
-    ? `[${label ?? 'Tri thức tham khảo'}]\n${ragContext}\n\n[Câu hỏi của người dùng]\n${userMessage}`
+    ? `[${label ?? 'Tri thức tham khảo'}]\n${normalizeHourUnits(ragContext)}\n\n[Câu hỏi của người dùng]\n${userMessage}`
     : userMessage
   messages.push({ role: 'user', content })
   return messages

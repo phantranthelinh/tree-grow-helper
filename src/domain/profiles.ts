@@ -86,7 +86,7 @@ export function summarizeRanges(p: PlantProfile): string {
   add('độ ẩm đất', p.soil_moisture_range, '%')
   add('ánh sáng', p.light_range, ' lux')
   add('pH đất', p.soil_ph_range, '')
-  add('giờ chiếu sáng/ngày', p.daily_light_hours, 'h')
+  add('giờ chiếu sáng/ngày', p.daily_light_hours, ' giờ')
   add('EC', p.ec_range, ' mS/cm')
   return parts.join('; ')
 }

@@ -1,6 +1,6 @@
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Orchestrator, isTruncatedReply, type OrchestratorDeps } from '../src/agent/orchestrator'
+import { Orchestrator, hasForeignScript, isTruncatedReply, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
 import type { ChatMessage, CompleteOptions, LlmEngine, StreamOptions } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
@@ -509,5 +509,35 @@ describe('Orchestrator — truncated reply repair', () => {
     const res = await orch.handleChat('u1', 's1', 'vì sao lá vàng?')
     expect(res.reply).toBe('Lá vàng thường do úng nước; bạn kiểm tra thoát nước.')
     expect(llm.completeCalls).toBe(0)
+  })
+
+  it('regenerates a reply that switched to Chinese or Cyrillic', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Nên ngâm 4 часов, tưới 24小时/24小时。"}']
+    const res = await orch.handleChat('u1', 's1', 'ngâm đỗ bao lâu?')
+    expect(res.reply).toBe('Câu trả lời hoàn chỉnh bằng văn xuôi.')
+    expect(llm.completeCalls).toBe(1)
+  })
+
+  it('drops a code-switched lead-in but still asks to confirm the control tool', async () => {
+    llm.jsonQueue = ['{"type":"tool","message":"Mình sẽ bật bơm и tránh úng.","tool":"set_pump","args":{"device_id":"esp32-01","on":true}}']
+    const res = await orch.handleChat('u1', 's1', 'tưới đi')
+    expect(res.reply).not.toMatch(/и/)
+    expect(res.reply).toContain('(Có/Không)')
+    expect(res.pendingAction?.tool).toBe('set_pump')
+    expect(mcp.calls).toHaveLength(0)
+  })
+})
+
+describe('hasForeignScript', () => {
+  it('flags Cyrillic, CJK, kana and Hangul', () => {
+    expect(hasForeignScript('ánh sáng 6-13 часов/ngày')).toBe(true)
+    expect(hasForeignScript('cung cấp 24小时/24小时')).toBe(true)
+    expect(hasForeignScript('xong rồi。')).toBe(true)
+    expect(hasForeignScript('tưới みず')).toBe(true)
+    expect(hasForeignScript('물 주기')).toBe(true)
+  })
+
+  it('does not flag Vietnamese or the units used in plant text', () => {
+    expect(hasForeignScript('Độ ẩm đất 75–80%, nhiệt độ 10-27°C, 100–110 µmol/m²/s, 20 cm × 20 cm.')).toBe(false)
   })
 })

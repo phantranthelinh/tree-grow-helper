@@ -24,4 +24,10 @@ describe('plant profiles', () => {
     expect(s).toContain('độ ẩm đất 75-80%')
     expect(s).toContain('ánh sáng 200-800 lux')
   })
+
+  it('renders daily light hours with the Vietnamese unit, never "h"', () => {
+    const s = summarizeRanges(loadProfile('strawberry'))
+    expect(s).toContain('giờ chiếu sáng/ngày 6-13 giờ')
+    expect(s).not.toMatch(/\d+h\b/)
+  })
 })

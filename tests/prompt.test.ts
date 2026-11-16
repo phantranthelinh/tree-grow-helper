@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { loadProfile } from '../src/domain/profiles'
 import { getFewshot } from '../src/domain/fewshot'
-import { buildSystemPrompt } from '../src/llm/prompt'
+import { assembleMessages, buildSystemPrompt, normalizeHourUnits } from '../src/llm/prompt'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 
 describe('system prompt', () => {
@@ -45,5 +45,42 @@ describe('system prompt', () => {
     // The schema template in rule 2 also shows the message-first shape.
     const system = buildSystemPrompt({ profile: loadProfile('strawberry'), tools: KNOWN_TOOLS })
     expect(system).toMatch(/\{"type":"tool","message":/)
+  })
+
+  it('writes hour quantities as "giờ" and leaves other units alone', () => {
+    expect(normalizeHourUnits('ngâm 4 h, tổng 48h, 24h/24h, CO2 18h – 6h')).toBe('ngâm 4 giờ, tổng 48 giờ, 24 giờ/24 giờ, CO2 18 giờ – 6 giờ')
+    const keep = '35.000 cây/ha, 1,16 ha, 30–32 tấn/ha, pH 5,5, lúc 1h30, 24 giờ'
+    expect(normalizeHourUnits(keep)).toBe(keep)
+  })
+
+  it('assembleMessages normalizes hour units inside the knowledge block', () => {
+    const msgs = assembleMessages({ system: 's', history: [], ragContext: '[x] ngâm 4 h', userMessage: 'q' })
+    expect(msgs.at(-1)?.content).toContain('ngâm 4 giờ')
+  })
+
+  it('routes automation-rule questions to get_device_config from inside the rules', () => {
+    const profile = loadProfile('strawberry')
+    const system = buildSystemPrompt({ profile, tools: KNOWN_TOOLS, fewshot: getFewshot(profile) })
+    expect(system).toContain('người dùng HỎI luật/ngưỡng đang cài')
+    expect(system).toContain('→ get_device_config (ĐỌC)')
+    expect(system.indexOf('LUẬT/NGƯỠNG tự động')).toBeLessThan(system.indexOf('VÍ DỤ:'))
+    expect(system.lastIndexOf('ĐOẠN VĂN')).toBeGreaterThan(system.indexOf('"tool":"get_device_config"'))
+  })
+
+  it.each([
+    ['strawberry', loadProfile('strawberry')],
+    ['bean-sprout', loadProfile('bean-sprout')],
+    ['unknown plant', { ...loadProfile('strawberry'), plant: 'tomato' }],
+  ])('%s few-shot keeps message before tool and has a get_device_config example', (_name, profile) => {
+    const fewshot = getFewshot(profile)
+    expect(fewshot).toMatch(/"type":"tool","message"/)
+    expect(fewshot).not.toMatch(/"type":"tool","tool"/)
+    expect(fewshot).toContain('"tool":"get_device_config"')
+  })
+
+  it('keeps the grow light out of the bean-sprout get_device_config example', () => {
+    const fewshot = getFewshot(loadProfile('bean-sprout'))
+    const line = fewshot.split('\n').find((l) => l.includes('"tool":"get_device_config"')) ?? ''
+    expect(line).not.toContain('đèn')
   })
 })

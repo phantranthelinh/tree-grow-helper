@@ -90,6 +90,15 @@ export function isTruncatedReply(message: string): boolean {
 }
 
 /**
+ * True when text contains Cyrillic, CJK, kana or Hangul. The 3B sometimes
+ * code-switches mid-sentence (typically at an hour quantity); Vietnamese
+ * diacritics and unit symbols (°, µ, –, ×, ²) sit outside these ranges.
+ */
+export function hasForeignScript(text: string): boolean {
+  return /[\u0400-\u04FF\u3000-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uAC00-\uD7AF]/.test(text)
+}
+
+/**
  * Emit whatever part of the final reply the live stream didn't already cover.
  * The streamed text is normally a strict prefix of the reply (or empty in
  * buffered mode); anything else means the stream diverged, so tell the client
@@ -375,9 +384,10 @@ export class Orchestrator {
           break
         }
         const message = decision.message ?? ''
-        if (isTruncatedReply(message)) {
+        if (isTruncatedReply(message) || hasForeignScript(message)) {
           // The model abandoned its answer inside the JSON "message" string
-          // (empty or a dangling-colon lead-in). Regenerate a clean, flowing
+          // (empty or a dangling-colon lead-in) or code-switched into another
+          // script. Regenerate a clean, flowing
           // prose answer with an UNCONSTRAINED call at replyTemp (0.3) instead of
           // shipping the fragment — decisionTemp (0.1) + JSON constraint is what
           // produced the stub. In stream mode the fragment already went out, so
@@ -410,7 +420,7 @@ export class Orchestrator {
       if (classifyTool(toolName) === 'control') {
         const pending = createPendingAction(toolName, args, 'control')
         sessions.setPending(userId, sessionId, pending)
-        const lead = decision.message ? `${decision.message}\n\n` : ''
+        const lead = decision.message && !hasForeignScript(decision.message) ? `${decision.message}\n\n` : ''
         finalReply = `${lead}Bạn xác nhận thực hiện: "${pending.summary}"? (Có/Không)`
         pendingView = toView(pending)
         yield { type: 'token', text: finalReply }
