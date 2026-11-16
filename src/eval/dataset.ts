@@ -88,4 +88,38 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB', expectChunks: ['disease:anthracnose'] },
   { id: 'uses-general', message: 'Dâu tây dùng để làm gì?', expect: { type: 'reply' } },
   { id: 'uses-processing', message: 'Dâu tây chế biến được những món gì?', expect: { type: 'reply' } },
+
+  // --- A7: facts only the reviewed source docs (data/docs) hold — measures doc retrieval ---
+  { id: 'doc-nitrogen', message: 'Nồng độ đạm N trong dung dịch dinh dưỡng trồng dâu tây bao nhiêu là tốt?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['154', '182', '98'] }, expectChunks: ['https://tapchi.vaas.vn/vi/tap-chi/anh-huong-cua-nong-do-nito'] },
+  { id: 'doc-leaf-spot-fungi', message: 'Bệnh đốm lá dâu tây ở Đà Lạt do những chi nấm nào gây ra?', expect: { type: 'reply' }, expectChunks: ['https://jst.iuh.edu.vn/'] },
+  { id: 'doc-varieties', message: 'Giống dâu Mỹ đá và Camarosa có ưu nhược điểm gì?', expect: { type: 'reply' }, expectChunks: ['https://tapchi.vaas.vn/sites/tapchi.vaas.vn/files/tapchi/2022-03/'] },
+  { id: 'doc-lowland-climate', message: 'Trồng dâu tây ở vùng thấp như Sơn La thì khí hậu ngày đêm cần thế nào?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['28', '18'] }, expectChunks: ['https://nongnghiepmoitruong.vn/'] },
+  { id: 'doc-hanging-watering', message: 'Dâu tây treo thủy canh tĩnh thì mỗi ngày tưới mấy lần?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['5 lần', '7 lần'] }, expectChunks: ['https://www.sggp.org.vn/'] },
+  { id: 'doc-greenhouse-yield', message: 'Trồng dâu tây New Zealand trong nhà màng năng suất được bao nhiêu tấn một héc-ta?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['30', '32'] }, expectChunks: ['https://vaas.vn/'] },
+  { id: 'doc-container-temp', message: 'Trồng dâu thủy canh trong container thì giữ nhiệt độ bao nhiêu?', expect: { type: 'reply' }, expectChunks: ['https://techport.vn/'] },
 ]
+
+/**
+ * Bean-sprout set, picked when DEFAULT_PLANT=bean-sprout. Sprouts grow in the
+ * dark, so the knowledge cases check the model does not carry strawberry advice
+ * (light, soil moisture) over.
+ */
+export const BEAN_SPROUT_EVAL_CASES: EvalCase[] = [
+  { id: 'bs-sensor', message: 'Nhiệt độ khay ủ giá của esp32-01 bây giờ bao nhiêu?', expect: { type: 'tool', tool: 'get_latest_sensor', safety: 'read' } },
+  { id: 'bs-list-devices', message: 'Liệt kê các thiết bị đang có.', expect: { type: 'tool', tool: 'list_devices', safety: 'read' } },
+  { id: 'bs-water', message: 'Tưới khay giá esp32-01 trong 30 giây.', expect: { type: 'tool', tool: 'set_pump', safety: 'control' } },
+  { id: 'bs-auto-water', message: 'Bật chế độ tưới tự động cho esp32-01.', expect: { type: 'tool', tool: 'set_mode', safety: 'control' } },
+  { id: 'bs-hello', message: 'Xin chào!', expect: { type: 'reply' } },
+  { id: 'bs-kb-temp', message: 'Ủ giá đỗ cần nhiệt độ bao nhiêu?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['27', '30'] }, expectChunks: ['bean-sprout:care_notes'] },
+  { id: 'bs-kb-light', message: 'Giá đỗ có cần chiếu đèn hay phơi nắng không?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['tối'] }, expectChunks: ['bean-sprout:light_description'] },
+  { id: 'bs-kb-soak', message: 'Ngâm đỗ xanh làm giá bao lâu, nước bao nhiêu độ?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['35', '4 giờ', '4 h'] }, expectChunks: ['bean-sprout:planting'] },
+  { id: 'bs-kb-watering', message: 'Máy làm giá tự động nên tưới theo chu kỳ thế nào?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['30 phút'] }, expectChunks: ['bean-sprout:watering'] },
+  { id: 'bs-kb-harvest', message: 'Bao lâu thì thu hoạch giá được?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['48'] }, expectChunks: ['bean-sprout:harvest'] },
+  { id: 'bs-kb-banned', message: 'Nước kẹo làm giá là gì, có nguy hiểm không?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['6-BAP', '6-Benzylaminopurine', 'chất cấm'] }, expectChunks: ['bean-sprout:toxicity'] },
+  { id: 'bs-kb-microbe', message: 'Vì sao giá đỗ dễ bị nhiễm vi sinh vật?', expect: { type: 'reply' }, expectChunks: ['bean-sprout:diseases'] },
+]
+
+/** The eval set for a plant; plants without their own set fall back to strawberry's. */
+export function evalCasesFor(plant: string): EvalCase[] {
+  return plant === 'bean-sprout' ? BEAN_SPROUT_EVAL_CASES : EVAL_CASES
+}

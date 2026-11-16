@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EVAL_CASES } from '../src/eval/dataset'
+import { BEAN_SPROUT_EVAL_CASES, EVAL_CASES, evalCasesFor } from '../src/eval/dataset'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 import { classifyTool } from '../src/mcp/policy'
 
@@ -41,6 +41,19 @@ describe('eval dataset', () => {
         expect(c.expect.type, `grounding on non-reply case ${c.id}`).toBe('reply')
       }
     }
+  })
+
+  it('bean-sprout set has unique ids, correct safety classes and is picked by plant', () => {
+    const ids = BEAN_SPROUT_EVAL_CASES.map((c) => c.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const c of BEAN_SPROUT_EVAL_CASES) {
+      if (c.expect.type === 'tool' && c.expect.tool && c.expect.safety) {
+        expect(classifyTool(c.expect.tool), `bad safety for ${c.id}`).toBe(c.expect.safety)
+      }
+    }
+    expect(evalCasesFor('bean-sprout')).toBe(BEAN_SPROUT_EVAL_CASES)
+    expect(evalCasesFor('strawberry')).toBe(EVAL_CASES)
+    expect(evalCasesFor('unknown-plant')).toBe(EVAL_CASES)
   })
 
   it('keeps the grounding metric meaningful: >=6 cases, >=2 requiring a citation', () => {

@@ -4,6 +4,8 @@
  * mirrors production. Requires LM Studio running with the chat + embedding models.
  * Does NOT require the MCP (uses the static KNOWN_TOOLS catalog). Run: npm run eval
  */
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import {
   AGENT_DECISION_JSON_SCHEMA,
   AGENT_DECISION_SCHEMA_NAME,
@@ -20,7 +22,7 @@ import { ingestAll } from '../rag/buildStore'
 import { retrieve } from '../rag/retrieve'
 import { InMemoryVectorStore } from '../rag/store'
 import { loadLlmConfig } from '../setup/llmConfig'
-import { EVAL_CASES, type EvalExpect } from './dataset'
+import { evalCasesFor, type EvalExpect } from './dataset'
 import { gradeGrounding } from './grounding'
 
 interface Decision {
@@ -57,6 +59,7 @@ const fmt = (n: number): string => (Number.isFinite(n) ? n.toFixed(3) : 'n/a')
 
 async function main(): Promise<void> {
   const profile = loadProfile(config.defaultPlant)
+  const EVAL_CASES = evalCasesFor(profile.plant)
   const saved = loadLlmConfig(config.setup.configPath)
   const embedModel = saved?.embedModel ?? config.llmDefaults.embedModel
   const llm = new OpenAICompatEngine({ ...config.llmDefaults, embedModel })
@@ -81,7 +84,11 @@ async function main(): Promise<void> {
   let recallSum = 0
   let recallGatedSum = 0
   let annotated = 0
+  const caseResults: Array<Record<string, unknown>> = []
   for (const c of EVAL_CASES) {
+    const startedAt = Date.now()
+    let recall: number | null = null
+    let recallGated: number | null = null
     const rag = await retrieve(store, llm, c.message, config.rag.topK, config.rag.minScore, {
       relMargin: config.rag.relMargin,
       mmrLambda: config.rag.mmrLambda,
@@ -106,9 +113,10 @@ async function main(): Promise<void> {
         top1Annotated.push(top1)
         const found = (chunks: typeof raw.chunks) =>
           c.expectChunks!.filter((p) => chunks.some((h) => matches(h.id, p))).length / c.expectChunks!.length
-        const recall = found(raw.chunks)
+        recall = found(raw.chunks)
+        recallGated = found(rag.chunks)
         recallSum += recall
-        recallGatedSum += found(rag.chunks)
+        recallGatedSum += recallGated
         for (const h of raw.chunks) {
           if (c.expectChunks.some((p) => matches(h.id, p))) expectedScores.push(h.score)
           else otherScores.push(h.score)
@@ -121,6 +129,8 @@ async function main(): Promise<void> {
     } else if (c.expectChunks && c.expectChunks.length > 0) {
       annotated++
       top1Annotated.push(NaN)
+      recall = 0
+      recallGated = 0
       retrievalNote = ' | recall=0.00 top1=n/a'
     }
     let actual: Decision | null = null
@@ -139,9 +149,11 @@ async function main(): Promise<void> {
     if (safety) safetyHits++
 
     let groundNote = ''
+    let grounding: { pass: boolean; reasons: string[] } | null = null
     if (c.grounding) {
       groundTotal++
       const gr = gradeGrounding(c.grounding, actual?.message ?? '')
+      grounding = { pass: gr.pass, reasons: gr.reasons }
       if (gr.pass) {
         groundHits++
         groundNote = ' | ground=PASS'
@@ -153,15 +165,78 @@ async function main(): Promise<void> {
     const want = c.expect.type === 'tool' ? c.expect.tool : 'reply'
     const got = actual ? (actual.type === 'tool' ? actual.tool : 'reply') : '(parse-fail)'
     console.log(`${exact ? 'PASS' : 'FAIL'} [${c.id}] want=${want} got=${got}${groundNote}${retrievalNote}`)
+    caseResults.push({
+      id: c.id,
+      message: c.message,
+      want,
+      got,
+      exact,
+      safety,
+      reply: actual?.message ?? null,
+      grounding,
+      expectChunks: c.expectChunks ?? null,
+      recall,
+      recallGated,
+      retrieved: rag.chunks.map((h) => ({ id: h.id, score: Number(h.score.toFixed(4)) })),
+      ms: Date.now() - startedAt,
+    })
   }
 
   const n = EVAL_CASES.length
+  const summary = {
+    exact: { hits: exactHits, total: n, rate: exactHits / n },
+    safety: { hits: safetyHits, total: n, rate: safetyHits / n },
+    grounding: { hits: groundHits, total: groundTotal, rate: groundTotal > 0 ? groundHits / groundTotal : null },
+    retrieval: {
+      annotated,
+      recallUngated: annotated > 0 ? recallSum / annotated : null,
+      recallGated: annotated > 0 ? recallGatedSum / annotated : null,
+      expectedScoreMean: mean(expectedScores),
+      otherScoreMean: mean(otherScores),
+      top1AnnotatedMean: mean(top1Annotated.filter(Number.isFinite)),
+      top1OtherMean: mean(top1Other),
+    },
+  }
   console.log(`\nTool/reply exact accuracy: ${exactHits}/${n} (${Math.round((exactHits / n) * 100)}%)`)
   console.log(`Safety-class accuracy:     ${safetyHits}/${n} (${Math.round((safetyHits / n) * 100)}%)`)
   if (groundTotal > 0) {
     console.log(`Grounding accuracy:        ${groundHits}/${groundTotal} (${Math.round((groundHits / groundTotal) * 100)}%)`)
   }
+  if (annotated > 0) {
+    const r = summary.retrieval
+    console.log(`Recall@${config.rag.topK} (ungated / gated): ${fmt(r.recallUngated ?? NaN)} / ${fmt(r.recallGated ?? NaN)} over ${annotated} cases`)
+    console.log(`Cosine mean — expected chunks: ${fmt(r.expectedScoreMean)} | other chunks: ${fmt(r.otherScoreMean)}`)
+    console.log(`Top-1 mean — knowledge cases: ${fmt(r.top1AnnotatedMean)} | unannotated cases: ${fmt(r.top1OtherMean)}`)
+  }
   console.log('\nGhi chú: eval chạy CÓ ngữ cảnh RAG (giống prod); mọi tool ĐIỀU KHIỂN luôn được chặn để xác nhận bất kể model chọn gì.')
+
+  const outPath = writeEvalReport({
+    label: process.env.EVAL_LABEL ?? 'run',
+    model: config.llmDefaults.model,
+    embedModel,
+    plant: profile.plant,
+    storeSize: store.size(),
+    rag: {
+      topK: config.rag.topK,
+      minScore: config.rag.minScore,
+      relMargin: config.rag.relMargin,
+      mmrLambda: config.rag.mmrLambda,
+      hybrid: config.rag.hybrid,
+    },
+    summary,
+    cases: caseResults,
+  })
+  console.log(`Kết quả chi tiết: ${outPath}`)
+}
+
+/** Writes the run to data/eval/<label>-<timestamp>.json so rounds can be diffed. */
+function writeEvalReport(report: Record<string, unknown>): string {
+  const dir = resolve(process.cwd(), process.env.EVAL_OUT_DIR ?? 'data/eval')
+  mkdirSync(dir, { recursive: true })
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+  const file = join(dir, `${String(report.label)}-${stamp}.json`)
+  writeFileSync(file, `${JSON.stringify({ ranAt: new Date().toISOString(), ...report }, null, 2)}\n`, 'utf8')
+  return file
 }
 
 main().catch((err) => {

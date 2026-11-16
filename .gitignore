@@ -14,3 +14,6 @@ data/llm-config.json
 
 # Session history + pendingAction persisted at runtime (per-deployment state).
 data/sessions.json
+
+# Eval run reports (npm run eval), one JSON per run.
+data/eval/
