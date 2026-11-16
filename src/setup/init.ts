@@ -1,6 +1,6 @@
 import { Orchestrator } from '../agent/orchestrator'
 import type { Config } from '../config'
-import { getFewshot } from '../domain/fewshot'
+import { getFewshot, hasPlantFewshot } from '../domain/fewshot'
 import { loadProfile } from '../domain/profiles'
 import { OpenAICompatEngine, type LlmEngine } from '../llm'
 import { PlantMcpClient, type McpGateway, type McpTool } from '../mcp/client'
@@ -134,6 +134,11 @@ async function runInitPipeline(
     }
   }
 
+  if (!hasPlantFewshot(profile.plant)) {
+    console.warn(
+      `[setup] chưa có ví dụ mẫu riêng cho cây "${profile.plant}" — dùng bộ trung tính (chỉ dạy định dạng). Thêm bộ riêng trong src/domain/fewshot.ts.`,
+    )
+  }
   const orch = new Orchestrator({
     llm,
     mcp,
@@ -141,10 +146,13 @@ async function runInitPipeline(
     sessions,
     profile,
     tools,
-    fewshot: getFewshot(),
+    fewshot: getFewshot(profile),
     maxToolSteps: appCfg.agent.maxToolSteps,
     ragTopK: appCfg.rag.topK,
     ragMinScore: appCfg.rag.minScore,
+    ragRelMargin: appCfg.rag.relMargin,
+    ragMmrLambda: appCfg.rag.mmrLambda,
+    ragHybrid: appCfg.rag.hybrid,
     decisionTemp: appCfg.llm.decisionTemp,
     replyTemp: appCfg.llm.replyTemp,
   })

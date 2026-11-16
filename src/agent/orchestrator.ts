@@ -1,6 +1,6 @@
-import type { PlantProfile } from '../domain/profiles'
+import { type PlantProfile, plantDisplayName } from '../domain/profiles'
 import type { ChatMessage, LlmEngine } from '../llm'
-import { assembleMessages, buildSystemPrompt } from '../llm/prompt'
+import { assembleMessages, buildSystemPrompt, knowledgeLabel } from '../llm/prompt'
 import { sanitizeArgs } from '../mcp/args'
 import type { McpGateway, McpTool } from '../mcp/client'
 import { describeMcpError, isRouteErrorText } from '../mcp/errors'
@@ -54,6 +54,12 @@ export interface OrchestratorDeps {
   ragTopK: number
   /** Drop retrieved chunks below this cosine score. Defaults to 0 (off) when unset. */
   ragMinScore?: number
+  /** Drop retrieved chunks scoring below top1 - margin. Defaults to off when unset. */
+  ragRelMargin?: number
+  /** MMR relevance weight for the final top-K. Defaults to 1 (plain top-K) when unset. */
+  ragMmrLambda?: number
+  /** Fuse BM25 with dense ranking. Defaults to off when unset. */
+  ragHybrid?: boolean
   /** Temperature for the JSON decision call. Defaults to 0.1 when unset. */
   decisionTemp?: number
   /** Temperature for the free-text fallback answer. Defaults to 0.3 when unset. */
@@ -228,7 +234,7 @@ export class Orchestrator {
       ...history,
       {
         role: 'user',
-        content: `[Kết quả ${pending.tool}]\n${resultText}\nHãy tóm tắt và trả lời người dùng bằng tiếng Việt, ngắn gọn, so với khoảng tối ưu của dâu nếu phù hợp.`,
+        content: `[Kết quả ${pending.tool}]\n${resultText}\nHãy tóm tắt và trả lời người dùng bằng tiếng Việt, ngắn gọn, so với khoảng tối ưu của ${plantDisplayName(profile)} nếu phù hợp.`,
       },
     ]
   }
@@ -283,7 +289,7 @@ export class Orchestrator {
     mode: 'buffered' | 'stream',
     signal?: AbortSignal,
   ): AsyncGenerator<ChatStreamEvent, void, unknown> {
-    const { llm, store, sessions, profile, tools, fewshot, maxToolSteps, ragTopK, ragMinScore } = this.deps
+    const { llm, store, sessions, profile, tools, fewshot, maxToolSteps, ragTopK, ragMinScore, ragRelMargin, ragMmrLambda, ragHybrid } = this.deps
 
     // 1) Resolve any pending confirmation via free-text yes/no.
     const pending = sessions.getPending(userId, sessionId)
@@ -317,9 +323,27 @@ export class Orchestrator {
 
     // 2) Normal agent loop.
     const system = buildSystemPrompt({ profile, tools, fewshot })
-    const rag = await retrieve(store, llm, message, ragTopK, ragMinScore)
     const history = sessions.getHistory(userId, sessionId)
-    const messages: ChatMessage[] = assembleMessages({ system, history, ragContext: rag.contextText, userMessage: message })
+    const prevQuery = [...history].reverse().find((m) => m.role === 'user')?.content
+    let ragContext = ''
+    try {
+      const rag = await retrieve(store, llm, message, ragTopK, ragMinScore, {
+        prevQuery: typeof prevQuery === 'string' ? prevQuery : undefined,
+        relMargin: ragRelMargin,
+        mmrLambda: ragMmrLambda,
+        hybrid: ragHybrid,
+      })
+      ragContext = rag.contextText
+    } catch (err) {
+      console.warn(`[rag] truy hồi thất bại (${(err as Error).message}) — tiếp tục không có ngữ cảnh tri thức.`)
+    }
+    const messages: ChatMessage[] = assembleMessages({
+      system,
+      history,
+      ragContext,
+      knowledgeLabel: knowledgeLabel(profile),
+      userMessage: message,
+    })
 
     let finalReply: string | undefined
     let pendingView: PendingActionView | null = null

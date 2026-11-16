@@ -1,0 +1,34 @@
+{
+  "plant": "bean-sprout",
+  "name_vi": "giá đỗ",
+  "temperature_range": [27.0, 30.0],
+  "humidity_range": [60.0, 65.0],
+  "soil_moisture_range": null,
+  "light_range": null,
+  "scientific_name": "Vigna radiata",
+  "aliases": ["giá đỗ", "giá đỗ xanh", "giá đậu xanh", "giá", "bean sprout"],
+  "soil_ph_range": null,
+  "daily_light_hours": [0.0, 0.0],
+  "ec_range": null,
+  "light_description": "Giá đỗ phải ươm trong tối. Sản phẩm yêu cầu thân mầm thẳng, màu trắng, lá vàng hoặc xanh nhạt, mà ánh sáng làm mầm đổi màu, nên cần tránh ánh sáng mặt trời trong suốt quá trình sinh trưởng, đặc biệt khi mầm dài khoảng 1,5 cm, và cả khi đem bán (ĐH Cần Thơ). Buồng ươm giá cần thoáng khí và không có ánh sáng; đèn chiếu sáng chỉ dùng khi ươm rau mầm lá xanh, không dùng khi ươm giá (ĐH Cần Thơ). Quy trình máy làm giá tự động cũng yêu cầu ngăn ánh sáng (Tạp chí VAAS).",
+  "toxicity": "Giá đỗ được ăn sống hoặc nấu chín (Tạp chí VAAS). Nguy cơ an toàn thực phẩm chính là chất cấm: một số cơ sở dùng \"nước kẹo\" chứa 6-Benzylaminopurine (6-BAP) để giá mọc nhanh, mập, trắng; đây là hành vi vi phạm pháp luật, dùng lâu dài có thể gây rối loạn phát triển tế bào, ảnh hưởng hệ thần kinh, thậm chí gây dị tật thai nhi (UBND Ninh Bình). Giới hạn vi sinh được dùng để đánh giá giá đỗ trong nghiên cứu máy tự động: Coliforms 100 CFU/g, E. coli 10 CFU/g, Salmonella 0; mẫu giá làm bằng máy và mẫu thủ công đều đạt (Tạp chí VAAS).",
+  "care_notes": "Cây giá cần đủ oxy, đủ nước tưới và được che tối (Tạp chí VAAS). Nhiệt độ thấp nhất để đậu nảy mầm là 10°C, cao nhất 28–30°C và không vượt quá 32°C; quá lạnh thì giá mọc chậm, thu hoạch lâu, năng suất giảm, quá nóng thì giá mọc nhanh nhưng ốm, nhiều rễ sợi, chất lượng kém (ĐH Cần Thơ). Sau khi nảy mầm, tưới quá nhiều hoặc ngâm nước quá lâu làm giá thiếu oxy và có thể chết (ĐH Cần Thơ). Nếu vừa thu hoạch xong mà làm mẻ mới ngay thì phải vệ sinh kỹ khay, lưới mành, khăn (ĐH Cần Thơ). Máy làm giá tự động có hệ thống sục khí để tăng oxy và dùng tia UV khử trùng trước khi thu hoạch (Tạp chí VAAS). Không dùng bất kỳ chất kích thích sinh trưởng nào (ĐH Cần Thơ; UBND Ninh Bình).",
+  "fertilizer": "Các quy trình làm giá trong tài liệu không dùng phân bón: nước tưới vừa cấp ẩm vừa cấp dinh dưỡng trong giai đoạn ngâm hạt và ủ giá, và các ion kim loại trong nước (Ca2+, Mg2+, Cu2+) cùng lượng oxy hòa tan ảnh hưởng đến độ giòn và mùi vị của giá (Tạp chí VAAS). Chỉ dùng nguồn nước sạch, ngâm ủ tự nhiên; nếu cần dùng chế phẩm thì chỉ dùng loại có trong danh mục được phép và đảm bảo thời gian cách ly theo quy định (UBND Ninh Bình).",
+  "watering": "Quy trình máy tự động tối ưu: nước tưới 28–30°C, chu kỳ 30 phút một lần, mỗi lần tưới 1 phút, mật độ lưu lượng 0,05 L/phút/dm² khay, tổng thời gian tưới 48 giờ (Tạp chí VAAS). Tưới dày hơn (15 phút một lần, mỗi lần 2 phút) làm giá thừa nước, kém giòn và có mùi ủng; tưới thưa hơn (45–60 phút một lần) thì giá thiếu ẩm, năng suất thấp và kém giòn (Tạp chí VAAS). Hệ thống ươm tự động của ĐH Cần Thơ tưới tối đa 12 lần mỗi ngày, mỗi lần 30 giây, cách nhau 2 giờ, nước tưới 27–30°C và bật bộ gia nhiệt khi nước lạnh hơn mức cài đặt; độ ẩm không khí thấp hơn ngưỡng thì bơm tưới, cao hơn ngưỡng thì bật quạt hút ẩm (ĐH Cần Thơ). Cách ủ thủ công truyền thống tưới 3–4 lần mỗi ngày (Tạp chí VAAS).",
+  "pests": "Chọn hạt đỗ đều, không sâu mọt và có nguồn gốc rõ ràng (Tạp chí VAAS; UBND Ninh Bình).",
+  "diseases": "Điều kiện nảy mầm ẩm và giàu dinh dưỡng khiến giá dễ nhiễm vi sinh vật như nấm men, pseudomonads, enterobacteria và vi khuẩn axit lactic; vi sinh vật gây bệnh có thể làm thối giá trong suốt quá trình sản xuất (Tạp chí VAAS). Thừa nước làm giá thiếu oxy, bị ủng hoặc chết (Tạp chí VAAS; ĐH Cần Thơ). Với hệ thống tưới tự động, tỷ lệ hư hỏng do úng nước dưới 0,2% (ĐH Cần Thơ).",
+  "growth_stages": "Giá đỗ là hạt đậu nảy mầm, dài khoảng 3–7 cm (ĐH Cần Thơ; UBND Ninh Bình). Quy trình gồm ngâm hạt, gieo vào khay, tưới gián đoạn theo chu kỳ rồi thu hoạch (Tạp chí VAAS). Hạt ngâm 4 giờ ở 30–35°C có 93–96% nảy mầm chỉ sau 5 giờ tưới (Tạp chí VAAS). Khi mầm dài khoảng 1,5 cm là giai đoạn quan trọng nhất phải tránh ánh sáng (ĐH Cần Thơ). Máy tự động cho thu hoạch sau 48–72 giờ, còn cách ủ thủ công là 72–96 giờ (Tạp chí VAAS).",
+  "planting": "Dùng đỗ xanh hạt đều, tròn, vỏ xanh bóng, không sâu mọt; nghiên cứu dùng giống BM04, hạt đường kính khoảng 2,5 mm, 100 g có 2.800–3.000 hạt (Tạp chí VAAS). Ngâm hạt tối ưu ở 35°C trong 4 giờ; ngâm quá lâu ở nhiệt độ cao (40°C trong 5 giờ) làm hạt thiếu oxy, dễ nhớt và tỷ lệ nảy mầm giảm còn 80% (Tạp chí VAAS). Hệ thống của ĐH Cần Thơ ngâm hạt trong nước ấm 37–40°C rồi xả sạch, vớt ráo; cách thủ công ngâm 6–10 giờ (ĐH Cần Thơ; Tạp chí VAAS). Mật độ gieo tối ưu 40 g hạt trên mỗi dm² khay: thưa hơn (20 g/dm²) giá dài và gầy, dày hơn (45 g/dm²) giá mọc không đều, năng suất thấp (Tạp chí VAAS). Khay đặt trên giá đỡ cao khoảng 5 cm, lót lưới mành rồi gieo đậu (ĐH Cần Thơ).",
+  "harvest": "Với máy tự động, thu hoạch sau 48 giờ tưới, năng suất khoảng 7 kg giá trên 1 kg đỗ; giá trắng đều, thân 4–6 cm, rễ 1–1,5 cm, đường kính 2–3 mm, giòn và thơm (Tạp chí VAAS). Hệ thống của ĐH Cần Thơ thu hoạch sau 2,5 ngày khi cây giá cao khoảng 5 cm, tỷ lệ nảy mầm từ 95% trở lên (ĐH Cần Thơ). Giá thành phẩm có độ ẩm khoảng 84%, protein khoảng 3,2 g/100 g và vitamin C khoảng 14 mg/100 g (Tạp chí VAAS). Khi đem bán cần tránh ánh sáng mặt trời để giá không đổi màu (ĐH Cần Thơ).",
+  "propagation": null,
+  "varieties": [
+    "Đỗ xanh giống BM04 (hạt tròn đều, đường kính khoảng 2,5 mm), giống dùng trong nghiên cứu máy làm giá tự động (Tạp chí VAAS)",
+    "Giá có thể làm từ nhiều loại đỗ: đỗ xanh, đỗ tương, đỗ đen (UBND Ninh Bình)"
+  ],
+  "sources": [
+    "https://tapchi.vaas.vn/sites/tapchi.vaas.vn/files/tapchi/2021-05/TC%20so%207-2019-08.pdf",
+    "https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/download/2390/1429/1429",
+    "https://s3-cdn.ninhbinh.gov.vn/nbportalcdn/tenant-binhluc1/tenant-binhluc1/van-ban/bituyntruynattp.pdf"
+  ],
+  "notes": "BẢN NHÁP chờ duyệt, soạn từ 3 PDF trong data/pdf/bean-sprout/ (2026-11): Tạp chí KHCN Nông nghiệp VN (VAAS) số 7/2019 về máy làm giá tự động, Tạp chí Khoa học ĐH Cần Thơ 2016 về hệ thống ươm rau mầm, tài liệu tuyên truyền ATTP của UBND Ninh Bình. Khoảng số: nhiệt độ 27–30°C và độ ẩm không khí 60–65% lấy theo ĐH Cần Thơ (đo trên buồng ươm thực nghiệm); VAAS trích tài liệu nước ngoài nêu 22–24°C và độ ẩm 95% — hai nguồn chưa thống nhất, người duyệt cần chọn. Giá không trồng trên đất nên soil_moisture_range, soil_ph_range, ec_range để null: tưới theo chu kỳ thời gian (30 phút/lần, mỗi lần 1 phút) chứ không theo ngưỡng độ ẩm đất. daily_light_hours = 0 vì giá ươm trong tối. scientific_name (Vigna radiata, đậu xanh) là kiến thức chung, không lấy từ 3 tài liệu."
+}

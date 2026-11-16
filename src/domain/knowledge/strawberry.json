@@ -5,6 +5,7 @@
   "soil_moisture_range": [75.0, 80.0],
   "light_range": [200.0, 800.0],
   "scientific_name": "Fragaria × ananassa",
+  "name_vi": "dâu tây",
   "aliases": ["dâu tây", "dâu", "strawberry"],
   "soil_ph_range": [5.5, 6.5],
   "light_description": "Dâu tây là cây ưa sáng, cần đủ ánh sáng để sinh trưởng và cho quả; ở Đà Lạt cây được trồng trong nhà che nylon hoặc ngoài trời có dàn che (Khuyến nông Lâm Đồng). Trong mô hình trồng có kiểm soát môi trường, cường độ ánh sáng là một trong các yếu tố được theo dõi bằng cảm biến cùng với nhiệt độ, độ ẩm, EC, pH và CO2 (Cổng KHCN VISTA). Với chiếu sáng bổ sung bằng đèn LED, tỷ lệ ánh sáng xanh/đỏ khoảng 30:70 và cường độ đo được khoảng 100–110 µmol/m2/s được áp dụng trong mô hình trồng dâu tây thủy canh trong container của Trung tâm Nghiên cứu Khoai tây, Rau và Hoa (Đà Lạt). Cần bố trí mật độ hợp lý và tỉa bớt lá che khuất để ánh sáng chiếu đều; tránh trồng quá dày làm giảm quang hợp và dễ phát sinh bệnh (Khuyến nông Lâm Đồng).",

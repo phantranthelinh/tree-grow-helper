@@ -47,8 +47,17 @@ export const config = {
     // (keep all top-K, unchanged behavior). Raise (~0.3–0.4 for bge-m3) once the
     // grounding eval shows weak chunks are misleading the small model.
     minScore: num(process.env.RAG_MIN_SCORE, 0),
+    // Relative cutoff: drop hits scoring below top1 - margin, so a weak tail (or an
+    // off-topic turn like "xin chào") doesn't inject filler. 0 or negative = off.
+    relMargin: num(process.env.RAG_REL_MARGIN, 0.15),
+    // MMR weight over a topK*3 candidate pool: 1 = plain top-K, lower = more diverse.
+    mmrLambda: num(process.env.RAG_MMR_LAMBDA, 0.7),
+    // RAG_HYBRID=1 fuses BM25 (exact terms: Botrytis, PS8.10, EC, pH) with dense ranking.
+    hybrid: process.env.RAG_HYBRID === '1',
     docsDir: process.env.RAG_DOCS_DIR ?? 'data/docs',
     stagingDir: process.env.RAG_STAGING_DIR ?? 'data/staging',
+    // Source PDFs, committed to the repo so a re-scrape never depends on the site staying up.
+    pdfDir: process.env.RAG_PDF_DIR ?? 'data/pdf',
     embedCachePath: process.env.RAG_EMBED_CACHE ?? 'data/cache/embeddings.jsonl',
     chunkSize: num(process.env.RAG_CHUNK_SIZE, 600),
     chunkOverlap: num(process.env.RAG_CHUNK_OVERLAP, 80),
@@ -62,6 +71,12 @@ export const config = {
     pendingTtlMs: num(process.env.PENDING_TTL_MS, 30 * 60 * 1000),
   },
   defaultPlant: process.env.DEFAULT_PLANT ?? 'strawberry',
+  // Crawl4AI server used by `npm run scrape` (docker compose --profile scrape up -d crawl4ai).
+  // Since 0.9 it rejects every request without the bearer token it was started with.
+  crawl4ai: {
+    url: process.env.CRAWL4AI_URL ?? 'http://localhost:11235',
+    token: process.env.CRAWL4AI_API_TOKEN ?? '',
+  },
 } as const
 
 export type Config = typeof config

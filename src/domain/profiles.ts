@@ -12,6 +12,8 @@ const Range = z.tuple([z.number(), z.number()])
 export const PlantProfileSchema = z.object({
   plant: z.string(),
   scientific_name: z.string().nullable().default(null),
+  /** Vietnamese display name used in prompts; falls back to aliases[0] then `plant`. */
+  name_vi: z.string().nullable().default(null),
   aliases: z.array(z.string()).default([]),
 
   // numeric optimal ranges
@@ -87,4 +89,9 @@ export function summarizeRanges(p: PlantProfile): string {
   add('giờ chiếu sáng/ngày', p.daily_light_hours, 'h')
   add('EC', p.ec_range, ' mS/cm')
   return parts.join('; ')
+}
+
+/** Vietnamese name of the plant for prompt text. */
+export function plantDisplayName(p: PlantProfile): string {
+  return p.name_vi ?? p.aliases[0] ?? p.plant
 }
