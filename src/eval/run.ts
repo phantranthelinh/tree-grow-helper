@@ -23,7 +23,8 @@ import { retrieve } from '../rag/retrieve'
 import { InMemoryVectorStore } from '../rag/store'
 import { loadLlmConfig } from '../setup/llmConfig'
 import { evalCasesFor, type EvalExpect } from './dataset'
-import { gradeGrounding } from './grounding'
+import { gradeGrounding, hasForeignScript } from './grounding'
+import { type CaseResult, chunkRecall, summarize } from './metrics'
 
 interface Decision {
   type: 'reply' | 'tool'
@@ -73,18 +74,7 @@ async function main(): Promise<void> {
     `Eval: ${EVAL_CASES.length} cases | model=${config.llmDefaults.model} | embed=${embedModel} | plant=${profile.plant} | store=${store.size()} chunks${dimNote}\n`,
   )
 
-  let exactHits = 0
-  let safetyHits = 0
-  let groundTotal = 0
-  let groundHits = 0
-  const expectedScores: number[] = []
-  const otherScores: number[] = []
-  const top1Annotated: number[] = []
-  const top1Other: number[] = []
-  let recallSum = 0
-  let recallGatedSum = 0
-  let annotated = 0
-  const caseResults: Array<Record<string, unknown>> = []
+  const results: CaseResult[] = []
   for (const c of EVAL_CASES) {
     const startedAt = Date.now()
     let recall: number | null = null
@@ -106,32 +96,13 @@ async function main(): Promise<void> {
     const raw = await retrieve(store, llm, c.message, config.rag.topK, 0, { hybrid: config.rag.hybrid })
     const top1 = raw.chunks.reduce((m, h) => Math.max(m, h.score), -Infinity)
     let retrievalNote = ''
-    if (raw.chunks.length > 0) {
-      const matches = (id: string | undefined, prefix: string) => !!id && id.startsWith(prefix)
-      if (c.expectChunks && c.expectChunks.length > 0) {
-        annotated++
-        top1Annotated.push(top1)
-        const found = (chunks: typeof raw.chunks) =>
-          c.expectChunks!.filter((p) => chunks.some((h) => matches(h.id, p))).length / c.expectChunks!.length
-        recall = found(raw.chunks)
-        recallGated = found(rag.chunks)
-        recallSum += recall
-        recallGatedSum += recallGated
-        for (const h of raw.chunks) {
-          if (c.expectChunks.some((p) => matches(h.id, p))) expectedScores.push(h.score)
-          else otherScores.push(h.score)
-        }
-        retrievalNote = ` | recall=${recall.toFixed(2)} top1=${fmt(top1)}`
-      } else {
-        top1Other.push(top1)
-        retrievalNote = ` | top1=${fmt(top1)}`
-      }
-    } else if (c.expectChunks && c.expectChunks.length > 0) {
-      annotated++
-      top1Annotated.push(NaN)
-      recall = 0
-      recallGated = 0
-      retrievalNote = ' | recall=0.00 top1=n/a'
+    if (c.expectChunks && c.expectChunks.length > 0) {
+      // An empty ungated pass still counts as an annotated case with recall 0.
+      recall = chunkRecall(c.expectChunks, raw.chunks.map((h) => h.id ?? ''))
+      recallGated = chunkRecall(c.expectChunks, rag.chunks.map((h) => h.id ?? ''))
+      retrievalNote = ` | recall=${recall.toFixed(2)} top1=${fmt(raw.chunks.length > 0 ? top1 : NaN)}`
+    } else if (raw.chunks.length > 0) {
+      retrievalNote = ` | top1=${fmt(top1)}`
     }
     let actual: Decision | null = null
     try {
@@ -140,36 +111,32 @@ async function main(): Promise<void> {
       })
       actual = parse(raw)
     } catch (err) {
-      console.error(`\nLLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${config.llmDefaults.model}"?`)
+      console.error(`
+LLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${config.llmDefaults.model}"?`)
       console.error(String((err as Error).message))
       process.exit(1)
     }
     const { exact, safety } = grade(c.expect, actual)
-    if (exact) exactHits++
-    if (safety) safetyHits++
 
     let groundNote = ''
     let grounding: { pass: boolean; reasons: string[] } | null = null
     if (c.grounding) {
-      groundTotal++
       const gr = gradeGrounding(c.grounding, actual?.message ?? '')
       grounding = { pass: gr.pass, reasons: gr.reasons }
-      if (gr.pass) {
-        groundHits++
-        groundNote = ' | ground=PASS'
-      } else {
-        groundNote = ` | ground=FAIL(${gr.reasons.join('; ')})`
-      }
+      groundNote = gr.pass ? ' | ground=PASS' : ` | ground=FAIL(${gr.reasons.join('; ')})`
     }
 
     const want = c.expect.type === 'tool' ? c.expect.tool : 'reply'
     const got = actual ? (actual.type === 'tool' ? actual.tool : 'reply') : '(parse-fail)'
-    console.log(`${exact ? 'PASS' : 'FAIL'} [${c.id}] want=${want} got=${got}${groundNote}${retrievalNote}`)
-    caseResults.push({
+    const foreignScript = hasForeignScript(actual?.message ?? '')
+    const scriptNote = foreignScript ? ' | SCRIPT=FOREIGN' : ''
+    console.log(`${exact ? 'PASS' : 'FAIL'} [${c.id}] want=${want} got=${got}${groundNote}${retrievalNote}${scriptNote}`)
+    const scored = (chunks: typeof raw.chunks) => chunks.map((h) => ({ id: h.id ?? '', score: Number(h.score.toFixed(4)) }))
+    results.push({
       id: c.id,
-      message: c.message,
-      want,
-      got,
+      set: c.set ?? 'r0',
+      want: want ?? '',
+      got: got ?? '',
       exact,
       safety,
       reply: actual?.message ?? null,
@@ -177,36 +144,42 @@ async function main(): Promise<void> {
       expectChunks: c.expectChunks ?? null,
       recall,
       recallGated,
-      retrieved: rag.chunks.map((h) => ({ id: h.id, score: Number(h.score.toFixed(4)) })),
+      retrieved: scored(rag.chunks),
+      retrievedUngated: scored(raw.chunks),
+      foreignScript,
       ms: Date.now() - startedAt,
     })
   }
 
-  const n = EVAL_CASES.length
-  const summary = {
-    exact: { hits: exactHits, total: n, rate: exactHits / n },
-    safety: { hits: safetyHits, total: n, rate: safetyHits / n },
-    grounding: { hits: groundHits, total: groundTotal, rate: groundTotal > 0 ? groundHits / groundTotal : null },
-    retrieval: {
-      annotated,
-      recallUngated: annotated > 0 ? recallSum / annotated : null,
-      recallGated: annotated > 0 ? recallGatedSum / annotated : null,
-      expectedScoreMean: mean(expectedScores),
-      otherScoreMean: mean(otherScores),
-      top1AnnotatedMean: mean(top1Annotated.filter(Number.isFinite)),
-      top1OtherMean: mean(top1Other),
-    },
+  // `summary` is the round-0 case set so its keys and meaning stay comparable across rounds.
+  const r0 = results.filter((r) => r.set === 'r0')
+  const r1 = results.filter((r) => r.set === 'r1')
+  const summary = summarize(r0)
+  const summaryR1 = summarize(r1)
+  const summaryAll = summarize(results)
+  const pct = (h: number, t: number): string => `${h}/${t} (${t > 0 ? Math.round((h / t) * 100) : 0}%)`
+  console.log(`
+Round-0 cases (${r0.length}):`)
+  console.log(`Tool/reply exact accuracy: ${pct(summary.exact.hits, summary.exact.total)}`)
+  console.log(`Safety-class accuracy:     ${pct(summary.safety.hits, summary.safety.total)}`)
+  if (summary.grounding.total > 0) {
+    console.log(`Grounding accuracy:        ${pct(summary.grounding.hits, summary.grounding.total)}`)
   }
-  console.log(`\nTool/reply exact accuracy: ${exactHits}/${n} (${Math.round((exactHits / n) * 100)}%)`)
-  console.log(`Safety-class accuracy:     ${safetyHits}/${n} (${Math.round((safetyHits / n) * 100)}%)`)
-  if (groundTotal > 0) {
-    console.log(`Grounding accuracy:        ${groundHits}/${groundTotal} (${Math.round((groundHits / groundTotal) * 100)}%)`)
-  }
-  if (annotated > 0) {
+  console.log(`Replies free of Cyrillic/CJK: ${pct(summary.scriptClean.hits, summary.scriptClean.total)}`)
+  if (summary.retrieval.annotated > 0) {
     const r = summary.retrieval
-    console.log(`Recall@${config.rag.topK} (ungated / gated): ${fmt(r.recallUngated ?? NaN)} / ${fmt(r.recallGated ?? NaN)} over ${annotated} cases`)
-    console.log(`Cosine mean — expected chunks: ${fmt(r.expectedScoreMean)} | other chunks: ${fmt(r.otherScoreMean)}`)
-    console.log(`Top-1 mean — knowledge cases: ${fmt(r.top1AnnotatedMean)} | unannotated cases: ${fmt(r.top1OtherMean)}`)
+    console.log(`Recall@${config.rag.topK} (ungated / gated): ${fmt(r.recallUngated ?? NaN)} / ${fmt(r.recallGated ?? NaN)} over ${r.annotated} cases`)
+    console.log(`Cosine mean — expected chunks: ${fmt(r.expectedScoreMean ?? NaN)} | other chunks: ${fmt(r.otherScoreMean ?? NaN)}`)
+    console.log(`Top-1 mean — knowledge cases: ${fmt(r.top1AnnotatedMean ?? NaN)} | unannotated cases: ${fmt(r.top1OtherMean ?? NaN)}`)
+  }
+  if (r1.length > 0) {
+    const g = summaryR1.grounding
+    console.log(
+      `Round-1 cases (${r1.length}, outside the stop criterion): exact ${pct(summaryR1.exact.hits, summaryR1.exact.total)}` +
+        (g.total > 0 ? ` | grounding ${pct(g.hits, g.total)}` : '') +
+        ` | recall@${config.rag.topK} gated ${fmt(summaryR1.retrieval.recallGated ?? NaN)} over ${summaryR1.retrieval.annotated}` +
+        ` | script-clean ${pct(summaryR1.scriptClean.hits, summaryR1.scriptClean.total)}`,
+    )
   }
   console.log('\nGhi chú: eval chạy CÓ ngữ cảnh RAG (giống prod); mọi tool ĐIỀU KHIỂN luôn được chặn để xác nhận bất kể model chọn gì.')
 
@@ -224,7 +197,9 @@ async function main(): Promise<void> {
       hybrid: config.rag.hybrid,
     },
     summary,
-    cases: caseResults,
+    summaryR1,
+    summaryAll,
+    cases: results,
   })
   console.log(`Kết quả chi tiết: ${outPath}`)
 }

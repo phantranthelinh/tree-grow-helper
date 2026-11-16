@@ -1,7 +1,34 @@
+import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BEAN_SPROUT_EVAL_CASES, EVAL_CASES, evalCasesFor } from '../src/eval/dataset'
+import { config } from '../src/config'
+import { loadDiseases } from '../src/domain/diseases'
+import { loadProfile } from '../src/domain/profiles'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 import { classifyTool } from '../src/mcp/policy'
+import { profileToChunks } from '../src/rag/ingest'
+import { buildDiseaseChunks } from '../src/rag/ingestDiseases'
+import { buildDocChunks, readReviewedDocs } from '../src/rag/ingestDocs'
+
+const chunkOpts = { chunkSize: config.rag.chunkSize, chunkOverlap: config.rag.chunkOverlap, minChunkLen: config.rag.minChunkLen }
+
+/** Chunk ids the ingest pipeline produces for a plant, built without embeddings. */
+function chunkIdsFor(plant: string): Set<string> {
+  const profile = loadProfile(plant)
+  const docs = readReviewedDocs(resolve(process.cwd(), config.rag.docsDir)).filter(
+    (d) => !d.plant || d.plant.trim().toLowerCase() === plant,
+  )
+  // Plants without a disease KB are valid: init skips the disease source when the file is absent.
+  let diseases: ReturnType<typeof loadDiseases> = []
+  try {
+    diseases = loadDiseases(plant)
+  } catch {}
+  return new Set([
+    ...profileToChunks(profile, chunkOpts).map((c) => c.id),
+    ...buildDocChunks(docs, { plant, ...chunkOpts }).map((c) => c.id),
+    ...buildDiseaseChunks(diseases, { plant }).map((c) => c.id),
+  ])
+}
 
 describe('eval dataset', () => {
   it('has at least 32 cases', () => {
@@ -61,5 +88,32 @@ describe('eval dataset', () => {
     expect(grounded.length).toBeGreaterThanOrEqual(6)
     const citing = grounded.filter((c) => c.grounding?.requireCitation)
     expect(citing.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('every chunk label names a chunk the ingest pipeline produces', () => {
+    const sets: Array<[string, typeof EVAL_CASES]> = [
+      ['strawberry', EVAL_CASES],
+      ['bean-sprout', BEAN_SPROUT_EVAL_CASES],
+    ]
+    for (const [plant, cases] of sets) {
+      const ids = chunkIdsFor(plant)
+      for (const c of cases) {
+        for (const label of (c.expectChunks ?? []).flat()) {
+          if (label.includes('#')) expect(ids.has(label), `${c.id}: ${label}`).toBe(true)
+          else expect([...ids].some((id) => id.startsWith(label)), `${c.id}: ${label}`).toBe(true)
+        }
+      }
+    }
+  })
+
+  it('keeps round-0 comparability: r0 cases unchanged in number, r1 cases tagged', () => {
+    expect(EVAL_CASES.filter((c) => !c.set)).toHaveLength(52)
+    expect(BEAN_SPROUT_EVAL_CASES.filter((c) => !c.set)).toHaveLength(12)
+    expect(EVAL_CASES.filter((c) => c.set === 'r1')).toHaveLength(20)
+    expect(BEAN_SPROUT_EVAL_CASES.filter((c) => c.set === 'r1')).toHaveLength(4)
+  })
+
+  it('kb-moisture carries no retrieval label (no chunk states a soil-moisture %)', () => {
+    expect(EVAL_CASES.find((c) => c.id === 'kb-moisture')?.expectChunks).toBeUndefined()
   })
 })

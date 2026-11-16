@@ -20,7 +20,8 @@ export interface EvalGrounding {
 /**
  * Source markers found across the curated Vietnamese KB (profile `sources[]`).
  * A reply "cites" when it names one of these. `nguồn` covers an explicit
- * "nguồn: ..." / "theo nguồn ...".
+ * "nguồn: ..." / "theo nguồn ..." (see NGUON_CITATION); a bare "nguồn" is not a marker
+ * because "chọn nguồn cây giống" / "nguồn nước" are everyday uses.
  */
 const SOURCE_MARKERS = [
   'khuyến nông',
@@ -35,17 +36,22 @@ const SOURCE_MARKERS = [
   'techport',
   '.gov.vn',
   '.edu.vn',
-  'nguồn',
 ]
+
+const NGUON_CITATION = /(?:theo|tại)\s+nguồn|nguồn\s*(?::|\[|\(|https?:)/
 
 /** Lowercase + collapse whitespace to a single space. */
 function normalize(s: string): string {
   return s.toLowerCase().replace(/\s+/g, ' ').trim()
 }
 
-/** Whitespace-insensitive containment so "30 %" matches "30%" and "mốc  xám" matches "mốc xám". */
+/**
+ * Whitespace-insensitive containment so "30 %" matches "30%" and "mốc  xám" matches "mốc xám".
+ * A comma between digits is a Vietnamese decimal ("5,5") and compares equal to a dot; a range
+ * like "154–182" is untouched and still matches "154".
+ */
 function contains(haystack: string, needle: string): boolean {
-  const strip = (s: string) => normalize(s).replace(/ /g, '')
+  const strip = (s: string) => normalize(s).replace(/(\d),(\d)/g, '$1.$2').replace(/ /g, '')
   return strip(haystack).includes(strip(needle))
 }
 
@@ -56,8 +62,11 @@ function contains(haystack: string, needle: string): boolean {
  */
 export function hasCitation(text: string): boolean {
   const t = normalize(text)
-  return SOURCE_MARKERS.some((m) => t.includes(m))
+  return SOURCE_MARKERS.some((m) => t.includes(m)) || NGUON_CITATION.test(t)
 }
+
+// The eval counts code-switching with the same check the orchestrator uses to repair it.
+export { hasForeignScript } from '../agent/orchestrator'
 
 export interface GroundingResult {
   pass: boolean
