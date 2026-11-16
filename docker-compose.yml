@@ -44,3 +44,19 @@ services:
     # Desktop for Mac/Windows, where it already works).
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # Crawler for `npm run scrape` (runs on the host, not in the ai-server image).
+  # Not started by a plain `docker compose up`; start it on demand with:
+  #   docker compose --profile scrape up -d crawl4ai
+  # CRAWL4AI_API_TOKEN must be set in .env: since 0.9 the server refuses
+  # requests without it. Bound to 127.0.0.1 so it is not reachable from the LAN.
+  crawl4ai:
+    image: unclecode/crawl4ai:0.9.5
+    container_name: crawl4ai
+    profiles: ["scrape"]
+    restart: "no"
+    shm_size: 1g
+    ports:
+      - "127.0.0.1:11235:11235"
+    environment:
+      CRAWL4AI_API_TOKEN: ${CRAWL4AI_API_TOKEN:-}
