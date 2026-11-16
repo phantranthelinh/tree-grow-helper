@@ -17,6 +17,12 @@ export interface EvalCase {
    * model would score by copying, not by grounding.
    */
   grounding?: EvalGrounding
+  /**
+   * Chunk-id prefixes the retriever should surface for this message, e.g.
+   * `strawberry:fertilizer` (profile field) or `disease:botrytis-gray-mold`.
+   * Drives the recall@k and score-distribution report.
+   */
+  expectChunks?: string[]
   note?: string
 }
 
@@ -34,8 +40,8 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'auto-water', message: 'Bật chế độ tưới tự động cho esp32-01.', expect: { type: 'tool', tool: 'set_mode', safety: 'control' } },
   { id: 'set-moisture-rule', message: 'Đặt luật tưới cho esp32-01 khi độ ẩm đất dưới 75%.', expect: { type: 'tool', tool: 'set_device_config', safety: 'control' } },
   { id: 'kb-temp', message: 'Cây dâu tây thích hợp nhiệt độ khoảng bao nhiêu?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['10', '27'] } },
-  { id: 'kb-pests', message: 'Cây dâu hay bị sâu bệnh gì?', expect: { type: 'reply' } },
-  { id: 'kb-moisture', message: 'Độ ẩm đất tối ưu cho dâu là bao nhiêu phần trăm?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['75', '80'], forbid: ['30%'] } },
+  { id: 'kb-pests', message: 'Cây dâu hay bị sâu bệnh gì?', expect: { type: 'reply' }, expectChunks: ['strawberry:pests'] },
+  { id: 'kb-moisture', message: 'Độ ẩm đất tối ưu cho dâu là bao nhiêu phần trăm?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['75', '80'], forbid: ['30%'] }, expectChunks: ['strawberry:watering'] },
 
   // --- A1: tools not previously covered ---
   { id: 'device-info', message: 'Cho xem thông tin chi tiết thiết bị esp32-01.', expect: { type: 'tool', tool: 'get_device_info', safety: 'read' } },
@@ -55,13 +61,13 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'water-15s', message: 'Mở nước tưới esp32-01 trong 15 giây.', expect: { type: 'tool', tool: 'set_pump', safety: 'control' } },
 
   // --- A3: knowledge questions that should stay a reply (drives RAG) ---
-  { id: 'kb-fertilizer', message: 'Nên bón phân gì cho dâu khi cây ra hoa?', expect: { type: 'reply' }, grounding: { requireCitation: true } },
-  { id: 'kb-botrytis', message: 'Dâu bị mốc xám (nấm Botrytis) thì xử lý sao?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] } },
-  { id: 'kb-harvest', message: 'Khi nào thì thu hoạch dâu được?', expect: { type: 'reply' } },
-  { id: 'kb-propagation', message: 'Dâu tây nhân giống bằng cách nào?', expect: { type: 'reply' } },
-  { id: 'kb-planting', message: 'Trồng dâu nên để khoảng cách cây bao nhiêu?', expect: { type: 'reply' }, grounding: { requireCitation: true } },
-  { id: 'kb-toxicity', message: 'Chó ăn phải lá dâu có sao không?', expect: { type: 'reply' } },
-  { id: 'kb-light-hours', message: 'Dâu tây cần mấy giờ nắng mỗi ngày?', expect: { type: 'reply' } },
+  { id: 'kb-fertilizer', message: 'Nên bón phân gì cho dâu khi cây ra hoa?', expect: { type: 'reply' }, grounding: { requireCitation: true }, expectChunks: ['strawberry:fertilizer'] },
+  { id: 'kb-botrytis', message: 'Dâu bị mốc xám (nấm Botrytis) thì xử lý sao?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] }, expectChunks: ['disease:botrytis-gray-mold'] },
+  { id: 'kb-harvest', message: 'Khi nào thì thu hoạch dâu được?', expect: { type: 'reply' }, expectChunks: ['strawberry:harvest'] },
+  { id: 'kb-propagation', message: 'Dâu tây nhân giống bằng cách nào?', expect: { type: 'reply' }, expectChunks: ['strawberry:propagation'] },
+  { id: 'kb-planting', message: 'Trồng dâu nên để khoảng cách cây bao nhiêu?', expect: { type: 'reply' }, grounding: { requireCitation: true }, expectChunks: ['strawberry:planting'] },
+  { id: 'kb-toxicity', message: 'Chó ăn phải lá dâu có sao không?', expect: { type: 'reply' }, expectChunks: ['strawberry:toxicity'] },
+  { id: 'kb-light-hours', message: 'Dâu tây cần mấy giờ nắng mỗi ngày?', expect: { type: 'reply' }, expectChunks: ['strawberry:light_description'] },
   { id: 'kb-ph', message: 'Đất trồng dâu nên có pH khoảng bao nhiêu?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['5.5', '6.5'] } },
 
   // --- A4: trap / chit-chat that should stay a reply (guards against over-triggering tools) ---
@@ -76,10 +82,10 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'symptom-leaf-spot', message: 'Lá dâu xuất hiện đốm nâu là bị gì?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
 
   // --- A6: specific disease diagnosis (disease KB) + uses (databank) — all reply ---
-  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] }, note: 'diagnose from disease KB' },
-  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['phấn trắng'] }, note: 'diagnose from disease KB' },
-  { id: 'diag-spider-mite', message: 'Lá dâu có chấm li ti vàng và có tơ nhện mảnh, xử lý thế nào?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
-  { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB' },
+  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] }, note: 'diagnose from disease KB', expectChunks: ['disease:botrytis-gray-mold'] },
+  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['phấn trắng'] }, note: 'diagnose from disease KB', expectChunks: ['disease:powdery-mildew'] },
+  { id: 'diag-spider-mite', message: 'Lá dâu có chấm li ti vàng và có tơ nhện mảnh, xử lý thế nào?', expect: { type: 'reply' }, note: 'diagnose from disease KB', expectChunks: ['disease:spider-mite'] },
+  { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB', expectChunks: ['disease:anthracnose'] },
   { id: 'uses-general', message: 'Dâu tây dùng để làm gì?', expect: { type: 'reply' } },
   { id: 'uses-processing', message: 'Dâu tây chế biến được những món gì?', expect: { type: 'reply' } },
 ]
