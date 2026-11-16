@@ -22,6 +22,7 @@ export function buildDiseaseChunks(diseases: Disease[], opts: IngestDiseasesOpti
       name_vi: d.name_vi,
       severity: d.severity,
       favorable_conditions: d.favorable_conditions,
+      source_url: d.sources[0] ?? null,
     },
   }))
 }

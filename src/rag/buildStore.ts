@@ -60,7 +60,7 @@ export async function ingestAll(
     console.warn(`[rag] disease KB skipped (${(err as Error).message}).`)
   }
 
-  saveEmbedCache(cachePath, cache)
+  saveEmbedCache(cachePath, cache, cache.used)
   const mixed = store.uniformDims()
     ? ''
     : ' ⚠ CHIỀU EMBEDDING KHÔNG ĐỒNG NHẤT — một số chunk sẽ không truy hồi được; xóa cache cũ.'

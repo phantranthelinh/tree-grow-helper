@@ -32,16 +32,27 @@ export interface IngestDocsOptions {
   embedModel?: string
 }
 
-/** Read reviewed source docs from every .jsonl file in a directory (empty if absent). */
+/**
+ * Read reviewed source docs from every .jsonl file in a directory (empty if absent).
+ * These files are edited by hand, so a malformed line is skipped with a warning
+ * instead of taking down the whole RAG build.
+ */
 export function readReviewedDocs(dir: string): SourceDoc[] {
   if (!existsSync(dir)) return []
   const docs: SourceDoc[] = []
   for (const file of readdirSync(dir)) {
     if (!file.endsWith('.jsonl')) continue
-    for (const line of readFileSync(join(dir, file), 'utf8').split('\n')) {
+    const lines = readFileSync(join(dir, file), 'utf8').split('\n')
+    for (const [idx, line] of lines.entries()) {
       const trimmed = line.trim()
       if (!trimmed) continue
-      const obj = JSON.parse(trimmed) as Partial<SourceDoc>
+      let obj: Partial<SourceDoc>
+      try {
+        obj = JSON.parse(trimmed) as Partial<SourceDoc>
+      } catch (err) {
+        console.warn(`[rag] bỏ qua dòng ${idx + 1} của ${join(dir, file)}: ${(err as Error).message}`)
+        continue
+      }
       if (
         typeof obj.text === 'string' &&
         typeof obj.source_url === 'string' &&
@@ -81,7 +92,8 @@ export function buildDocChunks(docs: SourceDoc[], opts: IngestDocsOptions = {}):
 
 /**
  * Ingest reviewed source documents into the vector store: chunk → embed (reusing
- * the on-disk cache) → drop near-duplicates → add. Returns the number of records
+ * the on-disk cache) → drop near-duplicates (of each other and of what the store
+ * already holds) → add. Returns the number of records
  * actually added. Advisory only — never touches control thresholds.
  */
 export async function ingestDocs(
@@ -90,7 +102,13 @@ export async function ingestDocs(
   docs: SourceDoc[],
   opts: IngestDocsOptions = {},
 ): Promise<number> {
-  const chunks = buildDocChunks(docs, opts)
+  const sameCrop = (d: SourceDoc) =>
+    !d.plant || !opts.plant || d.plant.trim().toLowerCase() === opts.plant.trim().toLowerCase()
+  const scoped = docs.filter(sameCrop)
+  if (scoped.length < docs.length) {
+    console.warn(`[rag] bỏ qua ${docs.length - scoped.length} tài liệu thuộc cây khác (không phải ${opts.plant}).`)
+  }
+  const chunks = buildDocChunks(scoped, opts)
   if (chunks.length === 0) return 0
 
   const cache = opts.cache ?? new Map<string, number[]>()
@@ -100,7 +118,7 @@ export async function ingestDocs(
     .map((c, i) => ({ ...c, embedding: embeddings[i] ?? [] }))
     .filter((c) => c.embedding.length > 0)
 
-  const deduped = dedupeByEmbedding(withEmbedding, opts.dedupeThreshold ?? 0.95)
+  const deduped = dedupeByEmbedding(withEmbedding, opts.dedupeThreshold ?? 0.95, store.all())
 
   const records: VectorRecord[] = deduped.map((c) => ({
     id: c.id,

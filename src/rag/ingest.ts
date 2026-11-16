@@ -1,6 +1,7 @@
 import type { PlantProfile } from '../domain/profiles'
 import type { LlmEngine } from '../llm'
 import { type EmbedCache, embedWithCache } from './embedCache'
+import { FIELD_LABELS_VI } from './labels'
 import { InMemoryVectorStore, type VectorRecord } from './store'
 import { chunkDocument, dropShortChunks } from './textChunk'
 
@@ -35,7 +36,7 @@ export interface ProfileChunkOptions {
  * Split the text portion of a profile into RAG chunks. Long fields (care_notes,
  * light_description…) are sub-split with the shared document chunker so one big
  * multi-topic field can't crowd a top-K slot or dilute its own embedding. Every
- * non-empty field still yields at least one chunk carrying its `[field]` label.
+ * non-empty field still yields at least one chunk carrying its Vietnamese field label.
  */
 export function profileToChunks(p: PlantProfile, opts: ProfileChunkOptions = {}): Chunk[] {
   const chunks: Chunk[] = []
@@ -48,7 +49,7 @@ export function profileToChunks(p: PlantProfile, opts: ProfileChunkOptions = {})
     // Keep the whole field if it's shorter than minChunkLen (don't drop it entirely).
     const finalPieces = pieces.length > 0 ? pieces : [trimmed]
     finalPieces.forEach((text, i) => {
-      chunks.push({ id: `${p.plant}:${field}#${i}`, field, text: `[${field}] ${text}` })
+      chunks.push({ id: `${p.plant}:${field}#${i}`, field, text: `[${FIELD_LABELS_VI[field] ?? field}] ${text}` })
     })
   }
   for (const field of TEXT_FIELDS) {
@@ -79,7 +80,7 @@ export async function ingestProfile(
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i]
     const embedding = embeddings[i]
-    if (!chunk || !embedding) continue
+    if (!chunk || !embedding || embedding.length === 0) continue
     records.push({
       id: chunk.id,
       text: chunk.text,

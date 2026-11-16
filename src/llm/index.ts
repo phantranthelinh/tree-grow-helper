@@ -124,6 +124,6 @@ export class OpenAICompatEngine implements LlmEngine {
       model: this.opts.embedModel,
       input: texts,
     })
-    return res.data.map((d) => d.embedding as number[])
+    return [...res.data].sort((a, b) => a.index - b.index).map((d) => d.embedding as number[])
   }
 }
