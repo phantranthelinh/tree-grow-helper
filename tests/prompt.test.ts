@@ -67,6 +67,15 @@ describe('system prompt', () => {
     expect(system.lastIndexOf('ĐOẠN VĂN')).toBeGreaterThan(system.indexOf('"tool":"get_device_config"'))
   })
 
+  it('keeps "what should it be kept at" questions on reply, inside the routing bullet', () => {
+    const profile = loadProfile('strawberry')
+    const system = buildSystemPrompt({ profile, tools: KNOWN_TOOLS, fewshot: getFewshot(profile) })
+    const bullet = system.split('\n').find((l) => l.startsWith('   - LUẬT/NGƯỠNG tự động:')) ?? ''
+    expect(bullet).toContain('người dùng HỎI luật/ngưỡng đang cài')
+    expect(bullet).toContain('YÊU CẦU đặt/đổi ngưỡng kèm con số → set_device_config')
+    expect(bullet.endsWith('Hỏi kiến thức trồng trọt ("nên/cần giữ nhiệt độ bao nhiêu") → reply, không gọi tool.')).toBe(true)
+  })
+
   it.each([
     ['strawberry', loadProfile('strawberry')],
     ['bean-sprout', loadProfile('bean-sprout')],
