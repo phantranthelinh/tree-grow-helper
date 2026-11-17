@@ -7,7 +7,7 @@ import { z } from 'zod'
  *           intercepted for user confirmation (never executed directly here).
  */
 export const AgentDecisionSchema = z.object({
-  /** Optional short chain-of-thought emitted BEFORE the decision; never shown to the user. */
+  /** Optional note the model may add after `type`; never shown to the user. */
   reasoning: z.string().optional(),
   type: z.enum(['reply', 'tool']),
   message: z.string().optional().default(''),
@@ -32,8 +32,8 @@ export const MESSAGE_PATTERN = String.raw`^([ !#-\[\]-~\u00A0-\u024F\u0300-\u036
 export const AGENT_DECISION_JSON_SCHEMA: Record<string, unknown> = {
   type: 'object',
   properties: {
-    // Listed FIRST so schema-ordered backends (LM Studio/llama.cpp) generate a few
-    // reasoning tokens before committing to type/message — a lightweight CoT.
+    // Optional on purpose: LM Studio's grammar emits required keys first, so `type` is decided before
+    // `reasoning`. Requiring it (to force it first) made the 3B route knowledge questions to sensor reads.
     reasoning: { type: 'string', description: 'Suy nghĩ ngắn 1-2 câu trước khi quyết định (không hiển thị cho người dùng)' },
     type: { type: 'string', enum: ['reply', 'tool'], description: 'reply hoặc tool' },
     message: {

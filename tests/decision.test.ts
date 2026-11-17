@@ -15,12 +15,11 @@ describe('AgentDecisionSchema', () => {
 })
 
 describe('AGENT_DECISION_JSON_SCHEMA', () => {
-  it('lists reasoning FIRST so schema-ordered backends emit CoT before deciding', () => {
+  it('keeps the field order and type as the only required key', () => {
     const props = AGENT_DECISION_JSON_SCHEMA.properties as Record<string, unknown>
-    expect(Object.keys(props)[0]).toBe('reasoning')
-  })
-
-  it('still only requires type (reasoning stays optional)', () => {
+    expect(Object.keys(props)).toEqual(['reasoning', 'type', 'message', 'tool', 'args'])
+    // Requiring reasoning is what would make the grammar emit it before type; that routed knowledge
+    // questions to sensor reads, so type stays the only required key and is decided first.
     expect(AGENT_DECISION_JSON_SCHEMA.required as string[]).toEqual(['type'])
   })
 })
