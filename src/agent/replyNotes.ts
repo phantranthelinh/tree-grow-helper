@@ -26,10 +26,10 @@ const ASKS_FOR_VALUE = anyWord(['bao nhiêu', 'khoảng nào', 'mức nào', 'm�
 
 // A question naming a device, a growing setting, a time, a stage, a region or a limit asks for something other
 // than the plant's general optimum: "trong container … ban đêm" wants a document's 17°C, "esp32-01 … bây giờ"
-// a sensor read, "chịu được … cao nhất" a limit.
+// a sensor read, "chịu được … cao nhất" a limit, "bao nhiêu giờ ánh sáng" hours rather than lux.
 const NOT_GENERAL = anyWord([
   'esp32', 'thiết bị', 'cảm biến', 'hiện tại', 'hiện giờ', 'bây giờ', 'lúc này', 'đang', 'cài', 'ngưỡng', 'luật',
-  'đặt', 'chỉnh', 'bật', 'tắt', 'lịch sử', 'khay',
+  'đặt', 'chỉnh', 'bật', 'tắt', 'lịch sử', 'khay', 'giờ', 'ngày', 'tuần', 'lần', 'phút',
   'container', 'nhà kính', 'nhà màng', 'nhà lưới', 'mái che', 'nhà che', 'thủy canh', 'thuỷ canh', 'giá thể',
   'chậu', 'ban công', 'phòng', 'trong nhà', 'ngoài trời', 'kiểm soát', 'điều hòa', 'điều hoà', 'đèn', 'led', 'treo',
   'đêm', 'ban ngày', 'buổi', 'mùa', 'sáng sớm', 'trưa', 'chiều',

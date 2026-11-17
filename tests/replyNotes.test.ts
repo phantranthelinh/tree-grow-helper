@@ -42,6 +42,14 @@ describe('generalRangeFields', () => {
   })
 
   it.each([
+    'Cây dâu cần bao nhiêu giờ ánh sáng mỗi ngày?',
+    'Dâu cần ánh sáng bao nhiêu giờ mỗi ngày?',
+    'Bao lâu thì tưới, độ ẩm đất bao nhiêu ngày một lần?',
+  ])('leaves the duration question %s alone', (question) => {
+    expect(generalRangeFields(question)).toEqual([])
+  })
+
+  it.each([
     'Ban đêm nên giữ nhiệt độ cho dâu tây bao nhiêu?',
     'Nhà kính trồng dâu nên để nhiệt độ bao nhiêu?',
     'Dâu tây chịu được nhiệt độ cao nhất bao nhiêu?',
