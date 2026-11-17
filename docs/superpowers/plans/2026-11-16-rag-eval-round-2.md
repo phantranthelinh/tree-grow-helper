@@ -166,9 +166,7 @@ Whether the answer comes back as JSON depends on the context, so WP-1 Task 1.2 c
 
 ### §2.8 Simulated round-2 eval
 
-Every case, 2 samples each, through the same harness (rates over samples; grounding with the §3 checks):
-
-(SIMULATED-EVAL-TABLE)
+Not run: the combined round-2 changes were never simulated before measurement, so the per-WP expectations that cite §2.8 were never checked together. See the round-3 plan (`2026-11-17-rag-eval-round-3.md`) §2.1 for why `r1-container-night` could not hold.
 
 ## §3 Eval corrections (WP-3)
 

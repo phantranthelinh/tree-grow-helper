@@ -96,13 +96,21 @@ The decision prompt is tuned around quirks of the 3B model, and regressions are 
 - **The automation-config routing bullet in rule 3 needs its HỎI / YÊU CẦU contrast.** Without it the
   model sends "luật/ngưỡng" questions to `get_latest_sensor`, and a draft that only named the tools
   sent a read question ("ngưỡng … đang là bao nhiêu?") to `set_device_config`.
-- **The routing bullet keeps its "Hỏi kiến thức trồng trọt … → reply" clause.** The `get_device_config`
-  example pulled "giữ nhiệt độ bao nhiêu?" questions onto the tool. Keep that clause in
-  [prompt.ts](src/llm/prompt.ts) when the routing bullet is edited.
+- **The strawberry set keeps a knowledge reply (Ví dụ 6) immediately before the `get_device_config`
+  example.** Without a reply in that slot, "Trồng dâu thủy canh trong container có kiểm soát thì ban đêm
+  giữ nhiệt độ bao nhiêu?" goes to `get_device_config`. Moving the config example earlier or dropping it
+  makes this worse, because the question itself reads like a device question. That reply names no growing
+  setting, because the 3B copied an opening "Trong nhà kính, …" into unrelated answers. The routing
+  bullet's "Hỏi kiến thức trồng trọt" clause stays in [prompt.ts](src/llm/prompt.ts), but it does not
+  hold this case on its own.
 - **No few-shot example may give a specific disease as its answer.** The 3B reused the strawberry
   example's "thán thư (Colletotrichum spp.)" for gray mold, powdery mildew and bacterial leaf spot, with
   the right `[bệnh]` entry ranked first. Examples that explain causes (the bean set's Ví dụ 6) are fine.
-  Keep disease-naming examples out of every set in [fewshot.ts](src/domain/fewshot.ts).
+  Keep disease-naming examples out of every set in [fewshot.ts](src/domain/fewshot.ts). When removing an
+  example, keep a reply example directly in front of the config example.
+- **Structured output decides `type` first.** LM Studio's grammar emits the only required key before
+  the optional ones, so `reasoning` never comes before the decision. Requiring it, which puts it first,
+  made the 3B reason knowledge questions onto sensor reads.
 
 ### Profile drives both thresholds and RAG
 
