@@ -42,6 +42,9 @@ export const config = {
     // previous hardcoded engine values, so behavior is unchanged unless overridden.
     decisionTemp: num(process.env.LLM_DECISION_TEMP, 0.1),
     replyTemp: num(process.env.LLM_REPLY_TEMP, 0.3),
+    // Token cap on each JSON decision. The longest of 928 recorded decisions is 237 tokens; a message string the
+    // 3B never closed ran on until the cap, and on /chat/stream every one of those tokens is streamed. 0 = no cap.
+    decisionMaxTokens: num(process.env.LLM_DECISION_MAX_TOKENS, 400),
   },
   rag: {
     // RAG_DISABLED=1 skips building the vector store at init — the model then

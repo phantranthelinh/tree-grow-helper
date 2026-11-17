@@ -23,3 +23,16 @@ describe('config.rag.hybrid', () => {
     expect((await import('../src/config')).config.rag.hybrid).toBe(true)
   })
 })
+
+describe('config.llm.decisionMaxTokens', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('reads LLM_DECISION_MAX_TOKENS, 0 meaning no cap', async () => {
+    vi.stubEnv('LLM_DECISION_MAX_TOKENS', '250')
+    vi.resetModules()
+    expect((await import('../src/config')).config.llm.decisionMaxTokens).toBe(250)
+    vi.stubEnv('LLM_DECISION_MAX_TOKENS', '0')
+    vi.resetModules()
+    expect((await import('../src/config')).config.llm.decisionMaxTokens).toBe(0)
+  })
+})

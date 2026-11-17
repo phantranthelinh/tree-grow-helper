@@ -4,11 +4,28 @@ export type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam
 
 export interface CompleteOptions {
   temperature?: number
+  /** Upper bound on generated tokens; unset (or 0) leaves the provider's default. */
+  maxTokens?: number
 }
 
 export interface StreamOptions extends CompleteOptions {
   /** Abort the underlying HTTP request (e.g. client disconnected). */
   signal?: AbortSignal
+}
+
+/** One generated token with its log-probability and the most likely tokens at that position. */
+export interface TokenLogprob {
+  token: string
+  logprob: number
+  top: Array<{ token: string; logprob: number }>
+}
+
+export interface JsonCompleteOptions extends CompleteOptions {
+  /**
+   * Asks the provider for per-token log-probabilities and hands them over. Only measurement code (the eval) sets
+   * it, so chat requests are unchanged.
+   */
+  onLogprobs?: (tokens: TokenLogprob[]) => void
 }
 
 /** Abstraction over the local LLM so the agent can be tested with fakes. */
@@ -20,7 +37,7 @@ export interface LlmEngine {
     messages: ChatMessage[],
     jsonSchema: Record<string, unknown>,
     schemaName: string,
-    opts?: CompleteOptions,
+    opts?: JsonCompleteOptions,
   ): Promise<string>
   /** Streaming twin of complete(): yields raw content deltas as generated. */
   completeStream(messages: ChatMessage[], opts?: StreamOptions): AsyncGenerator<string, void, unknown>
@@ -42,6 +59,11 @@ export interface EngineOptions {
   embedModel: string
 }
 
+const TOP_LOGPROBS = 5
+
+const capOf = (opts?: CompleteOptions): { max_tokens?: number } =>
+  opts?.maxTokens && opts.maxTokens > 0 ? { max_tokens: opts.maxTokens } : {}
+
 /** LlmEngine backed by any OpenAI-compatible server (LM Studio, Ollama, Gemini, …). */
 export class OpenAICompatEngine implements LlmEngine {
   private readonly client: OpenAI
@@ -55,6 +77,7 @@ export class OpenAICompatEngine implements LlmEngine {
       model: this.opts.model,
       messages,
       temperature: opts?.temperature ?? 0.3,
+      ...capOf(opts),
     })
     return res.choices[0]?.message?.content ?? ''
   }
@@ -63,18 +86,28 @@ export class OpenAICompatEngine implements LlmEngine {
     messages: ChatMessage[],
     jsonSchema: Record<string, unknown>,
     schemaName: string,
-    opts?: CompleteOptions,
+    opts?: JsonCompleteOptions,
   ): Promise<string> {
     const res = await this.client.chat.completions.create({
       model: this.opts.model,
       messages,
       temperature: opts?.temperature ?? 0.1,
+      ...capOf(opts),
+      ...(opts?.onLogprobs ? { logprobs: true, top_logprobs: TOP_LOGPROBS } : {}),
       response_format: {
         type: 'json_schema',
         json_schema: { name: schemaName, strict: false, schema: jsonSchema },
       },
     })
-    return res.choices[0]?.message?.content ?? ''
+    const choice = res.choices[0]
+    opts?.onLogprobs?.(
+      (choice?.logprobs?.content ?? []).map((t) => ({
+        token: t.token,
+        logprob: t.logprob,
+        top: t.top_logprobs.map((a) => ({ token: a.token, logprob: a.logprob })),
+      })),
+    )
+    return choice?.message?.content ?? ''
   }
 
   async *completeStream(messages: ChatMessage[], opts?: StreamOptions): AsyncGenerator<string, void, unknown> {
@@ -83,6 +116,7 @@ export class OpenAICompatEngine implements LlmEngine {
         model: this.opts.model,
         messages,
         temperature: opts?.temperature ?? 0.3,
+        ...capOf(opts),
         stream: true,
       },
       { signal: opts?.signal },
@@ -104,6 +138,7 @@ export class OpenAICompatEngine implements LlmEngine {
         model: this.opts.model,
         messages,
         temperature: opts?.temperature ?? 0.1,
+        ...capOf(opts),
         response_format: {
           type: 'json_schema',
           json_schema: { name: schemaName, strict: false, schema: jsonSchema },
