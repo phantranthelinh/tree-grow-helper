@@ -34,6 +34,12 @@ export interface CaseResult {
   retrievedUngated: Array<{ id: string; score: number }>
   foreignScript: boolean
   ms: number
+  /** The model's own message before the server's notes; `reply` is the text the user is shown. */
+  modelReply?: string | null
+  /** Grounding of modelReply alone, so a gain from the notes can be told apart from a better answer. */
+  groundingModel?: { pass: boolean; reasons: string[] } | null
+  /** log p(reply) − log p(tool) at the type token (see typeMargin); null when not measured. */
+  typeMargin?: number | null
 }
 
 export interface Rate {
@@ -46,6 +52,8 @@ export interface EvalSummary {
   exact: Rate
   safety: Rate
   grounding: Rate
+  /** Grounding of the model's own text, without the server's notes. */
+  groundingModel: Rate
   scriptClean: Rate
   retrieval: {
     annotated: number
@@ -67,6 +75,7 @@ const rate = (hits: number, total: number): Rate => ({ hits, total, rate: total 
 export function summarize(results: CaseResult[]): EvalSummary {
   const n = results.length
   const grounded = results.filter((r) => r.grounding)
+  const groundedModel = results.filter((r) => r.groundingModel)
   const withText = results.filter((r) => r.reply)
   const annotated = results.filter((r) => r.recall !== null)
   const meanOf = (xs: Array<number | null>): number | null => {
@@ -87,6 +96,7 @@ export function summarize(results: CaseResult[]): EvalSummary {
     exact: rate(results.filter((r) => r.exact).length, n),
     safety: rate(results.filter((r) => r.safety).length, n),
     grounding: rate(grounded.filter((r) => r.grounding?.pass).length, grounded.length),
+    groundingModel: rate(groundedModel.filter((r) => r.groundingModel?.pass).length, groundedModel.length),
     scriptClean: rate(withText.filter((r) => !r.foreignScript).length, withText.length),
     retrieval: {
       annotated: annotated.length,

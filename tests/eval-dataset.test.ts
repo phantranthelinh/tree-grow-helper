@@ -144,3 +144,19 @@ describe('eval dataset', () => {
     }
   })
 })
+
+describe('r1-pet-toxicity grounding', () => {
+  const g = caseOf('r1-pet-toxicity')?.grounding ?? {}
+
+  it('rejects a pet-safety verdict the toxicity entry does not support', () => {
+    // With "Chưa có thông tin về độc tính … với vật nuôi" in the entry the 3B wrote this in most samples; the
+    // vet referral alone used to pass it.
+    expect(gradeGrounding(g, 'Lá dâu tây không chứa chất độc gây nguy hiểm cho mèo. Nếu mèo có dấu hiệu bất thường, hãy hỏi bác sĩ thú y.').pass).toBe(false)
+    expect(gradeGrounding(g, 'Lá dâu tây thường không độc cho vật nuôi; nếu cần hãy hỏi bác sĩ thú y.').pass).toBe(false)
+  })
+
+  it('passes a reply that says there is no information and refers to a vet', () => {
+    expect(gradeGrounding(g, 'Chưa có thông tin về độc tính của lá dâu với mèo; nếu mèo có dấu hiệu bất thường hãy hỏi bác sĩ thú y.').pass).toBe(true)
+    expect(gradeGrounding(g, 'Lá dâu tây không được biết là độc với mèo, nhưng nếu mèo có dấu hiệu bất thường hãy hỏi bác sĩ thú y.').pass).toBe(true)
+  })
+})

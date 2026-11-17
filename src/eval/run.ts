@@ -11,10 +11,11 @@ import {
   AGENT_DECISION_SCHEMA_NAME,
   AgentDecisionSchema,
 } from '../agent/decision'
+import { bigramDocFreq, withReplyNotes } from '../agent/replyNotes'
 import { config } from '../config'
 import { getFewshot } from '../domain/fewshot'
 import { loadProfile } from '../domain/profiles'
-import { OpenAICompatEngine } from '../llm'
+import { OpenAICompatEngine, type TokenLogprob } from '../llm'
 import { assembleMessages, buildSystemPrompt, knowledgeLabel } from '../llm/prompt'
 import { KNOWN_TOOLS } from '../mcp/knownTools'
 import { classifyTool } from '../mcp/policy'
@@ -24,6 +25,7 @@ import { InMemoryVectorStore } from '../rag/store'
 import { loadLlmConfig } from '../setup/llmConfig'
 import { evalCasesFor, type EvalExpect } from './dataset'
 import { gradeGrounding, hasForeignScript } from './grounding'
+import { NEAR_TIE, typeMargin } from './margin'
 import { type CaseResult, chunkRecall, summarize } from './metrics'
 
 interface Decision {
@@ -69,6 +71,9 @@ async function main(): Promise<void> {
     ? new InMemoryVectorStore()
     : (await ingestAll(llm, config, profile, embedModel)).store
 
+  // The orchestrator appends the same notes to every first-step reply, so the eval grades the text users see.
+  const docFreq = bigramDocFreq(store.all().map((r) => r.text))
+
   const dimNote = store.size() === 0 ? ' (RAG off/empty)' : store.uniformDims() ? '' : ' ⚠ MIXED DIMS'
   console.log(
     `Eval: ${EVAL_CASES.length} cases | model=${config.llmDefaults.model} | embed=${embedModel} | plant=${profile.plant} | store=${store.size()} chunks${dimNote}\n`,
@@ -105,9 +110,12 @@ async function main(): Promise<void> {
       retrievalNote = ` | top1=${fmt(top1)}`
     }
     let actual: Decision | null = null
+    let logprobs: TokenLogprob[] = []
     try {
       const raw = await llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME, {
         temperature: config.llm.decisionTemp,
+        maxTokens: config.llm.decisionMaxTokens,
+        onLogprobs: (tokens) => (logprobs = tokens),
       })
       actual = parse(raw)
     } catch (err) {
@@ -116,21 +124,31 @@ LLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${con
       console.error(String((err as Error).message))
       process.exit(1)
     }
+    const margin = typeMargin(logprobs)
     const { exact, safety } = grade(c.expect, actual)
 
+    const modelText = actual?.message ?? ''
+    const shipped =
+      actual?.type === 'reply' && modelText
+        ? withReplyNotes(modelText, { question: c.message, chunks: rag.chunks, docFreq, profile })
+        : modelText
     let groundNote = ''
     let grounding: { pass: boolean; reasons: string[] } | null = null
+    let groundingModel: { pass: boolean; reasons: string[] } | null = null
     if (c.grounding) {
-      const gr = gradeGrounding(c.grounding, actual?.message ?? '')
+      const gr = gradeGrounding(c.grounding, shipped)
       grounding = { pass: gr.pass, reasons: gr.reasons }
+      groundingModel = gradeGrounding(c.grounding, modelText)
       groundNote = gr.pass ? ' | ground=PASS' : ` | ground=FAIL(${gr.reasons.join('; ')})`
+      if (gr.pass && !groundingModel.pass) groundNote += ' (nhờ ghi chú)'
     }
 
     const want = c.expect.type === 'tool' ? c.expect.tool : 'reply'
     const got = actual ? (actual.type === 'tool' ? actual.tool : 'reply') : '(parse-fail)'
-    const foreignScript = hasForeignScript(actual?.message ?? '')
+    const foreignScript = hasForeignScript(shipped)
     const scriptNote = foreignScript ? ' | SCRIPT=FOREIGN' : ''
-    console.log(`${exact ? 'PASS' : 'FAIL'} [${c.id}] want=${want} got=${got}${groundNote}${retrievalNote}${scriptNote}`)
+    const marginNote = margin === null ? '' : ` | Δ=${margin.toFixed(2)}`
+    console.log(`${exact ? 'PASS' : 'FAIL'} [${c.id}] want=${want} got=${got}${marginNote}${groundNote}${retrievalNote}${scriptNote}`)
     const scored = (chunks: typeof raw.chunks) => chunks.map((h) => ({ id: h.id ?? '', score: Number(h.score.toFixed(4)) }))
     results.push({
       id: c.id,
@@ -139,8 +157,11 @@ LLM call failed. Is the LLM running at ${config.llmDefaults.baseURL} with "${con
       got: got ?? '',
       exact,
       safety,
-      reply: actual?.message ?? null,
+      reply: actual ? shipped : null,
+      modelReply: actual?.message ?? null,
       grounding,
+      groundingModel,
+      typeMargin: margin,
       expectChunks: c.expectChunks ?? null,
       recall,
       recallGated,
@@ -163,7 +184,10 @@ Round-0 cases (${r0.length}):`)
   console.log(`Tool/reply exact accuracy: ${pct(summary.exact.hits, summary.exact.total)}`)
   console.log(`Safety-class accuracy:     ${pct(summary.safety.hits, summary.safety.total)}`)
   if (summary.grounding.total > 0) {
-    console.log(`Grounding accuracy:        ${pct(summary.grounding.hits, summary.grounding.total)}`)
+    console.log(
+      `Grounding accuracy:        ${pct(summary.grounding.hits, summary.grounding.total)} ` +
+        `(model text alone: ${pct(summary.groundingModel.hits, summary.groundingModel.total)})`,
+    )
   }
   console.log(`Replies free of Cyrillic/CJK: ${pct(summary.scriptClean.hits, summary.scriptClean.total)}`)
   if (summary.retrieval.annotated > 0) {
@@ -181,6 +205,12 @@ Round-0 cases (${r0.length}):`)
         ` | script-clean ${pct(summaryR1.scriptClean.hits, summaryR1.scriptClean.total)}`,
     )
   }
+  const nearTies = results.flatMap((r) =>
+    r.typeMargin != null && Math.abs(r.typeMargin) < NEAR_TIE ? [{ id: r.id, typeMargin: Number(r.typeMargin.toFixed(2)) }] : [],
+  )
+  console.log(
+    `Near-ties at the type token (|Δ| < ${NEAR_TIE}): ${nearTies.length === 0 ? 'none' : nearTies.map((n) => `${n.id} ${n.typeMargin}`).join(', ')}`,
+  )
   console.log('\nGhi chú: eval chạy CÓ ngữ cảnh RAG (giống prod); mọi tool ĐIỀU KHIỂN luôn được chặn để xác nhận bất kể model chọn gì.')
 
   const outPath = writeEvalReport({
@@ -199,6 +229,7 @@ Round-0 cases (${r0.length}):`)
     summary,
     summaryR1,
     summaryAll,
+    nearTies,
     cases: results,
   })
   console.log(`Kết quả chi tiết: ${outPath}`)

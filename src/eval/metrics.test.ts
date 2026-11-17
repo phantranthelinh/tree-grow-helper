@@ -63,6 +63,15 @@ describe('summarize', () => {
     expect(s.retrieval.otherScoreMean).toBeCloseTo(0.5)
   })
 
+  it("counts the model's own grounding apart from the shipped text's", () => {
+    // A citation check the sources line satisfies while the model's own words did not.
+    const a: CaseResult = { ...base, id: 'A', grounding: { pass: true, reasons: [] }, groundingModel: { pass: false, reasons: ['thiếu trích dẫn nguồn'] } }
+    const b: CaseResult = { ...base, id: 'B', grounding: { pass: true, reasons: [] }, groundingModel: { pass: true, reasons: [] } }
+    const s = summarize([a, b, base])
+    expect(s.grounding).toEqual({ hits: 2, total: 2, rate: 1 })
+    expect(s.groundingModel).toEqual({ hits: 1, total: 2, rate: 0.5 })
+  })
+
   it('returns null rates for an empty set', () => {
     expect(summarize([]).grounding.rate).toBeNull()
     expect(summarize([]).retrieval.recallGated).toBeNull()
