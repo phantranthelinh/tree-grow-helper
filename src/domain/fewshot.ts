@@ -8,8 +8,8 @@ import { type PlantProfile, plantDisplayName } from './profiles'
  * One set per plant: the 3B copies the examples' advice and actions, so a
  * strawberry set served for bean sprouts would have it offer to switch the grow
  * light on, which ruins sprouts that must stay dark. An example must also not
- * answer a diagnosis, because the 3B reuses the disease it sees there as the
- * answer for other symptoms.
+ * name a specific disease as its answer, because the 3B reuses that disease for
+ * other symptoms; an example that explains causes is fine.
  *
  * FIELD ORDER MATTERS for type="tool": put "message" BEFORE "tool"/"args". The
  * 3B closes the JSON right after "args", so a "message" placed after "args" is

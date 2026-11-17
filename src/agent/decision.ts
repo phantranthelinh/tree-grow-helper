@@ -20,8 +20,8 @@ export type AgentDecision = z.infer<typeof AgentDecisionSchema>
 /**
  * The 3B code-switches mid-sentence (Russian, Chinese) at quantities and Sino-Vietnamese words. LM Studio
  * compiles this pattern into its sampling grammar, so those characters cannot be generated at all.
- * It is an allow-list, not a deny-list: printable ASCII without the backslash, Latin-1 and Latin Extended,
- * combining marks, Vietnamese tone letters, punctuation, super/subscripts and currency, letterlike symbols,
+ * It is an allow-list, not a deny-list: printable ASCII without the backslash and the raw quote (quotes only as the \" escape),
+ * Latin-1 and Latin Extended, combining marks, Vietnamese tone letters, punctuation, super/subscripts and currency, letterlike symbols,
  * arrows and math operators; the only escapes are \" \\ \/ \n \t. A deny-list was bypassed with other
  * scripts and with \u escapes. Plain groups only, because LM Studio rejects (?: . A provider that ignores
  * `pattern` still has the orchestrator's hasForeignScript net.
