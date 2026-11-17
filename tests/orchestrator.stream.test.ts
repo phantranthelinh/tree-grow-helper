@@ -210,6 +210,34 @@ describe('Orchestrator — handleChatStream', () => {
     expect(mcp.calls).toHaveLength(0)
   })
 
+  it('sends a plain-prose repair as one token frame after the reset', async () => {
+    llm.jsonScripts = [['{"type":"reply","message":"Các nguyên nhân gồm:"}']]
+    llm.streamScripts = [['Lá vàng do ', 'úng nước.']]
+    const events = await collect(orch.handleChatStream('u1', 's1', 'vì sao lá vàng?'))
+    const reset = events.findIndex((e) => e.type === 'reset')
+    expect(reset).toBeGreaterThan(-1)
+    const after = events.slice(reset + 1).filter((e) => e.type === 'token')
+    expect(after).toEqual([{ type: 'token', text: 'Lá vàng do úng nước.' }])
+  })
+
+  it('sends the fallback as one token frame when the repair is empty', async () => {
+    llm.jsonScripts = [['{"type":"reply","message":"Các nguyên nhân gồm:"}']]
+    llm.streamScripts = [['']]
+    const events = await collect(orch.handleChatStream('u1', 's1', 'vì sao lá vàng?'))
+    const reset = events.findIndex((e) => e.type === 'reset')
+    const after = events.slice(reset + 1).filter((e) => e.type === 'token')
+    expect(after).toEqual([{ type: 'token', text: FALLBACK }])
+    expect(doneOf(events).reply).toBe(FALLBACK)
+  })
+
+  it('does not reset when the repaired decision had emitted no fragment', async () => {
+    llm.jsonScripts = [['{"type":"reply","message":""}']]
+    llm.streamScripts = [['Lá vàng do úng nước.']]
+    const events = await collect(orch.handleChatStream('u1', 's1', 'vì sao lá vàng?'))
+    expect(events.some((e) => e.type === 'reset')).toBe(false)
+    expect(events.filter((e) => e.type === 'token')).toEqual([{ type: 'token', text: 'Lá vàng do úng nước.' }])
+  })
+
   it('resets after a parse failure that already emitted tokens, then streams the retry', async () => {
     // Attempt 1 opens the gate and emits text but the JSON never closes -> parse fails.
     llm.jsonScripts = [['{"type":"reply","message":"nửa chừng'], ['{"type":"reply","message":"ok"}']]

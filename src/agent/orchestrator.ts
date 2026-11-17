@@ -132,10 +132,20 @@ function parseDecision(raw: string): AgentDecision | null {
 /**
  * The user-facing text of a regenerated answer. The repair call shares the decision system prompt, which
  * demands JSON, so the model sometimes answers with a decision object anyway; ship its message, never the JSON.
+ * Anything that looks like JSON but does not parse (concatenated objects, a truncated one) yields its first
+ * "message" string or '' — the caller then ships the fallback. A tool decision yields '' because no action
+ * is pending, so its lead-in ("Mình sẽ bật bơm.") would promise something that will not happen.
  */
 export function replyTextOf(raw: string): string {
   const decision = parseDecision(raw)
-  return decision ? decision.message.trim() : raw.trim()
+  if (decision) return decision.type === 'reply' ? decision.message.trim() : ''
+  if (!raw.includes('{"')) return raw.trim()
+  const scanner = new JsonStringFieldStreamer()
+  let message = ''
+  for (const event of scanner.push(raw)) {
+    if (event.kind === 'message') message += event.text
+  }
+  return message.trim()
 }
 
 function toView(p: PendingAction): PendingActionView {

@@ -483,6 +483,10 @@ describe('replyTextOf', () => {
     expect(replyTextOf('{"type":"reply","message":"Tưới nhỏ giọt."}')).toBe('Tưới nhỏ giọt.')
     expect(replyTextOf('  Tưới nhỏ giọt, tránh úng.  ')).toBe('Tưới nhỏ giọt, tránh úng.')
     expect(replyTextOf('{"type":"reply","message":""}')).toBe('')
+    expect(replyTextOf('{"type":"reply","message":"Một."}\n{"type":"reply","message":"Hai."}')).toBe('Một.')
+    expect(replyTextOf('{"type":"reply","message":"Nên ngâm')).toBe('Nên ngâm')
+    expect(replyTextOf('{"type":"tool","message":"Mình sẽ bật bơm.","tool":"set_pump","args":{}}')).toBe('')
+    expect(replyTextOf('{"message":"x"}')).toBe('x')
   })
 })
 
