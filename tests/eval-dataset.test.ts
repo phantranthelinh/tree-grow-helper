@@ -1,6 +1,7 @@
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BEAN_SPROUT_EVAL_CASES, EVAL_CASES, evalCasesFor } from '../src/eval/dataset'
+import { gradeGrounding } from '../src/eval/grounding'
 import { config } from '../src/config'
 import { loadDiseases } from '../src/domain/diseases'
 import { loadProfile } from '../src/domain/profiles'
@@ -29,6 +30,9 @@ function chunkIdsFor(plant: string): Set<string> {
     ...buildDiseaseChunks(diseases, { plant }).map((c) => c.id),
   ])
 }
+
+const caseOf = (id: string) => [...EVAL_CASES, ...BEAN_SPROUT_EVAL_CASES].find((c) => c.id === id)
+const DIAGNOSES = ['diag-gray-mold', 'diag-powdery', 'diag-anthracnose', 'diag-spider-mite', 'r1-root-rot', 'r1-thrips', 'r1-aphid', 'r1-slug', 'r1-bact-spot', 'r1-leaf-spot']
 
 describe('eval dataset', () => {
   it('has at least 32 cases', () => {
@@ -115,5 +119,22 @@ describe('eval dataset', () => {
 
   it('kb-moisture carries no retrieval label (no chunk states a soil-moisture %)', () => {
     expect(EVAL_CASES.find((c) => c.id === 'kb-moisture')?.expectChunks).toBeUndefined()
+  })
+
+  it('diagnosis checks fail a wrong diagnosis that repeats the symptom', () => {
+    const g = (id: string) => caseOf(id)?.grounding ?? {}
+    expect(gradeGrounding(g('diag-gray-mold'), 'Quả dâu bị thối mềm và có lớp mốc xám phủ lên khớp với triệu chứng của bệnh thán thư (Colletotrichum spp.).').pass).toBe(false)
+    expect(gradeGrounding(g('diag-gray-mold'), 'Nhiều khả năng là bệnh mốc xám (Botrytis cinerea).').pass).toBe(true)
+    expect(gradeGrounding(g('diag-powdery'), 'Lá dâu tây có lớp phấn trắng mặt dưới kèm mép lá cong tím đỏ khớp nhất với bệnh thán thư (Colletotrichum spp.).').pass).toBe(false)
+    expect(gradeGrounding(g('diag-powdery'), 'Nhiều khả năng là bệnh phấn trắng (Podosphaera aphanis).').pass).toBe(true)
+    expect(gradeGrounding(g('r1-bact-spot'), 'Đốm nhỏ sũng nước trên mặt dưới lá kèm dịch rỉ ra rồi khô lại thành vảy khớp nhất với thán thư (Colletotrichum spp.).').pass).toBe(false)
+  })
+
+  it('no diagnosis check can be met by repeating the question', () => {
+    for (const id of DIAGNOSES) {
+      const c = caseOf(id)
+      expect(c?.grounding?.mustIncludeAny?.length, id).toBeGreaterThan(0)
+      expect(gradeGrounding(c?.grounding ?? {}, c?.message ?? '').pass, id).toBe(false)
+    }
   })
 })

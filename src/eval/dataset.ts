@@ -98,10 +98,10 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'symptom-leaf-spot', message: 'Lá dâu xuất hiện đốm nâu là bị gì?', expect: { type: 'reply' }, note: 'advise from knowledge, no sensor' },
 
   // --- A6: specific disease diagnosis (disease KB) + uses (databank) — all reply ---
-  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['mốc xám', 'botrytis'] }, note: 'diagnose from disease KB', expectChunks: ['disease:botrytis-gray-mold'] },
-  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['phấn trắng'] }, note: 'diagnose from disease KB', expectChunks: ['disease:powdery-mildew'] },
-  { id: 'diag-spider-mite', message: 'Lá dâu có chấm li ti vàng và có tơ nhện mảnh, xử lý thế nào?', expect: { type: 'reply' }, note: 'diagnose from disease KB', expectChunks: [['disease:spider-mite', `${NGHEAN}#11`]] },
-  { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, note: 'diagnose from disease KB', expectChunks: ['disease:anthracnose'] },
+  { id: 'diag-gray-mold', message: 'Quả dâu bị thối mềm, có lớp mốc xám phủ lên là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['botrytis', 'bệnh mốc xám', 'thối xám'] }, note: 'diagnose from disease KB', expectChunks: ['disease:botrytis-gray-mold'] },
+  { id: 'diag-powdery', message: 'Lá dâu có lớp phấn trắng mặt dưới, mép lá cong tím, cây bị gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['bệnh phấn trắng', 'nấm phấn trắng', 'podosphaera', 'sphaerotheca'] }, note: 'diagnose from disease KB', expectChunks: ['disease:powdery-mildew'] },
+  { id: 'diag-spider-mite', message: 'Lá dâu có chấm li ti vàng và có tơ nhện mảnh, xử lý thế nào?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['nhện đỏ', 'tetranychus'] }, note: 'diagnose from disease KB', expectChunks: [['disease:spider-mite', `${NGHEAN}#11`]] },
+  { id: 'diag-anthracnose', message: 'Quả dâu có vết lõm nâu đen, cây con héo chết là bệnh gì?', expect: { type: 'reply' }, grounding: { mustIncludeAny: ['thán thư', 'colletotrichum'] }, note: 'diagnose from disease KB', expectChunks: ['disease:anthracnose'] },
   { id: 'uses-general', message: 'Dâu tây dùng để làm gì?', expect: { type: 'reply' } },
   { id: 'uses-processing', message: 'Dâu tây chế biến được những món gì?', expect: { type: 'reply' } },
 
@@ -115,12 +115,12 @@ export const EVAL_CASES: EvalCase[] = [
   { id: 'doc-container-temp', message: 'Trồng dâu thủy canh trong container thì giữ nhiệt độ bao nhiêu?', expect: { type: 'reply' }, expectChunks: [[`${TECHPORT}#3`]] },
 
   // --- Round-1 cases: reported separately from the round-0 set ---
-  { id: 'r1-root-rot', message: 'Rễ dâu bị thâm đen, thối nhũn, cây héo dần rồi chết là bệnh gì?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:root-rot']] },
-  { id: 'r1-thrips', message: 'Hoa và lá non của dâu bị cong queo, có vết xước bạc là do con gì?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:thrips', `${NGHEAN}#12`]] },
-  { id: 'r1-aphid', message: 'Ngọn dâu có đám côn trùng nhỏ chích hút làm lá non xoăn lại, có kiến bu, xử lý sao?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:aphid']] },
-  { id: 'r1-slug', message: 'Lá và quả dâu bị gặm thủng lỗ lớn, có vệt nhớt bóng là do đâu?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:slug-snail']] },
-  { id: 'r1-bact-spot', message: 'Mặt dưới lá dâu có đốm nhỏ sũng nước, sau rỉ dịch rồi khô thành vảy là bệnh gì?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:bacterial-leaf-spot']] },
-  { id: 'r1-leaf-spot', message: 'Lá dâu có đốm tròn nhỏ, tâm xám trắng, viền tím đỏ là bệnh gì?', expect: { type: 'reply' }, set: 'r1', expectChunks: [['disease:leaf-spot']] },
+  { id: 'r1-root-rot', message: 'Rễ dâu bị thâm đen, thối nhũn, cây héo dần rồi chết là bệnh gì?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['thối đen rễ', 'thối rễ', 'rễ thối', 'pythium', 'fusarium'] }, expectChunks: [['disease:root-rot']] },
+  { id: 'r1-thrips', message: 'Hoa và lá non của dâu bị cong queo, có vết xước bạc là do con gì?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['bọ trĩ', 'bù lạch', 'thrips', 'frankliniella'] }, expectChunks: [['disease:thrips', `${NGHEAN}#12`]] },
+  { id: 'r1-aphid', message: 'Ngọn dâu có đám côn trùng nhỏ chích hút làm lá non xoăn lại, có kiến bu, xử lý sao?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['rệp', 'aphid'] }, expectChunks: [['disease:aphid']] },
+  { id: 'r1-slug', message: 'Lá và quả dâu bị gặm thủng lỗ lớn, có vệt nhớt bóng là do đâu?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['ốc sên', 'sên nhớt', 'gastropoda'] }, expectChunks: [['disease:slug-snail']] },
+  { id: 'r1-bact-spot', message: 'Mặt dưới lá dâu có đốm nhỏ sũng nước, sau rỉ dịch rồi khô thành vảy là bệnh gì?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['vi khuẩn', 'xanthomonas', 'xì mủ'] }, expectChunks: [['disease:bacterial-leaf-spot']] },
+  { id: 'r1-leaf-spot', message: 'Lá dâu có đốm tròn nhỏ, tâm xám trắng, viền tím đỏ là bệnh gì?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['đốm lá', 'mycosphaerella'] }, expectChunks: [['disease:leaf-spot']] },
   { id: 'r1-spacing-out', message: 'Trồng dâu ngoài trời thì cây cách cây bao xa?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['45 cm'] }, expectChunks: [['strawberry:planting']] },
   { id: 'r1-flower-time', message: 'Dâu tây trồng bao lâu thì bắt đầu ra hoa?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['2,5 tháng'] }, expectChunks: [['strawberry:growth_stages', `${KNQG}#0`]] },
   { id: 'r1-variety-indoor', message: 'Nên chọn giống dâu nào để trồng trong nhà mái che?', expect: { type: 'reply' }, set: 'r1', grounding: { mustIncludeAny: ['New Zealand', 'Newzealand', 'Akihime'] }, expectChunks: [['strawberry:varieties', `${NGHEAN}#0`]] },
