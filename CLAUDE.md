@@ -121,7 +121,9 @@ The decision prompt is tuned around quirks of the 3B model, and regressions are 
 etc.) → `deriveControlThresholds` + `summarizeRanges` → injected into the system prompt, and are the
 reason a strawberry gets 75–80% target moisture instead of the MCP's generic 30% default. **Text
 fields** (`care_notes`, `watering`, `diseases`…) are chunked + embedded for RAG. The prompt rule is:
-if sources conflict with the numeric optimal ranges, the ranges win.
+if sources conflict with the numeric optimal ranges, the ranges win. The 3B does not follow it on its
+own (kb-temp quotes a study's 15–26°C every run), so general range questions also get the profile
+range stated by the server (see Reply notes).
 
 **Adding a plant**: drop `src/domain/knowledge/<plant>.json` (validated by `PlantProfileSchema`) and
 set `DEFAULT_PLANT=<plant>`. That runs with no code change, but on a format-only neutral few-shot set
@@ -129,6 +131,28 @@ set `DEFAULT_PLANT=<plant>`. That runs with no code change, but on a format-only
 [src/domain/fewshot.ts](src/domain/fewshot.ts): the 3B copies the examples' advice and actions, so
 another plant's set teaches the wrong care (strawberry's "bật đèn" would ruin bean sprouts, which
 grow in the dark). Keep the message-before-tool field order in every set.
+
+### Reply notes (server text after the model's reply)
+
+[src/agent/replyNotes.ts](src/agent/replyNotes.ts) builds two deterministic paragraphs that the
+orchestrator appends after the model's text, in both chat paths, only to a reply decided at step 0
+(before any tool ran this turn): a plain reply, a reply carrying a sensor-read offer (notes go before
+the "(Có/Không)" question, and not after a cut-off lead-in), and a repaired reply. Never to a tool
+lead-in, a control confirmation, a confirm/cancel reply, a sensor summary, the step-exhausted answer or
+the fallback. Both exist because no prompt placement made the 3B do either reliably.
+
+- **Range statement** ("Khoảng tối ưu chung hệ thống áp dụng cho cây …"): added when the question names
+  the profile's plant (`name_vi` or an alias), `generalRangeFields` reads it as a general range question
+  (temperature, air humidity, soil moisture or light, asking for a value, with no device, setting, time,
+  duration, stage, region, disease or limit word), and the reply does not state both profile bounds.
+  Unaccented questions ("nhiet do cho dau tay bao nhieu") never fire; it errs toward silence.
+- **Sources line** ("Nguồn tham khảo: …"): names the retrieved chunks the reply shares ≥ 3 rare phrase
+  bigrams with (in ≤ 3 store chunks, not in the question), at most three: the host for document and
+  disease chunks, the inline institutions for profile chunks. Keep the prefix: "Nguồn:" would make
+  `hasCitation` pass every line, while today a line passes only by naming a marked source. The
+  `toxicity` entry contributes no names, because it holds no pet data and a source would lend authority
+  to a pet verdict. The line is chunk-level, not claim-level: a reply that invents a number while
+  paraphrasing a chunk still gets that chunk's source.
 
 ### RAG pipeline (human-review gate)
 
@@ -164,7 +188,10 @@ its OpenAI-compatible layer accepts the `pattern` keyword, since a rejected sche
 drop `pattern` for that provider if it does not. `LlmEngine` also has streaming twins
 (`completeStream`/`completeJsonStream`, `stream: true` + optional `AbortSignal`) used only by the
 SSE path; a provider that buffers structured output despite `stream: true` degrades gracefully to
-one big token frame.
+one big token frame. `maxTokens` caps a call: the orchestrator passes `LLM_DECISION_MAX_TOKENS`
+(default 400, 0 = off; the longest legitimate decision measured is 237 tokens) to decision calls only,
+and a capped decision fails to parse and takes the existing retry-then-fallback path. `completeJson`'s
+`onLogprobs` is for the eval; the chat path never requests log-probabilities.
 
 ### HTTP surface
 
@@ -192,7 +219,8 @@ the buffered path; the decision JSON is scanned incrementally
 ([src/agent/streamParser.ts](src/agent/streamParser.ts)) so only the `message` field streams out —
 `reasoning` and tool calls never reach the wire, and no token is emitted before the decision `type`
 is known. The buffered path (`Orchestrator.handleChat`, used by non-stream `/v1/chat/completions`)
-still uses the non-streaming LLM calls (provider behavior unchanged).
+still uses the non-streaming LLM calls (provider behavior unchanged). A reply that gets reply notes
+ends with one more `token` frame carrying them (no `reset`), so streamed and buffered text match.
 Pre-stream failures (400/503) stay plain JSON; smoke-test streaming with
 `curl -N -X POST localhost:8787/chat/stream -H 'content-type: application/json' -d '{"userId":"u1","sessionId":"s1","message":"..."}'`.
 
@@ -203,4 +231,9 @@ Tests run with **no external services** because the app is built around DI seams
 ([src/setup/init.ts](src/setup/init.ts)) are all interfaces with production impls and test fakes.
 When adding a feature that touches the LLM, MCP, or the init pipeline, thread it through the existing
 interface rather than newing up a concrete class, so it stays fakeable. `npm run eval` (needs a live
-LLM) is a separate accuracy measurement, not part of `npm test`.
+LLM) is a separate accuracy measurement, not part of `npm test`. It grades the text users see (`reply`
+= model message + reply notes) and reports the model's own text beside it (`modelReply`,
+`groundingModel`, "model text alone" in the summary), so a grounding gain from the notes is not read as
+a better model. It records the type-token margin Δ = log p(reply) − log p(tool) per case (`typeMargin`)
+and lists |Δ| < 1 as `nearTies`. [run.ts](src/eval/run.ts) mirrors the step-0 notes rule by hand; it
+also notes the rare truncated or foreign-script reply that production would regenerate first.
