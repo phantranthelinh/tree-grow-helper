@@ -17,6 +17,17 @@ export const AgentDecisionSchema = z.object({
 
 export type AgentDecision = z.infer<typeof AgentDecisionSchema>
 
+/**
+ * The 3B code-switches mid-sentence (Russian, Chinese) at quantities and Sino-Vietnamese words. LM Studio
+ * compiles this pattern into its sampling grammar, so those characters cannot be generated at all.
+ * It is an allow-list, not a deny-list: printable ASCII without the backslash, Latin-1 and Latin Extended,
+ * combining marks, Vietnamese tone letters, punctuation, super/subscripts and currency, letterlike symbols,
+ * arrows and math operators; the only escapes are \" \\ \/ \n \t. A deny-list was bypassed with other
+ * scripts and with \u escapes. Plain groups only, because LM Studio rejects (?: . A provider that ignores
+ * `pattern` still has the orchestrator's hasForeignScript net.
+ */
+export const MESSAGE_PATTERN = String.raw`^([ -\[\]-~ -ɏ̀-ͯḀ-ỿ -⁯⁰-⃏℀-⅏←-⋿]|\\["\\/nt])*$`
+
 /** JSON schema handed to LM Studio via response_format for structured output. */
 export const AGENT_DECISION_JSON_SCHEMA: Record<string, unknown> = {
   type: 'object',
@@ -25,7 +36,11 @@ export const AGENT_DECISION_JSON_SCHEMA: Record<string, unknown> = {
     // reasoning tokens before committing to type/message — a lightweight CoT.
     reasoning: { type: 'string', description: 'Suy nghĩ ngắn 1-2 câu trước khi quyết định (không hiển thị cho người dùng)' },
     type: { type: 'string', enum: ['reply', 'tool'], description: 'reply hoặc tool' },
-    message: { type: 'string', description: 'Câu trả lời tiếng Việt (reply) hoặc giải thích ngắn (tool)' },
+    message: {
+      type: 'string',
+      description: 'Câu trả lời tiếng Việt (reply) hoặc giải thích ngắn (tool)',
+      pattern: MESSAGE_PATTERN,
+    },
     tool: { type: 'string', description: 'Tên tool khi type=tool' },
     args: { type: 'object', description: 'Tham số của tool khi type=tool' },
   },
