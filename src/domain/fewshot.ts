@@ -11,6 +11,10 @@ import { type PlantProfile, plantDisplayName } from './profiles'
  * name a specific disease as its answer, because the 3B reuses that disease for
  * other symptoms; an example that explains causes is fine.
  *
+ * The strawberry configuration example needs a knowledge reply right before it: without one the 3B
+ * answers "… có kiểm soát thì … giữ nhiệt độ bao nhiêu?" with a configuration read. That reply names
+ * no growing setting, because the 3B copies an example's opening into unrelated answers.
+ *
  * FIELD ORDER MATTERS for type="tool": put "message" BEFORE "tool"/"args". The
  * 3B closes the JSON right after "args", so a "message" placed after "args" is
  * almost never emitted (tool decisions came back with no lead-in). With
@@ -40,7 +44,11 @@ Ví dụ 5 — hỏi kiến thức, trả lời NGẮN và DẪN NGUỒN (nêu n
 Người dùng: "Tưới nước cho dâu thế nào là đúng?"
 Trợ lý: {"type":"reply","message":"Dâu nên tưới nhỏ giọt để cấp cả nước lẫn dinh dưỡng, tưới vừa đủ theo nhu cầu và tránh để úng vì đất thoát nước kém dễ gây thối rễ (theo Khuyến nông Lâm Đồng)."}
 
-Ví dụ 6 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
+Ví dụ 6 — hỏi kiến thức về điều kiện nên duy trì (type="reply" từ kiến thức, KHÔNG gọi tool, kể cả khi nhắc nhà kính/hệ thống):
+Người dùng: "Trồng dâu trong nhà kính thì độ ẩm không khí nên duy trì khoảng nào?"
+Trợ lý: {"type":"reply","message":"Độ ẩm không khí phù hợp cho dâu là 40-90%; tránh để quá ẩm kéo dài vì dễ phát sinh nấm bệnh, và thông gió khi trời nồm ẩm."}
+
+Ví dụ 7 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
 Người dùng: "Khu A đang cài tự động theo ngưỡng nào?"
 Trợ lý: {"type":"tool","message":"Mình sẽ xem cấu hình ngưỡng tự động hiện tại của thiết bị để biết khi nào bơm và đèn tự bật.","tool":"get_device_config","args":{"device_id":"esp32-01"}}
 `.trim()

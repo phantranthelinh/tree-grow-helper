@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { loadProfile } from '../src/domain/profiles'
 import { getFewshot } from '../src/domain/fewshot'
+import { BEAN_SPROUT_EVAL_CASES, EVAL_CASES } from '../src/eval/dataset'
 import { assembleMessages, buildSystemPrompt, normalizeHourUnits } from '../src/llm/prompt'
 import { KNOWN_TOOLS } from '../src/mcp/knownTools'
 
@@ -99,6 +100,32 @@ describe('system prompt', () => {
     // leaf spot while the right [bệnh] entry was ranked first.
     expect(fewshot).not.toMatch(/thán thư|Colletotrichum/)
     expect(fewshot).not.toContain('chẩn đoán bệnh')
-    expect(fewshot).toContain('Ví dụ 6 — hỏi cấu hình tự động')
+    expect(fewshot).toContain('Ví dụ 7 — hỏi cấu hình tự động')
+  })
+
+  const strawberryBlocks = () => getFewshot(loadProfile('strawberry')).split(/\n\n(?=Ví dụ \d)/)
+
+  it('puts a knowledge reply right before the strawberry config example', () => {
+    const blocks = strawberryBlocks()
+    const cfg = blocks.findIndex((b) => b.includes('"tool":"get_device_config"'))
+    // Without a reply example in this slot, "… trong container có kiểm soát thì ban đêm giữ nhiệt độ
+    // bao nhiêu?" is answered with a get_device_config call; placed after the config example it does not help.
+    expect(cfg).toBe(blocks.length - 1)
+    const before = blocks[cfg - 1] ?? ''
+    expect(before).toMatch(/^Ví dụ 6 — hỏi kiến thức về điều kiện nên duy trì/)
+    expect(before).toContain('{"type":"reply","message":"')
+    expect(before).not.toMatch(/"tool"|"args"|"reasoning"/)
+    expect(blocks[cfg]).toMatch(/^Ví dụ 7 — hỏi cấu hình tự động/)
+  })
+
+  it('answers the knowledge example with the profile range, no setting, and no eval message', () => {
+    const block = strawberryBlocks().find((b) => b.startsWith('Ví dụ 6')) ?? ''
+    const answer = /"message":"([^"]*)"/.exec(block)?.[1] ?? ''
+    expect(answer).toContain('40-90%')
+    // An answer opening "Trong nhà kính, …" was copied into replies about hanging hydroponics and EC.
+    expect(answer).not.toMatch(/nhà kính|nhà màng|container/i)
+    const asked = /Người dùng: "([^"]+)"/.exec(block)?.[1] ?? ''
+    expect(asked).not.toBe('')
+    expect([...EVAL_CASES, ...BEAN_SPROUT_EVAL_CASES].map((c) => c.message)).not.toContain(asked)
   })
 })
