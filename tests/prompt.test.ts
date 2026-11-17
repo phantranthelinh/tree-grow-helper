@@ -121,7 +121,8 @@ describe('system prompt', () => {
   it('answers the knowledge example with the profile range, no setting, and no eval message', () => {
     const block = strawberryBlocks().find((b) => b.startsWith('Ví dụ 6')) ?? ''
     const answer = /"message":"([^"]*)"/.exec(block)?.[1] ?? ''
-    expect(answer).toContain('40-90%')
+    const [lo, hi] = loadProfile('strawberry').humidity_range!
+    expect(answer).toContain(`${lo}-${hi}%`)
     // An answer opening "Trong nhà kính, …" was copied into replies about hanging hydroponics and EC.
     expect(answer).not.toMatch(/nhà kính|nhà màng|container/i)
     const asked = /Người dùng: "([^"]+)"/.exec(block)?.[1] ?? ''

@@ -74,7 +74,7 @@ index → assemble the `Orchestrator` → mark ready.
 ### Small-model prompt constraints (qwen2.5-3b)
 
 The decision prompt is tuned around quirks of the 3B model, and regressions are silent — so
-[tests/prompt.test.ts](tests/prompt.test.ts) guards them. Two rules that look arbitrary but aren't:
+[tests/prompt.test.ts](tests/prompt.test.ts) guards them. Rules that look arbitrary but aren't:
 
 - **`type:"reply"` messages must be flowing prose, no lists.** The model crams the whole answer into
   the JSON `message` string; when it starts a bulleted/numbered list it writes a "here's a list:"
@@ -102,15 +102,17 @@ The decision prompt is tuned around quirks of the 3B model, and regressions are 
   makes this worse, because the question itself reads like a device question. That reply names no growing
   setting, because the 3B copied an opening "Trong nhà kính, …" into unrelated answers. The routing
   bullet's "Hỏi kiến thức trồng trọt" clause stays in [prompt.ts](src/llm/prompt.ts), but it does not
-  hold this case on its own.
+  hold this case on its own; removing it would still be an unmeasured change to every routing decision.
 - **No few-shot example may give a specific disease as its answer.** The 3B reused the strawberry
   example's "thán thư (Colletotrichum spp.)" for gray mold, powdery mildew and bacterial leaf spot, with
   the right `[bệnh]` entry ranked first. Examples that explain causes (the bean set's Ví dụ 6) are fine.
-  Keep disease-naming examples out of every set in [fewshot.ts](src/domain/fewshot.ts). When removing an
-  example, keep a reply example directly in front of the config example.
-- **Structured output decides `type` first.** LM Studio's grammar emits the only required key before
+  Keep disease-naming examples out of every set in [fewshot.ts](src/domain/fewshot.ts). When removing a
+  strawberry example, keep a reply example directly in front of the config example.
+- **With LM Studio, structured output decides `type` first.** LM Studio's grammar emits the only required key before
   the optional ones, so `reasoning` never comes before the decision. Requiring it, which puts it first,
-  made the 3B reason knowledge questions onto sensor reads.
+  made the 3B reason knowledge questions onto sensor reads. The schema's `reasoning` description and the
+  bean set's Ví dụ 6 (written `reasoning`-first, header "nghĩ ngắn trước") still read as reason-first; both are
+  model-facing text left unchanged because editing them is an unmeasured prompt change.
 
 ### Profile drives both thresholds and RAG
 

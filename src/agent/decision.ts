@@ -34,6 +34,7 @@ export const AGENT_DECISION_JSON_SCHEMA: Record<string, unknown> = {
   properties: {
     // Optional on purpose: LM Studio's grammar emits required keys first, so `type` is decided before
     // `reasoning`. Requiring it (to force it first) made the 3B route knowledge questions to sensor reads.
+    // The description's "trước" is stale model-facing text, left as is: changing it is an unmeasured prompt change.
     reasoning: { type: 'string', description: 'Suy nghĩ ngắn 1-2 câu trước khi quyết định (không hiển thị cho người dùng)' },
     type: { type: 'string', enum: ['reply', 'tool'], description: 'reply hoặc tool' },
     message: {

@@ -37,7 +37,7 @@
 
 - **Round-1 reports.** Every reply text, grounding reason, foreign-script flag and retrieved chunk id of the six round-1 runs was read; §1 counts are per run (run 1 / 2 / 3).
 - **Offline retrieval replay.** The strawberry (69 chunks) and bean-sprout (30) stores were rebuilt with the repo's own `ingestAll` and `retrieve()` against the same LM Studio bge-m3, with the embedding cache redirected outside the repo. The replay reproduces round 1 exactly (strawberry r0 18/19, r1 13/16; bean 7/7, 3/3), so every retrieval number below is exact.
-- **Live probes.** qwen2.5-3b-instruct with the eval's exact assembly (`buildSystemPrompt` + `getFewshot` + `retrieve` at the round-1 defaults + `assembleMessages` + `completeJson` at decision temperature 0.1). Each variant is a string transform of the assembled system prompt or knowledge block, or a changed JSON schema. About 1,100 calls in total, 2–6 samples per case per arm, including two **simulated round-2 evals** (every strawberry and bean case, 2 samples each) of the final configuration.
+- **Live probes.** qwen2.5-3b-instruct with the eval's exact assembly (`buildSystemPrompt` + `getFewshot` + `retrieve` at the round-1 defaults + `assembleMessages` + `completeJson` at decision temperature 0.1). Each variant is a string transform of the assembled system prompt or knowledge block, or a changed JSON schema. About 1,100 calls in total, 2–6 samples per case per arm, including two **simulated round-2 evals** (every strawberry and bean case, 2 samples each) of the final configuration (see §2.8).
 - **Noise rule (round-1 §0, unchanged).** A single-run difference of ≤2 cases is noise; a case counts as fixed only if it passes in ≥2 of 3 runs. Identical requests at temperature 0.1 still flipped verdicts here (`r1-container-night` 1/3 in a probe vs 0/3 in the eval; `doc-lowland-climate` 3/3 vs 2/3), so single-sample differences are not read as effects.
 
 ## §1 Diagnosis per remaining failure (round-1 runs)
@@ -166,7 +166,7 @@ Whether the answer comes back as JSON depends on the context, so WP-1 Task 1.2 c
 
 ### §2.8 Simulated round-2 eval
 
-Not run: the combined round-2 changes were never simulated before measurement, so the per-WP expectations that cite §2.8 were never checked together. See the round-3 plan (`2026-11-17-rag-eval-round-3.md`) §2.1 for why `r1-container-night` could not hold.
+Never filled in: this table has no recorded run, so the figures other sections cite from §2.8 have no recorded run behind them. The one recorded combined run (the last row of §2.5) already had `r1-container-night` back on `get_device_config`; see the round-3 plan (`2026-11-17-rag-eval-round-3.md`) §2.1.
 
 ## §3 Eval corrections (WP-3)
 
