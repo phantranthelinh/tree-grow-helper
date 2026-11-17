@@ -21,6 +21,17 @@ describe('strawberry knowledge enrichment', () => {
     expect(p.toxicity?.toLowerCase()).toContain('an toàn')
   })
 
+  it('opens the toxicity entry with the missing pet data and the vet referral', () => {
+    expect(p.toxicity).toMatch(
+      /^Chưa có thông tin về độc tính của cây dâu với vật nuôi; nếu vật nuôi có dấu hiệu bất thường hãy hỏi bác sĩ thú y\. Dâu tây/,
+    )
+  })
+
+  it('keeps the sentence that limits the food-safety claim to people', () => {
+    // Without it the 3B read "chưa có thông tin về độc tính" as "không chứa chất độc" for pets in 25 of 36 samples.
+    expect(p.toxicity).toContain('chỉ khẳng định quả dâu tây an toàn để ăn cho người')
+  })
+
   it('embeds the new text fields as RAG chunks', () => {
     const fields = new Set(profileToChunks(p).map((c) => c.field))
     expect(fields.has('light_description')).toBe(true)
