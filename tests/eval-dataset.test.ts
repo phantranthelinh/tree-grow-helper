@@ -121,6 +121,12 @@ describe('eval dataset', () => {
     expect(EVAL_CASES.find((c) => c.id === 'kb-moisture')?.expectChunks).toBeUndefined()
   })
 
+  it('r1-old-runners also accepts the NGHEAN chunk with the mother-plant age rule', () => {
+    expect(caseOf('r1-old-runners')?.expectChunks).toEqual([
+      ['strawberry:propagation', 'https://ngheandost.gov.vn/nong-nghiep/quy-trinh-ky-thuat-trong-va-cham-soc-dau-tay-2490.html#2'],
+    ])
+  })
+
   it('diagnosis checks fail a wrong diagnosis that repeats the symptom', () => {
     const g = (id: string) => caseOf(id)?.grounding ?? {}
     expect(gradeGrounding(g('diag-gray-mold'), 'Quả dâu bị thối mềm và có lớp mốc xám phủ lên khớp với triệu chứng của bệnh thán thư (Colletotrichum spp.).').pass).toBe(false)
