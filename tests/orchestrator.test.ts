@@ -568,3 +568,116 @@ describe('hasForeignScript', () => {
     expect(hasForeignScript('Độ ẩm đất 75–80%, nhiệt độ 10-27°C, 100–110 µmol/m²/s, 20 cm × 20 cm.')).toBe(false)
   })
 })
+
+const BORIC_URL = 'https://ngheandost.gov.vn/quy-trinh'
+const BORIC_REPLY = 'Khi dâu ra hoa, bổ sung acid Boric vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm.'
+const BORIC_SOURCE = 'Nguồn tham khảo: ngheandost.gov.vn.'
+const FLOWERING = 'Nên bón phân gì cho dâu khi cây ra hoa?'
+
+/** One document chunk; the fake embedder's zero vectors score it 0, so retrieval always returns it. */
+function boricStore(): InMemoryVectorStore {
+  const store = new InMemoryVectorStore()
+  store.add([
+    {
+      id: `${BORIC_URL}#6`,
+      text: 'Bổ sung acid Boric vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm khi cây bắt đầu ra hoa, nhắc lại sau một tuần.',
+      embedding: [1, 0, 0],
+      metadata: { source_url: BORIC_URL, category: 'grow' },
+    },
+  ])
+  return store
+}
+
+describe('Orchestrator — reply notes', () => {
+  let llm: FakeLlm
+  let mcp: FakeMcp
+  let orch: Orchestrator
+
+  beforeEach(() => {
+    llm = new FakeLlm()
+    mcp = new FakeMcp()
+    orch = new Orchestrator(makeDeps({ llm, mcp, store: boricStore() }))
+  })
+
+  it('appends the source of the chunk a knowledge reply drew on', async () => {
+    llm.jsonQueue = [JSON.stringify({ type: 'reply', message: BORIC_REPLY })]
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply).toBe(`${BORIC_REPLY}\n\n${BORIC_SOURCE}`)
+  })
+
+  it("states the profile's range when a general range question is answered without it", async () => {
+    orch = new Orchestrator(makeDeps({ llm, mcp }))
+    llm.jsonQueue = ['{"type":"reply","message":"Dâu tây thích hợp ở 15 - 26°C."}']
+    const res = await orch.handleChat('u1', 's1', 'Cây dâu tây thích hợp nhiệt độ khoảng bao nhiêu?')
+    expect(res.reply).toBe(
+      'Dâu tây thích hợp ở 15 - 26°C.\n\nKhoảng tối ưu chung hệ thống áp dụng cho cây dâu tây: nhiệt độ 10-27°C.',
+    )
+  })
+
+  it('adds nothing to a greeting that used no chunk', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Chào bạn! Mình có thể giúp gì cho bạn?"}']
+    const res = await orch.handleChat('u1', 's1', 'Xin chào!')
+    expect(res.reply).toBe('Chào bạn! Mình có thể giúp gì cho bạn?')
+  })
+
+  it('adds nothing to a reply that follows a tool result', async () => {
+    llm.jsonQueue = [
+      '{"type":"tool","tool":"get_device_config","args":{"device_id":"esp32-01"}}',
+      JSON.stringify({ type: 'reply', message: BORIC_REPLY }),
+    ]
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply).toBe(BORIC_REPLY)
+  })
+
+  it('adds nothing to a control confirmation', async () => {
+    llm.jsonQueue = [
+      JSON.stringify({ type: 'tool', message: BORIC_REPLY, tool: 'set_pump', args: { device_id: 'esp32-01', on: true } }),
+    ]
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply).not.toContain('Nguồn tham khảo')
+    expect(res.pendingAction?.tool).toBe('set_pump')
+  })
+
+  it('puts the notes before the sensor-read offer question', async () => {
+    llm.jsonQueue = [
+      JSON.stringify({ type: 'reply', message: BORIC_REPLY, tool: 'get_latest_sensor', args: { device_id: 'esp32-01' } }),
+    ]
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply.startsWith(`${BORIC_REPLY}\n\n${BORIC_SOURCE}\n\n`)).toBe(true)
+    expect(res.reply).toMatch(/\(Có\/Không\)$/)
+    expect(res.pendingAction?.tool).toBe('get_latest_sensor')
+  })
+
+  it('never adds notes to the fallback', async () => {
+    llm.jsonQueue = ['không phải json', 'vẫn không phải json']
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply).toBe('Xin lỗi, mình chưa xử lý được yêu cầu. Bạn nói rõ hơn giúp mình nhé.')
+  })
+})
+
+describe('Orchestrator — decision token cap', () => {
+  // The shape a capped decision arrives in: the message string never closed (a stray "}" inside it included).
+  const CAPPED_REPLY = '{"type":"reply","message":"Rệp hại dâu, nên luân phiên các hoạt chất để tránh kháng sinh;} <|im_start|> userório usuário não não'
+  const CAPPED_TOOL = '{"type":"tool","message":"Mình sẽ bật bơm tưới cho esp32-01","tool":"set_pu'
+
+  it('passes the cap to decision calls and not to free-text calls', async () => {
+    const llm = new FakeLlm()
+    const orch = new Orchestrator(makeDeps({ llm, decisionMaxTokens: 400 }))
+    llm.jsonQueue = ['{"type":"reply","message":"Các nguyên nhân gồm:"}']
+    await orch.handleChat('u1', 's1', 'vì sao lá vàng?')
+    expect(llm.lastJsonOpts?.maxTokens).toBe(400)
+    expect(llm.lastCompleteOpts?.maxTokens).toBeUndefined()
+  })
+
+  it('falls back when both attempts are cut off by the cap', async () => {
+    const llm = new FakeLlm()
+    const mcp = new FakeMcp()
+    const orch = new Orchestrator(makeDeps({ llm, mcp, decisionMaxTokens: 400 }))
+    llm.jsonQueue = [CAPPED_REPLY, CAPPED_TOOL]
+    const res = await orch.handleChat('u1', 's1', 'rệp hại dâu xử lý sao?')
+    expect(res.reply).toBe('Xin lỗi, mình chưa xử lý được yêu cầu. Bạn nói rõ hơn giúp mình nhé.')
+    expect(res.pendingAction).toBeNull()
+    expect(mcp.calls).toHaveLength(0)
+    expect(llm.jsonCalls).toBe(2)
+  })
+})

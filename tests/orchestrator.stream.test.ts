@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { Orchestrator, type ChatStreamEvent, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
-import type { LlmEngine } from '../src/llm'
+import type { LlmEngine, StreamOptions } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
 import { SessionStore } from '../src/memory/sessions'
 import { InMemoryVectorStore } from '../src/rag/store'
@@ -17,6 +17,7 @@ class FakeStreamLlm implements LlmEngine {
   jsonScripts: string[][] = []
   streamScripts: string[][] = []
   fallbackJson = '{"type":"reply","message":"hết kịch bản"}'
+  jsonStreamOpts: Array<StreamOptions | undefined> = []
   private jsonCall = 0
   private streamCall = 0
 
@@ -39,7 +40,13 @@ class FakeStreamLlm implements LlmEngine {
     yield* s
   }
 
-  async *completeJsonStream(): AsyncGenerator<string, void, unknown> {
+  async *completeJsonStream(
+    _messages: unknown,
+    _schema: unknown,
+    _name: unknown,
+    opts?: StreamOptions,
+  ): AsyncGenerator<string, void, unknown> {
+    this.jsonStreamOpts.push(opts)
     const s = this.jsonScripts[this.jsonCall++]
     if (!s) {
       yield this.fallbackJson
@@ -389,4 +396,61 @@ describe('Orchestrator — buffered/stream equivalence', () => {
       expect(tokens(events)).toBe(streamed.reply)
     })
   }
+})
+
+describe('Orchestrator — handleChatStream reply notes and token cap', () => {
+  const URL = 'https://ngheandost.gov.vn/quy-trinh'
+  const REPLY = 'Khi dâu ra hoa, bổ sung acid Boric vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm.'
+  const QUESTION = 'Nên bón phân gì cho dâu khi cây ra hoa?'
+  const store = () => {
+    const s = new InMemoryVectorStore()
+    s.add([
+      {
+        id: `${URL}#6`,
+        text: 'Bổ sung acid Boric vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm khi cây bắt đầu ra hoa, nhắc lại sau một tuần.',
+        embedding: [1, 0, 0],
+        metadata: { source_url: URL, category: 'grow' },
+      },
+    ])
+    return s
+  }
+
+  it('streams the message, then sends the notes as one more token frame', async () => {
+    const llm = new FakeStreamLlm()
+    llm.jsonScripts = [['{"type":"reply","message":"Khi dâu ra hoa, bổ sung acid Boric ', 'vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm."}']]
+    const events = await collect(new Orchestrator(makeDeps({ llm, store: store() })).handleChatStream('u1', 's1', QUESTION))
+    const frames = events.filter((e): e is Extract<ChatStreamEvent, { type: 'token' }> => e.type === 'token').map((e) => e.text)
+    expect(frames.at(-1)).toBe('\n\nNguồn tham khảo: ngheandost.gov.vn.')
+    expect(frames.slice(0, -1).join('')).toBe(REPLY)
+    expect(events.some((e) => e.type === 'reset')).toBe(false)
+    expect(doneOf(events).reply).toBe(`${REPLY}\n\nNguồn tham khảo: ngheandost.gov.vn.`)
+  })
+
+  it('gives the same noted reply through both paths', async () => {
+    const llm = new FakeStreamLlm()
+    llm.jsonScripts = [[JSON.stringify({ type: 'reply', message: REPLY })]]
+    const streamed = doneOf(await collect(new Orchestrator(makeDeps({ llm, store: store() })).handleChatStream('u1', 's1', QUESTION)))
+    llm.rewind()
+    const buffered = await new Orchestrator(makeDeps({ llm, store: store() })).handleChat('u1', 's1', QUESTION)
+    expect(streamed.reply).toBe(buffered.reply)
+    expect(buffered.reply).toContain('Nguồn tham khảo: ngheandost.gov.vn.')
+  })
+
+  it('passes the cap to every streamed decision attempt', async () => {
+    const llm = new FakeStreamLlm()
+    llm.jsonScripts = [['{"type":"reply","message":"nửa chừng'], ['{"type":"reply","message":"ok"}']]
+    await collect(new Orchestrator(makeDeps({ llm, decisionMaxTokens: 400 })).handleChatStream('u1', 's1', 'hi'))
+    expect(llm.jsonStreamOpts.map((o) => o?.maxTokens)).toEqual([400, 400])
+  })
+
+  it('resets and falls back when both streamed attempts are cut off by the cap', async () => {
+    const llm = new FakeStreamLlm()
+    const capped = ['{"type":"reply","message":"Rệp hại dâu, nên luân phiên ', 'các hoạt chất để tránh kháng sinh;} <|im_start|> ', 'userório usuário não não']
+    llm.jsonScripts = [capped, capped]
+    const events = await collect(new Orchestrator(makeDeps({ llm, decisionMaxTokens: 400 })).handleChatStream('u1', 's1', 'rệp?'))
+    expect(events.filter((e) => e.type === 'reset')).toHaveLength(2)
+    const lastReset = events.map((e) => e.type).lastIndexOf('reset')
+    expect(tokens(events.slice(lastReset + 1))).toBe(FALLBACK)
+    expect(doneOf(events)).toEqual({ type: 'done', reply: FALLBACK, pendingAction: null })
+  })
 })

@@ -7,7 +7,7 @@ import { describeMcpError, isRouteErrorText } from '../mcp/errors'
 import { classifyTool, confirmsBeforeRead } from '../mcp/policy'
 import type { PendingAction, SessionStore } from '../memory/sessions'
 import type { InMemoryVectorStore } from '../rag/store'
-import { retrieve } from '../rag/retrieve'
+import { type RetrievedChunk, retrieve } from '../rag/retrieve'
 import {
   AGENT_DECISION_JSON_SCHEMA,
   AGENT_DECISION_SCHEMA_NAME,
@@ -15,6 +15,7 @@ import {
   type AgentDecision,
 } from './decision'
 import { createPendingAction, detectConfirmation, executeAction } from './confirmation'
+import { bigramDocFreq, withReplyNotes } from './replyNotes'
 import { JsonStringFieldStreamer } from './streamParser'
 
 export interface PendingActionView {
@@ -64,6 +65,11 @@ export interface OrchestratorDeps {
   decisionTemp?: number
   /** Temperature for the free-text fallback answer. Defaults to 0.3 when unset. */
   replyTemp?: number
+  /**
+   * Token cap on each decision call; unset or 0 = none. A message string the model never closes otherwise runs to
+   * the context limit, and in stream mode every token of it reaches the client before the parse fails.
+   */
+  decisionMaxTokens?: number
 }
 
 const FALLBACK_REPLY = 'Xin lỗi, mình chưa xử lý được yêu cầu. Bạn nói rõ hơn giúp mình nhé.'
@@ -153,7 +159,20 @@ function toView(p: PendingAction): PendingActionView {
 }
 
 export class Orchestrator {
+  private docFreq?: Map<string, number>
+
   constructor(private readonly deps: OrchestratorDeps) {}
+
+  /**
+   * The reply plus its range statement and sources line (replyNotes), for a reply decided before any tool ran
+   * this turn. A reply after a tool result reads device data, not the chunks retrieved for the question.
+   */
+  private withNotes(reply: string, step: number, question: string, chunks: readonly RetrievedChunk[]): string {
+    if (step > 0) return reply
+    // Built once per orchestrator; a RAG rebuild makes a new orchestrator (withRag), so it never goes stale.
+    this.docFreq ??= bigramDocFreq(this.deps.store.all().map((r) => r.text))
+    return withReplyNotes(reply, { question, chunks, docFreq: this.docFreq, profile: this.deps.profile })
+  }
 
   /** Handle one chat turn (buffered: the full reply arrives at once). */
   async handleChat(userId: string, sessionId: string, message: string): Promise<ChatResult> {
@@ -354,6 +373,7 @@ export class Orchestrator {
     const history = sessions.getHistory(userId, sessionId)
     const prevQuery = [...history].reverse().find((m) => m.role === 'user')?.content
     let ragContext = ''
+    let ragChunks: RetrievedChunk[] = []
     try {
       const rag = await retrieve(store, llm, message, ragTopK, ragMinScore, {
         prevQuery: typeof prevQuery === 'string' ? prevQuery : undefined,
@@ -362,6 +382,7 @@ export class Orchestrator {
         hybrid: ragHybrid,
       })
       ragContext = rag.contextText
+      ragChunks = rag.chunks
     } catch (err) {
       console.warn(`[rag] truy hồi thất bại (${(err as Error).message}) — tiếp tục không có ngữ cảnh tri thức.`)
     }
@@ -375,6 +396,8 @@ export class Orchestrator {
 
     let finalReply: string | undefined
     let pendingView: PendingActionView | null = null
+    // The reply branch below shadows `message` with the decision's text.
+    const question = message
 
     for (let step = 0; step < maxToolSteps; step++) {
       const { decision, emittedText } =
@@ -394,11 +417,12 @@ export class Orchestrator {
         // a control tool named on a reply is ignored (never executed from a reply).
         if (decision.tool && confirmsBeforeRead(decision.tool)) {
           const args = this.sanitizeToolArgs(decision.tool, decision.args ?? {})
-          const offer = this.anchorReadOffer(userId, sessionId, decision.tool, args, decision.message)
+          const advice = decision.message && this.withNotes(decision.message, step, question, ragChunks)
+          const offer = this.anchorReadOffer(userId, sessionId, decision.tool, args, advice)
           finalReply = offer.reply
           pendingView = offer.view
-          // The streamed message is a prefix of the offer reply; only the
-          // "(Có/Không)" suffix still needs to go out.
+          // The streamed message is a prefix of the offer reply; the notes and the
+          // "(Có/Không)" question still need to go out.
           yield* emitRemainder(finalReply, emittedText)
           break
         }
@@ -421,11 +445,13 @@ export class Orchestrator {
           } else {
             text = await llm.complete(proseMessages, { temperature: this.deps.replyTemp })
           }
-          finalReply = replyTextOf(text) || FALLBACK_REPLY
+          const repaired = replyTextOf(text)
+          finalReply = repaired ? this.withNotes(repaired, step, question, ragChunks) : FALLBACK_REPLY
           yield { type: 'token', text: finalReply }
           break
         }
-        finalReply = message || FALLBACK_REPLY
+        // In stream mode the message already went out, so the notes leave as one more token frame.
+        finalReply = message ? this.withNotes(message, step, question, ragChunks) : FALLBACK_REPLY
         yield* emitRemainder(finalReply, emittedText)
         break
       }
@@ -492,7 +518,7 @@ export class Orchestrator {
   }
 
   private async decide(messages: ChatMessage[]): Promise<AgentDecision | null> {
-    const opts = { temperature: this.deps.decisionTemp }
+    const opts = { temperature: this.deps.decisionTemp, maxTokens: this.deps.decisionMaxTokens }
     const raw = await this.deps.llm.completeJson(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME, opts)
     const decision = parseDecision(raw)
     if (decision) return decision
@@ -543,6 +569,7 @@ export class Orchestrator {
     let gate: 'pending' | 'open' | 'closed' = 'pending'
     const stream = this.deps.llm.completeJsonStream(messages, AGENT_DECISION_JSON_SCHEMA, AGENT_DECISION_SCHEMA_NAME, {
       temperature: this.deps.decisionTemp,
+      maxTokens: this.deps.decisionMaxTokens,
       signal,
     })
     for await (const delta of stream) {

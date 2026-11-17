@@ -155,6 +155,7 @@ async function runInitPipeline(
     ragHybrid: appCfg.rag.hybrid,
     decisionTemp: appCfg.llm.decisionTemp,
     replyTemp: appCfg.llm.replyTemp,
+    decisionMaxTokens: appCfg.llm.decisionMaxTokens,
   })
 
   state.setReady(orch)
