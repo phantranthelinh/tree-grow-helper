@@ -7,7 +7,9 @@ import { type PlantProfile, plantDisplayName } from './profiles'
  *
  * One set per plant: the 3B copies the examples' advice and actions, so a
  * strawberry set served for bean sprouts would have it offer to switch the grow
- * light on, which ruins sprouts that must stay dark.
+ * light on, which ruins sprouts that must stay dark. An example must also not
+ * answer a diagnosis, because the 3B reuses the disease it sees there as the
+ * answer for other symptoms.
  *
  * FIELD ORDER MATTERS for type="tool": put "message" BEFORE "tool"/"args". The
  * 3B closes the JSON right after "args", so a "message" placed after "args" is
@@ -38,11 +40,7 @@ Ví dụ 5 — hỏi kiến thức, trả lời NGẮN và DẪN NGUỒN (nêu n
 Người dùng: "Tưới nước cho dâu thế nào là đúng?"
 Trợ lý: {"type":"reply","message":"Dâu nên tưới nhỏ giọt để cấp cả nước lẫn dinh dưỡng, tưới vừa đủ theo nhu cầu và tránh để úng vì đất thoát nước kém dễ gây thối rễ (theo Khuyến nông Lâm Đồng)."}
 
-Ví dụ 6 — chẩn đoán bệnh (nghĩ ngắn trước rồi nêu bệnh + xử lý + phòng ngừa, có nguồn):
-Người dùng: "Thân và cuống dâu có đốm đen, vài quả bị lõm nâu, cây bị bệnh gì?"
-Trợ lý: {"reasoning":"Đốm đen ở thân/cuống kèm vết lõm nâu trên quả khớp nhất với thán thư (Colletotrichum).","type":"reply","message":"Nhiều khả năng là bệnh thán thư (Colletotrichum spp.), phát mạnh khi nóng ẩm mưa nhiều. Xử lý: loại bỏ và tiêu hủy bộ phận bệnh, tránh thao tác khi cây ướt, phun thuốc phòng-trị theo khuyến cáo. Phòng ngừa: dùng cây giống sạch bệnh, phủ luống hạn chế nước bắn, thoát nước tốt (theo Chi cục BVTV Lâm Đồng)."}
-
-Ví dụ 7 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
+Ví dụ 6 — hỏi cấu hình tự động đang cài (tool ĐỌC cấu hình, không đọc cảm biến):
 Người dùng: "Khu A đang cài tự động theo ngưỡng nào?"
 Trợ lý: {"type":"tool","message":"Mình sẽ xem cấu hình ngưỡng tự động hiện tại của thiết bị để biết khi nào bơm và đèn tự bật.","tool":"get_device_config","args":{"device_id":"esp32-01"}}
 `.trim()

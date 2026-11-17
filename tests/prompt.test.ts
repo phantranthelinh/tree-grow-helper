@@ -92,4 +92,13 @@ describe('system prompt', () => {
     const line = fewshot.split('\n').find((l) => l.includes('"tool":"get_device_config"')) ?? ''
     expect(line).not.toContain('đèn')
   })
+
+  it('gives the strawberry set no diagnosis to copy', () => {
+    const fewshot = getFewshot(loadProfile('strawberry'))
+    // The 3B answered "thán thư (Colletotrichum spp.)" for gray mold, powdery mildew and bacterial
+    // leaf spot while the right [bệnh] entry was ranked first.
+    expect(fewshot).not.toMatch(/thán thư|Colletotrichum/)
+    expect(fewshot).not.toContain('chẩn đoán bệnh')
+    expect(fewshot).toContain('Ví dụ 6 — hỏi cấu hình tự động')
+  })
 })
