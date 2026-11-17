@@ -52,4 +52,13 @@ describe('MESSAGE_PATTERN', () => {
     expect(props.reasoning?.pattern).toBeUndefined()
     expect(MESSAGE_PATTERN).not.toContain('(?:')
   })
+
+  it('is pure ASCII, written with escapes rather than literal characters', () => {
+    expect(MESSAGE_PATTERN).toMatch(/^[\x20-\x7E]*$/)
+  })
+
+  it('rejects a raw quote, which is only valid as the escape \\"', () => {
+    expect(new RegExp(MESSAGE_PATTERN, 'u').test(String.raw`nói "có"`)).toBe(false)
+    expect(admits('nói "có"')).toBe(true)
+  })
 })

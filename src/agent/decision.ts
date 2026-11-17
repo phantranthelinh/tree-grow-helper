@@ -26,7 +26,7 @@ export type AgentDecision = z.infer<typeof AgentDecisionSchema>
  * scripts and with \u escapes. Plain groups only, because LM Studio rejects (?: . A provider that ignores
  * `pattern` still has the orchestrator's hasForeignScript net.
  */
-export const MESSAGE_PATTERN = String.raw`^([ -\[\]-~ -ɏ̀-ͯḀ-ỿ -⁯⁰-⃏℀-⅏←-⋿]|\\["\\/nt])*$`
+export const MESSAGE_PATTERN = String.raw`^([ !#-\[\]-~\u00A0-\u024F\u0300-\u036F\u1E00-\u1EFF\u2000-\u206F\u2070-\u20CF\u2100-\u214F\u2190-\u22FF]|\\["\\/nt])*$`
 
 /** JSON schema handed to LM Studio via response_format for structured output. */
 export const AGENT_DECISION_JSON_SCHEMA: Record<string, unknown> = {
