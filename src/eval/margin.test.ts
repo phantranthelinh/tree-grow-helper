@@ -28,4 +28,14 @@ describe('typeMargin', () => {
     expect(typeMargin([tok('{"'), tok('message')])).toBeNull()
     expect(typeMargin([tok('{"'), tok('type'), tok('":"'), tok('reply')])).toBeNull()
   })
+
+  it('is null when the provider lists only the chosen token', () => {
+    const tokens = [tok('{"'), tok('type'), tok('":"'), tok('reply', [['reply', 0]])]
+    expect(typeMargin(tokens)).toBeNull()
+  })
+
+  it('is null when neither reply nor tool is among the alternatives', () => {
+    const tokens = [tok('{"'), tok('type'), tok('":"'), tok('replies', [['replies', 0], ['ok', -3]])]
+    expect(typeMargin(tokens)).toBeNull()
+  })
 })

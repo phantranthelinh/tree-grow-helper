@@ -104,7 +104,7 @@ export class OpenAICompatEngine implements LlmEngine {
       (choice?.logprobs?.content ?? []).map((t) => ({
         token: t.token,
         logprob: t.logprob,
-        top: t.top_logprobs.map((a) => ({ token: a.token, logprob: a.logprob })),
+        top: (t.top_logprobs ?? []).map((a) => ({ token: a.token, logprob: a.logprob })),
       })),
     )
     return choice?.message?.content ?? ''

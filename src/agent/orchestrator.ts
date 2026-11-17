@@ -417,7 +417,11 @@ export class Orchestrator {
         // a control tool named on a reply is ignored (never executed from a reply).
         if (decision.tool && confirmsBeforeRead(decision.tool)) {
           const args = this.sanitizeToolArgs(decision.tool, decision.args ?? {})
-          const advice = decision.message && this.withNotes(decision.message, step, question, ragChunks)
+          // A cut-off lead-in ("… gồm:") must not be followed by a sources line as if it were an answer.
+          const advice =
+            decision.message && !isTruncatedReply(decision.message)
+              ? this.withNotes(decision.message, step, question, ragChunks)
+              : decision.message
           const offer = this.anchorReadOffer(userId, sessionId, decision.tool, args, advice)
           finalReply = offer.reply
           pendingView = offer.view

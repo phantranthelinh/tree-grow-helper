@@ -28,7 +28,7 @@ describe('strawberry knowledge enrichment', () => {
   })
 
   it('keeps the sentence that limits the food-safety claim to people', () => {
-    // Without it the 3B read "chưa có thông tin về độc tính" as "không chứa chất độc" for pets in 25 of 36 samples.
+    // Without it the 3B read "chưa có thông tin về độc tính" as "không chứa chất độc" for pets for pets.
     expect(p.toxicity).toContain('chỉ khẳng định quả dâu tây an toàn để ăn cho người')
   })
 

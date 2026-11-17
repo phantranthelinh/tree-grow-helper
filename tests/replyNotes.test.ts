@@ -103,6 +103,23 @@ describe('rangeStatement', () => {
   })
 })
 
+describe('rangeStatement plant gate', () => {
+  it.each([
+    'Cà chua cần nhiệt độ bao nhiêu?',
+    'Nhiệt độ sôi của nước là bao nhiêu?',
+    'Giá đỗ cần nhiệt độ bao nhiêu?',
+    'Nhiệt độ bao nhiêu thì dâu bị bệnh mốc xám?',
+  ])('says nothing on the strawberry profile for %s', (question) => {
+    expect(rangeStatement(question, 'Khoảng 5°C.', strawberry)).toBeNull()
+  })
+
+  it('states the bean-sprout range for a question that names the plant by an alias', () => {
+    expect(rangeStatement('Giá đỗ cần nhiệt độ bao nhiêu?', 'Khoảng 20°C.', bean)).toBe(
+      'Khoảng tối ưu chung hệ thống áp dụng cho cây giá đỗ: nhiệt độ 27-30°C.',
+    )
+  })
+})
+
 describe('sourceNames', () => {
   it('names a document or disease entry by its host', () => {
     expect(sourceNames({ text: 'x', source: 'https://www.sggp.org.vn/a-b.html' })).toEqual(['sggp.org.vn'])
@@ -113,6 +130,11 @@ describe('sourceNames', () => {
       '[ánh sáng] Dâu cần nắng (Khuyến nông Lâm Đồng). LED trong container của Trung tâm Nghiên cứu Khoai tây (Đà Lạt). ' +
       'Ngó (thân bò/stolon) (Cổng KHCN VISTA; VAAS).'
     expect(sourceNames({ text, field: 'light_description' })).toEqual(['Khuyến nông Lâm Đồng', 'Cổng KHCN VISTA', 'VAAS'])
+  })
+
+  it('gives a toxicity chunk no name, since the entry holds no pet data to cite', () => {
+    const text = '[độc tính] Quả an toàn cho người (Khuyến nông Lâm Đồng; VAAS).'
+    expect(sourceNames({ id: 'strawberry:toxicity#0', text, field: 'toxicity' })).toEqual([])
   })
 
   it('gives a disease entry without a source no name', () => {
@@ -155,6 +177,14 @@ describe('sourcesLine', () => {
   it('does not repeat a source the reply already names', () => {
     const reply = 'Theo ngheandost.gov.vn, bổ sung acid Boric vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm.'
     expect(sourcesLine(reply, asked, [boric], df)).toBeNull()
+  })
+
+  it('gives a pet-safety reply drawn from the toxicity chunk no sources line', () => {
+    const text =
+      '[độc tính] Quả dâu tây an toàn cho người, lá và thân chưa có nghiên cứu về vật nuôi (Khuyến nông Lâm Đồng; VAAS).'
+    const toxicity = { id: 'strawberry:toxicity#0', text, field: 'toxicity' }
+    const reply = 'Lá dâu tây không chứa chất độc gây nguy hiểm, quả dâu tây an toàn cho người, lá và thân chưa có nghiên cứu về vật nuôi.'
+    expect(sourcesLine(reply, 'Dâu tây có độc với mèo không?', [toxicity], bigramDocFreq([text]))).toBeNull()
   })
 
   it('lists at most three names and drops a name contained in another', () => {

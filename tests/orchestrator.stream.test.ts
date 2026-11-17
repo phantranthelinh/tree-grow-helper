@@ -426,6 +426,39 @@ describe('Orchestrator — handleChatStream reply notes and token cap', () => {
     expect(doneOf(events).reply).toBe(`${REPLY}\n\nNguồn tham khảo: ngheandost.gov.vn.`)
   })
 
+  const frameTexts = (events: ChatStreamEvent[]) =>
+    events.filter((e): e is Extract<ChatStreamEvent, { type: 'token' }> => e.type === 'token').map((e) => e.text)
+
+  it('sends the notes and the offer question of a sensor-read offer as one remainder frame', async () => {
+    const llm = new FakeStreamLlm()
+    llm.jsonScripts = [
+      [
+        '{"type":"reply","message":"Khi dâu ra hoa, bổ sung acid Boric ',
+        'vào dung dịch dinh dưỡng từ 0,7 - 0,9 ppm.","tool":"get_latest_sensor","args":{"device_id":"esp32-01"}}',
+      ],
+    ]
+    const events = await collect(new Orchestrator(makeDeps({ llm, store: store() })).handleChatStream('u1', 's1', QUESTION))
+    const frames = frameTexts(events)
+    const last = frames.at(-1) ?? ''
+    expect(frames.slice(0, -1).join('')).toBe(REPLY)
+    expect(last.startsWith('\n\nNguồn tham khảo: ngheandost.gov.vn.\n\n')).toBe(true)
+    expect(last).toMatch(/\(Có\/Không\)$/)
+    expect(events.some((e) => e.type === 'reset')).toBe(false)
+    expect(frames.join('')).toBe(doneOf(events).reply)
+  })
+
+  it('sends a repaired reply and its notes as one frame after the reset', async () => {
+    const llm = new FakeStreamLlm()
+    llm.jsonScripts = [['{"type":"reply","message":"Các nguyên nhân gồm:"}']]
+    llm.streamScripts = [[REPLY]]
+    const events = await collect(new Orchestrator(makeDeps({ llm, store: store() })).handleChatStream('u1', 's1', QUESTION))
+    const reset = events.findIndex((e) => e.type === 'reset')
+    expect(reset).toBeGreaterThan(-1)
+    const after = frameTexts(events.slice(reset + 1))
+    expect(after).toEqual([`${REPLY}\n\nNguồn tham khảo: ngheandost.gov.vn.`])
+    expect(after.join('')).toBe(doneOf(events).reply)
+  })
+
   it('gives the same noted reply through both paths', async () => {
     const llm = new FakeStreamLlm()
     llm.jsonScripts = [[JSON.stringify({ type: 'reply', message: REPLY })]]

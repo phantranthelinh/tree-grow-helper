@@ -648,6 +648,20 @@ describe('Orchestrator — reply notes', () => {
     expect(res.pendingAction?.tool).toBe('get_latest_sensor')
   })
 
+  it('adds no notes to an offer whose advice is a cut-off lead-in', async () => {
+    llm.jsonQueue = [
+      JSON.stringify({
+        type: 'reply',
+        message: `${BORIC_REPLY.replace(/.$/, '')} gồm:`,
+        tool: 'get_latest_sensor',
+        args: { device_id: 'esp32-01' },
+      }),
+    ]
+    const res = await orch.handleChat('u1', 's1', FLOWERING)
+    expect(res.reply).not.toContain('Nguồn tham khảo')
+    expect(res.pendingAction?.tool).toBe('get_latest_sensor')
+  })
+
   it('never adds notes to the fallback', async () => {
     llm.jsonQueue = ['không phải json', 'vẫn không phải json']
     const res = await orch.handleChat('u1', 's1', FLOWERING)

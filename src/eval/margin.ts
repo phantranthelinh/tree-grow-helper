@@ -4,14 +4,16 @@ import type { TokenLogprob } from '../llm'
  * Δ = log p("reply") − log p("tool") at the token that sets the decision's type. The grammar emits `type` first,
  * so this single token is the routing choice; |Δ| < 1 marks a case whose verdict can flip between runs or prefix
  * cache states, which a pass/fail count hides. A choice missing from the returned alternatives is given the lowest
- * listed log-probability, so Δ is then a lower bound on the true margin. Null when no type token is found or the
- * provider returned no alternatives.
+ * listed log-probability, so Δ is then a lower bound on the true margin. Null when no type token is found, or the
+ * provider listed neither choice or no alternative to take the lower bound from.
  */
 export function typeMargin(tokens: readonly TokenLogprob[]): number | null {
   let text = ''
   for (const t of tokens) {
     if (/"type"\s*:\s*"$/.test(text)) {
-      if (t.top.length === 0) return null
+      const listed = (choice: string) => t.top.some((a) => a.token === choice)
+      if (!listed('reply') && !listed('tool')) return null
+      if (t.top.length < 2) return null
       const lp = (choice: string) => t.top.find((a) => a.token === choice)?.logprob
       const floor = Math.min(...t.top.map((a) => a.logprob))
       return (lp('reply') ?? floor) - (lp('tool') ?? floor)

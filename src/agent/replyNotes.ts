@@ -36,7 +36,7 @@ const NOT_GENERAL = anyWord([
   'giai đoạn', 'ra hoa', 'cây con', 'nảy mầm', 'ra quả', 'nuôi quả', 'đậu quả', 'thu hoạch', 'ươm', 'ngâm',
   'bảo quản', 'vận chuyển', 'tháng',
   'vùng', 'miền', 'tỉnh',
-  'ảnh hưởng', 'dung dịch', 'nước tưới', 'tối đa', 'tối thiểu', 'chịu', 'cao nhất', 'thấp nhất', 'chết', 'quá',
+  'ảnh hưởng', 'bệnh', 'dung dịch', 'nước tưới', 'tối đa', 'tối thiểu', 'chịu', 'cao nhất', 'thấp nhất', 'chết', 'quá',
 ])
 
 /** The profile ranges a question asks for in general, or none when it names any qualifier above. */
@@ -47,6 +47,19 @@ export function generalRangeFields(question: string): RangeField[] {
   // A capitalised word after the first one is a place name ("ở Mộc Châu", "tại Sơn La").
   if (text.split(/\s+/).slice(1).some((w) => /^\p{Lu}\p{Ll}/u.test(w))) return []
   return QUANTITIES.filter((q) => q.pattern.test(lower)).map((q) => q.field)
+}
+
+/**
+ * True when the question names the profile's plant by its Vietnamese name or an alias. The profile's range is
+ * the answer only for that plant: "Cà chua cần nhiệt độ bao nhiêu?" or a question about boiling water is not.
+ */
+function namesPlant(question: string, profile: PlantProfile): boolean {
+  const lower = question.normalize('NFC').toLowerCase()
+  const names = [profile.name_vi, ...profile.aliases].filter((n): n is string => !!n)
+  return names.some((n) => {
+    const escaped = n.normalize('NFC').toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`)
+    return new RegExp(String.raw`(?<!\p{L})${escaped}(?!\p{L})`, 'u').test(lower)
+  })
 }
 
 /** True when `value` stands as a number of its own in `text` ("10-27°C" mentions 10; "100" does not). */
@@ -61,6 +74,7 @@ function mentions(text: string, value: number): boolean {
  * the source of the profile's numbers.
  */
 export function rangeStatement(question: string, reply: string, profile: PlantProfile): string | null {
+  if (!namesPlant(question, profile)) return null
   const asked = generalRangeFields(question)
   const parts: string[] = []
   for (const q of QUANTITIES) {
@@ -115,7 +129,8 @@ export function sourceNames(chunk: NotedChunk): string[] {
     const host = HOST.exec(chunk.source)?.[1]
     return host ? [host] : []
   }
-  if (!chunk.field) return []
+  // The toxicity entry has no pet data, so a source line under it would lend authority to a pet verdict.
+  if (!chunk.field || chunk.field === 'toxicity') return []
   const names: string[] = []
   for (const m of chunk.text.matchAll(/\(([^()]+)\)/g)) {
     for (const part of (m[1] ?? '').split(';')) {

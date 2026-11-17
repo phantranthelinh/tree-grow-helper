@@ -29,7 +29,7 @@ const LOGPROBS = {
 }
 
 /** Fake OpenAI-compatible chat server: records every request body, answers JSON or SSE like LM Studio. */
-async function chatServer(seen: Array<Record<string, unknown>>): Promise<string> {
+async function chatServer(seen: Array<Record<string, unknown>>, logprobs: unknown = LOGPROBS): Promise<string> {
   server = createServer((req, res) => {
     let body = ''
     req.on('data', (c) => (body += c))
@@ -60,7 +60,7 @@ async function chatServer(seen: Array<Record<string, unknown>>): Promise<string>
               index: 0,
               finish_reason: 'stop',
               message: { role: 'assistant', content: DECISION },
-              logprobs: parsed.logprobs ? LOGPROBS : null,
+              logprobs: parsed.logprobs ? logprobs : null,
             },
           ],
           usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
@@ -116,5 +116,13 @@ describe('OpenAICompatEngine request options', () => {
         { token: 'tool', logprob: -2.4 },
       ],
     })
+  })
+
+  it('treats a provider that omits top_logprobs as listing no alternatives', async () => {
+    const bare = { content: [{ token: 'reply', logprob: -0.1, bytes: null }] }
+    const e = engine(await chatServer([], bare))
+    let got: TokenLogprob[] = []
+    await e.completeJson(msgs, {}, 'd', { onLogprobs: (t) => (got = t) })
+    expect(got).toEqual([{ token: 'reply', logprob: -0.1, top: [] }])
   })
 })
