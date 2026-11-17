@@ -71,8 +71,8 @@ const READ_SUMMARY_FALLBACK = 'Mình đã đọc số liệu nhưng chưa tóm t
 const EXHAUSTED_FALLBACK = 'Mình đã xem dữ liệu nhưng chưa thể kết luận, bạn hỏi cụ thể hơn nhé.'
 const RETRY_NUDGE = 'Chỉ trả về đúng MỘT JSON hợp lệ theo schema, không thêm chữ nào khác.'
 const PROSE_ANSWER_INSTRUCTION =
-  'Hãy trả lời người dùng bằng tiếng Việt thành MỘT đoạn văn liền mạch, ngắn gọn (2-5 câu), ' +
-  'KHÔNG dùng gạch đầu dòng hay danh sách, và KHÔNG kết thúc bằng dấu hai chấm.'
+  'Lần này KHÔNG trả JSON. Hãy viết câu trả lời cho người dùng bằng tiếng Việt thành MỘT đoạn văn liền mạch, ' +
+  'ngắn gọn (2-5 câu), KHÔNG dùng gạch đầu dòng hay danh sách, và KHÔNG kết thúc bằng dấu hai chấm.'
 
 /**
  * True when a reply decision's `message` shows the documented small-model
@@ -127,6 +127,15 @@ function parseDecision(raw: string): AgentDecision | null {
   } catch {
     return null
   }
+}
+
+/**
+ * The user-facing text of a regenerated answer. The repair call shares the decision system prompt, which
+ * demands JSON, so the model sometimes answers with a decision object anyway; ship its message, never the JSON.
+ */
+export function replyTextOf(raw: string): string {
+  const decision = parseDecision(raw)
+  return decision ? decision.message.trim() : raw.trim()
 }
 
 function toView(p: PendingAction): PendingActionView {
@@ -385,28 +394,25 @@ export class Orchestrator {
         }
         const message = decision.message ?? ''
         if (isTruncatedReply(message) || hasForeignScript(message)) {
-          // The model abandoned its answer inside the JSON "message" string
-          // (empty or a dangling-colon lead-in) or code-switched into another
-          // script. Regenerate a clean, flowing
-          // prose answer with an UNCONSTRAINED call at replyTemp (0.3) instead of
-          // shipping the fragment — decisionTemp (0.1) + JSON constraint is what
-          // produced the stub. In stream mode the fragment already went out, so
-          // reset the client before re-speaking.
+          // The model abandoned its answer inside the JSON "message" string (empty or a dangling-colon
+          // lead-in) or code-switched into another script. Regenerate it at replyTemp (0.3) instead of
+          // shipping the fragment; decisionTemp (0.1) + the JSON constraint is what produced the stub.
+          // The regeneration still carries the JSON-demanding system prompt, so its answer is unwrapped
+          // with replyTextOf and, in stream mode, sent whole: a streamed decision object would leak JSON.
+          // The fragment already went out in stream mode, so the client is reset before re-speaking.
           const proseMessages: ChatMessage[] = [...messages, { role: 'user', content: PROSE_ANSWER_INSTRUCTION }]
+          let text: string
           if (mode === 'stream') {
             if (emittedText) yield { type: 'reset' }
-            let text = ''
+            text = ''
             for await (const delta of llm.completeStream(proseMessages, { temperature: this.deps.replyTemp, signal })) {
               text += delta
-              yield { type: 'token', text: delta }
             }
-            finalReply = text || FALLBACK_REPLY
-            if (!text) yield { type: 'token', text: finalReply }
           } else {
-            const text = await llm.complete(proseMessages, { temperature: this.deps.replyTemp })
-            finalReply = text || FALLBACK_REPLY
-            yield { type: 'token', text: finalReply }
+            text = await llm.complete(proseMessages, { temperature: this.deps.replyTemp })
           }
+          finalReply = replyTextOf(text) || FALLBACK_REPLY
+          yield { type: 'token', text: finalReply }
           break
         }
         finalReply = message || FALLBACK_REPLY

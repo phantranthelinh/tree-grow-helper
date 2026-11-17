@@ -1,6 +1,6 @@
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { Orchestrator, hasForeignScript, isTruncatedReply, type OrchestratorDeps } from '../src/agent/orchestrator'
+import { Orchestrator, hasForeignScript, isTruncatedReply, replyTextOf, type OrchestratorDeps } from '../src/agent/orchestrator'
 import { loadProfile } from '../src/domain/profiles'
 import type { ChatMessage, CompleteOptions, LlmEngine, StreamOptions } from '../src/llm'
 import type { McpGateway, McpToolResult } from '../src/mcp/client'
@@ -15,9 +15,11 @@ class FakeLlm implements LlmEngine {
   completeCalls = 0
   lastJsonOpts?: CompleteOptions
   lastCompleteOpts?: CompleteOptions
+  lastCompleteMessages?: ChatMessage[]
 
-  async complete(_messages: ChatMessage[], opts?: CompleteOptions): Promise<string> {
+  async complete(messages: ChatMessage[], opts?: CompleteOptions): Promise<string> {
     this.completeCalls++
+    this.lastCompleteMessages = messages
     this.lastCompleteOpts = opts
     return this.completeReturn
   }
@@ -476,6 +478,14 @@ describe('isTruncatedReply', () => {
   })
 })
 
+describe('replyTextOf', () => {
+  it('unwraps a decision, keeps prose, and empties a decision without a message', () => {
+    expect(replyTextOf('{"type":"reply","message":"Tưới nhỏ giọt."}')).toBe('Tưới nhỏ giọt.')
+    expect(replyTextOf('  Tưới nhỏ giọt, tránh úng.  ')).toBe('Tưới nhỏ giọt, tránh úng.')
+    expect(replyTextOf('{"type":"reply","message":""}')).toBe('')
+  })
+})
+
 describe('Orchestrator — truncated reply repair', () => {
   let llm: FakeLlm
   let mcp: FakeMcp
@@ -516,6 +526,19 @@ describe('Orchestrator — truncated reply repair', () => {
     const res = await orch.handleChat('u1', 's1', 'ngâm đỗ bao lâu?')
     expect(res.reply).toBe('Câu trả lời hoàn chỉnh bằng văn xuôi.')
     expect(llm.completeCalls).toBe(1)
+  })
+
+  it('ships the message, not the JSON, when the repair answers with a decision object', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Nên ngâm 4 часов."}']
+    llm.completeReturn = '{"type":"reply","message":"Nên ngâm đỗ xanh trong nước 35°C khoảng 4 giờ."}'
+    const res = await orch.handleChat('u1', 's1', 'ngâm đỗ bao lâu?')
+    expect(res.reply).toBe('Nên ngâm đỗ xanh trong nước 35°C khoảng 4 giờ.')
+  })
+
+  it('tells the repair call not to answer in JSON', async () => {
+    llm.jsonQueue = ['{"type":"reply","message":"Các nguyên nhân gồm:"}']
+    await orch.handleChat('u1', 's1', 'vì sao lá vàng?')
+    expect(String(llm.lastCompleteMessages?.at(-1)?.content)).toMatch(/^Lần này KHÔNG trả JSON\./)
   })
 
   it('drops a code-switched lead-in but still asks to confirm the control tool', async () => {

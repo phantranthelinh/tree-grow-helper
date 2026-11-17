@@ -127,6 +127,16 @@ describe('Orchestrator — handleChatStream', () => {
     expect(deps.sessions.getHistory('u1', 's1')).toHaveLength(2)
   })
 
+  it('sends the unwrapped repair as one frame after a reset', async () => {
+    llm.jsonScripts = [['{"type":"reply","message":"Các nguyên nhân gồm:"}']]
+    llm.streamScripts = [['{"type":"reply",', '"message":"Lá vàng do úng nước."}']]
+    const events = await collect(orch.handleChatStream('u1', 's1', 'vì sao lá vàng?'))
+    const reset = events.findIndex((e) => e.type === 'reset')
+    expect(reset).toBeGreaterThan(-1)
+    expect(tokens(events.slice(reset + 1))).toBe('Lá vàng do úng nước.')
+    expect(doneOf(events).reply).toBe('Lá vàng do úng nước.')
+  })
+
   it('holds message tokens until type is known when message arrives first', async () => {
     llm.jsonScripts = [['{"message":"xin chào"', ',"type":"reply"}']]
     const events = await collect(orch.handleChatStream('u1', 's1', 'hi'))
