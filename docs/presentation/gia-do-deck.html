@@ -4,7 +4,16 @@
 <meta charset="utf-8">
 <title>Bộ não ươm giá</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&display=swap">
+<script>
+// Added from script so the request never blocks rendering: on a network that drops packets
+// instead of refusing them, a parser-inserted stylesheet would hold back the whole deck.
+(function () {
+  var link = document.createElement('link')
+  link.rel = 'stylesheet'
+  link.href = 'https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=JetBrains+Mono:wght@400;600&display=swap'
+  document.head.appendChild(link)
+})()
+</script>
 <style>
 /* Layout: a fixed 1280×720 stage scaled to the window, letterboxed on a darker surround, with the deck bar below it. */
 :root {
@@ -583,7 +592,8 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 .s18-side .card h3 { font-size: 21px; }
 .s18-side .card p { margin: 0; font-size: 17px; line-height: 1.45; }
 .s18-big { font-family: var(--font-mono); font-size: 26px; font-weight: 600; color: var(--bean); }
-#s18-eval .s18-caveat { position: absolute; left: 72px; right: 72px; top: 530px; margin: 0; padding: 10px 16px; border-left: 4px solid var(--warn); font-size: 19px; line-height: 1.4; }
+#s18-eval .s18-regrade { position: absolute; left: 72px; width: 760px; top: 496px; margin: 0; font-size: 16px; line-height: 1.4; color: var(--ink-soft); }
+#s18-eval .s18-caveat { position: absolute; left: 72px; right: 72px; top: 572px; margin: 0; padding: 10px 16px; border-left: 4px solid var(--warn); font-size: 19px; line-height: 1.4; }
 
 /* 19 · live demo */
 #s19-demo .s19-online { position: absolute; right: 72px; top: 60px; margin: 0; padding: 4px 10px; border: 1px dashed var(--warn); border-radius: 6px; font-family: var(--font-mono); font-size: 14px; color: var(--warn); }
@@ -1141,7 +1151,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
   </div>
   <aside class="notes" data-min="1.5">
     <p><b>Mở:</b> "Nếu phải chỉ ra phần nào giống 'dạy' nhất, thì là phần này."</p>
-    <p><b>Ý chính:</b> Mỗi lượt hỏi, đề bài kèm 7 ví dụ mẫu: một câu của người dùng và câu trả lời đúng khuôn. Model nhỏ chép theo ví dụ rất sát, chép cả định dạng lẫn lời khuyên. Chuyện thật: bộ ví dụ của dâu tây có ví dụ "Bật đèn cho cây" để bổ sung ánh sáng. Đem bộ đó dùng cho giá đỗ thì model sẽ khuyên bật đèn, trong khi giá phải ươm trong tối và ánh sáng làm mầm đổi màu. Vì vậy mỗi cây có bộ ví dụ riêng; bộ của giá đỗ có ví dụ "Tắt đèn khu ươm giá".</p>
+    <p><b>Ý chính:</b> Mỗi lượt hỏi, đề bài kèm 7 ví dụ mẫu: một câu của người dùng và câu trả lời đúng khuôn. Model nhỏ chép theo ví dụ rất sát, chép cả định dạng lẫn lời khuyên. Ví dụ có thật trong code: bộ của dâu tây có ví dụ "Bật đèn cho cây" để bổ sung ánh sáng. Model 3B chép theo ví dụ cả lời khuyên lẫn hành động (CLAUDE.md ghi lại tật này), nên dùng bộ đó cho giá đỗ là dạy nó bật đèn, trong khi giá phải ươm trong tối và ánh sáng làm mầm đổi màu. Vì vậy mỗi cây có bộ ví dụ riêng; bộ của giá đỗ có ví dụ "Tắt đèn khu ươm giá".</p>
     <p><b>Nguồn:</b> <code>src/domain/fewshot.ts</code>, bộ <code>STRAWBERRY</code> và <code>BEAN_SPROUT</code>, Ví dụ 3 trích nguyên văn. Cây chưa có bộ riêng thì dùng bộ trung tính, chỉ dạy định dạng (CLAUDE.md, mục thêm cây).</p>
     <p><b>Có thể bị hỏi:</b> "Model chép đến mức nào?" Có lần nó lấy nguyên tên bệnh trong một ví dụ dâu tây để trả lời cho ba bệnh khác nhau. Từ đó không ví dụ nào được lấy một bệnh cụ thể làm đáp án.</p>
   </aside>
@@ -1256,24 +1266,25 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
       <span class="s18-cell old"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span>
       <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span></div>
     <div class="s18-row"><span class="s18-label">Trích đúng số liệu<small>câu hỏi kiến thức có số</small></span>
-      <span class="s18-cell old"><span class="s18-track"><i style="--w:83.3%"></i></span><span class="s18-frac">5/6</span></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">6/6</span></span>
       <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">6/6</span></span></div>
     <div class="s18-row"><span class="s18-label">Sạch chữ lạ<small>không chữ Nga, chữ Trung</small></span>
       <span class="s18-cell old none">chưa đo (slide 17)</span>
       <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span></div>
     <div class="s18-row"><span class="s18-label">Tìm đúng đoạn sách<small>câu có đánh dấu đoạn cần tìm</small></span>
-      <span class="s18-cell old"><span class="s18-track"><i style="--w:71.4%"></i></span><span class="s18-frac">5/7</span></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">7/7</span></span>
       <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">7/7</span></span></div>
   </div>
   <div class="s18-side">
     <div class="card"><h3>4 câu khó thêm sau</h3><p>Vòng mới nhất: chọn đúng 4/4, trích đúng số liệu 1/1, sạch chữ lạ 4/4.</p></div>
     <div class="card"><h3>Dâu tây</h3><p><span class="s18-big">52/52</span> câu chọn đúng hành động, trích đúng số liệu 14/14, cả 3 lần chạy ở vòng mới nhất.</p></div>
   </div>
+  <p class="s18-regrade">Cả hai vòng chấm theo tiêu chí hiện tại. Theo tiêu chí cũ lúc chạy, vòng đầu ghi 5/6 và 5/7; chấm lại thì đạt đủ. Tiến bộ đo được thật là dòng chữ lạ.</p>
   <p class="s18-caveat">Mỗi cột là kết quả một lần chạy, trên ít câu. Model trả lời mỗi lần một khác, nên đây không phải độ chính xác tuyệt đối.</p>
   <aside class="notes" data-min="2">
     <p><b>Mở:</b> "Mỗi mẹo nãy giờ được giữ lại vì có số đo, không phải vì nghe hay."</p>
-    <p><b>Ý chính:</b> Bộ chấm bài có 12 câu hỏi giá đỗ, sau thêm 4 câu khó. Các thước đo: chọn đúng hành động (trả lời, đọc cảm biến hay điều khiển), đúng mức an toàn (lệnh điều khiển phải hỏi trước), trích đúng số liệu, sạch chữ lạ, tìm đúng đoạn sách. Vòng đầu 16/11 đã chọn đúng 12/12, nhưng trích số liệu chỉ 5/6 (câu thu hoạch thiếu "48") và có chữ Nga, chữ Trung lọt ra; lúc đó chưa có thước đo chữ lạ, slide 17 là câu thật của vòng ấy. Vòng mới nhất 19/11: 12/12, 12/12, 6/6, 12/12, và tìm đúng đoạn sách 7/7. Dâu tây có bộ 52 câu: 52/52 và 14/14 ở cả 3 lần chạy.</p>
-    <p><b>Nguồn:</b> <code>data/eval/r0-bean-sprout-default-2026-11-16T13-34-06-975Z.json</code> và <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code> (<code>summary</code>, <code>summaryR1</code>); dâu tây <code>data/eval/r4-strawberry-{1,2,3}-….json</code>. Chạy bằng <code>npm run eval</code>, cần LM Studio.</p>
+    <p><b>Ý chính:</b> Bộ chấm bài có 12 câu hỏi giá đỗ, sau thêm 4 câu khó. Các thước đo: chọn đúng hành động (trả lời, đọc cảm biến hay điều khiển), đúng mức an toàn (lệnh điều khiển phải hỏi trước), trích đúng số liệu, sạch chữ lạ, tìm đúng đoạn sách. Chấm theo cùng tiêu chí hiện tại, vòng đầu 16/11 và vòng mới nhất 19/11 đều 12/12, 12/12, 6/6 và tìm đúng đoạn sách 7/7. Khác biệt đo được thật là chữ lạ: vòng đầu có chữ Nga, chữ Trung lọt ra (slide 17), lúc đó chưa có thước đo này; vòng mới nhất sạch 12/12. Lúc chạy vòng đầu, bộ chấm cũ ghi 5/6 và 5/7: câu thu hoạch trả lời "2,5 ngày ươm", đúng theo ĐH Cần Thơ, nhưng tiêu chí khi đó chỉ nhận "48"; hai câu tìm trúng một đoạn tài liệu khác với đoạn được đánh dấu. Tiêu chí được sửa ngay tối 16/11. Bài học đi kèm "đo, đừng đoán": chính thước đo cũng phải được kiểm. Dâu tây có bộ 52 câu: 52/52 và 14/14 ở cả 3 lần chạy.</p>
+    <p><b>Nguồn:</b> <code>data/eval/r0-bean-sprout-default-2026-11-16T13-34-06-975Z.json</code> và <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code> (<code>summary</code>, <code>summaryR1</code>); vòng đầu chấm lại theo tiêu chí hiện tại trong <code>src/eval/dataset.ts</code> (sửa ở commit <code>af6c85a</code>); dâu tây <code>data/eval/r4-strawberry-{1,2,3}-….json</code>. Chạy bằng <code>npm run eval</code>, cần LM Studio.</p>
     <p><b>Có thể bị hỏi:</b> "12/12 nghĩa là AI không sai?" Không. Mỗi thước đo chỉ kiểm vài điều cụ thể. Slide 20 là những lỗi mà các thước đo này chưa bắt được.</p>
   </aside>
 </section>
@@ -1310,10 +1321,10 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
   </div>
   <aside class="notes" data-min="4">
     <p><b>Mở:</b> "Giờ hỏi thật. Bên trái là model trần, bên phải là cả hệ thống, cùng một model 3B."</p>
-    <p><b>Trình tự:</b> (1) "Ủ giá đỗ cần nhiệt độ bao nhiêu?", câu của slide 2: bên trái tự nói một con số, bên phải ra 27–30°C kèm dòng nguồn. (2) "Nước kẹo…": bên phải nêu 6-BAP, nguồn Ninh Bình. (3) "Giá đỗ có cần chiếu đèn…": để ý câu về tưới, slide 20 quay lại. (4) "Tưới khay giá esp32-01 trong 30 giây." chỉ gửi bên phải: hiện câu hỏi Có/Không. MCP đang chạy thì bấm Có; không thì bấm Không để thấy lệnh bị huỷ.</p>
+    <p><b>Trình tự:</b> (1) "Ủ giá đỗ cần nhiệt độ bao nhiêu?", câu của slide 2: bên trái tự nói một con số, bên phải ra 27–30°C đúng khoảng của hồ sơ cây; câu này thường không có dòng nguồn, vì con số lấy từ hồ sơ trong đề bài chứ không chép từ đoạn sách nào. (2) "Nước kẹo…": bên phải nêu 6-BAP, nguồn Ninh Bình. (3) "Giá đỗ có cần chiếu đèn…": để ý câu về tưới, slide 20 quay lại. (4) "Tưới khay giá esp32-01 trong 30 giây." chỉ gửi bên phải: hiện câu hỏi Có/Không. MCP đang chạy thì bấm Có; không thì bấm Không để thấy lệnh bị huỷ.</p>
     <p><b>Khi demo hỏng:</b> một bên không kết nối được hoặc quá 20 giây chưa có chữ đầu tiên thì khung tự phát bản ghi, có nhãn "Bản ghi ngày …". Nút "Phát bản ghi" để chủ động chuyển. Gõ trong ô nhập thì phím mũi tên không chuyển slide; bấm Esc để thoát ô rồi → đi tiếp.</p>
     <p><b>Bản ghi ngày 20/11 nói gì:</b> bên trái nói ủ ở 20–25°C và nhầm "ủ" với lên men; ngâm 8–12 giờ; nước kẹo là "nước giải nhiệt trong công nghiệp sản xuất kẹo"; giá cần "đủ ánh sáng tự nhiên". Bên phải: 27–30°C; ngâm 35°C trong 4 giờ; 6-BAP kèm nguồn; câu tưới dừng ở Có/Không. Lúc ghi MCP không chạy, nên trả lời "có" sẽ báo lỗi thiết bị.</p>
-    <p><b>Chuẩn bị trước buổi nói:</b> (1) Trong <code>.env</code> đổi <code>DEFAULT_PLANT=strawberry</code> thành <code>DEFAULT_PLANT=bean-sprout</code>, khởi động lại server (<code>npm start</code>). (2) Mở LM Studio, nạp qwen2.5-3b-instruct, bật Enable CORS ở Developer → Server. (3) Tuỳ chọn: bật MCP <code>http://localhost:8100/mcp</code> nếu muốn trả lời "có" cho lệnh tưới. (4) Mở <code>gia-do-deck.html</code>, vào slide này, kiểm tra hai đèn xanh và chạy thử một câu. (5) Tuỳ chọn: <code>npm run deck:record</code> để ghi lại bản ghi mới ngay trước buổi nói.</p>
+    <p><b>Chuẩn bị trước buổi nói:</b> (1) Trong <code>.env</code> đổi <code>DEFAULT_PLANT=strawberry</code> thành <code>DEFAULT_PLANT=bean-sprout</code>, khởi động lại server (<code>npm start</code>). (2) Mở LM Studio, nạp qwen2.5-3b-instruct, bật Enable CORS ở Developer → Server. (3) Tuỳ chọn: bật MCP <code>http://localhost:8100/mcp</code> nếu muốn trả lời "có" cho lệnh tưới. (4) Mở <code>gia-do-deck.html</code>, vào slide này, kiểm tra hai đèn xanh và chạy thử một câu. (5) Tuỳ chọn: <code>npm run deck:record</code> để ghi lại bản ghi mới ngay trước buổi nói, khi server đã chạy với <code>DEFAULT_PLANT=bean-sprout</code> và LM Studio đang bật; thiếu câu nào thì script không ghi đè bản ghi cũ.</p>
   </aside>
 </section>
 
@@ -2233,7 +2244,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
     reveal(tl, $$(el, '.s18-row'), 0.25, { stagger: 0.06 })
     tl.fromTo(oldBars.concat(newBars), { scaleX: 0 }, { scaleX: 0, duration: 0.01 }, 0)
-    tl.fromTo(oldText.concat(newText, side, $(el, '.s18-caveat')), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo(oldText.concat(newText, side, $$(el, '.s18-regrade, .s18-caveat')), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
     tl.addLabel('step0')
     tl.to(oldBars, { scaleX: 1, duration: 0.7, stagger: 0.1, ease: 'power2.out' }, 'step0')
     tl.to(oldText, { autoAlpha: 1, duration: 0.3, stagger: 0.1 }, 'step0+=0.3')
@@ -2241,7 +2252,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     tl.to(newBars, { scaleX: 1, duration: 0.7, stagger: 0.1, ease: 'power2.out' }, 'step1')
     tl.to(newText, { autoAlpha: 1, duration: 0.3, stagger: 0.1 }, 'step1+=0.3')
     tl.to(side, { autoAlpha: 1, duration: 0.4, stagger: 0.2 }, '>')
-    tl.to($(el, '.s18-caveat'), { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.to($$(el, '.s18-regrade, .s18-caveat'), { autoAlpha: 1, duration: 0.4, stagger: 0.2 }, '>')
     tl.addLabel('step2')
     return tl
   })
@@ -2384,8 +2395,11 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     }, 40)
   }
 
+  // Retires the request first: its aborted fetch or finished stream settles later and must not
+  // overwrite the reason or the recording shown here.
   function fallback(s, id, reason) {
     if (s.req !== id) return
+    s.req++
     clearTimeout(s.timer)
     if (s.ctrl) { s.ctrl.abort(); s.ctrl = null }
     var r = L.pickRecording(rec, s.name, s.presetId)

@@ -266,6 +266,24 @@ describe('gia-do deck shell', () => {
     expect(text('s19-demo')).toMatch(/ví dụ mẫu/)
   })
 
+  it('slide 18 grades both rounds with the same answer key', () => {
+    const count = (s: string, needle: string) => s.split(needle).length - 1
+    expect(count(text('s18-eval'), '6/6')).toBeGreaterThanOrEqual(2)
+    expect(count(text('s18-eval'), '7/7')).toBeGreaterThanOrEqual(2)
+    expect(text('s18-eval')).toMatch(/tiêu chí cũ/)
+  })
+
+  it('speaker notes claim only what the recordings and code show', () => {
+    expect(notes('s19-demo')).not.toMatch(/27–30°C kèm dòng nguồn/)
+    expect(notes('s14-fewshot')).not.toMatch(/model sẽ khuyên bật đèn/)
+  })
+
+  it('loads Google Fonts without blocking the first render', () => {
+    const head = html.slice(0, html.indexOf('</head>'))
+    expect(head).not.toMatch(/<link[^>]+rel="stylesheet"[^>]+fonts\.googleapis\.com/)
+    expect(html).toContain('fonts.googleapis.com/css2')
+  })
+
   it('notes are complete and the talk runs about 30 minutes', () => {
     const total = slides.reduce((n, s) => n + s.min, 0)
     expect(total).toBeGreaterThanOrEqual(27)

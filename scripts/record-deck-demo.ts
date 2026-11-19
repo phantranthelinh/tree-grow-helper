@@ -56,6 +56,11 @@ export async function buildRecordings(
   return rec
 }
 
+/** Preset sides with no recorded answer, as "side · id". */
+export function missingRecordings(cfg: DemoConfig, rec: Recordings): string[] {
+  return cfg.presets.flatMap((p) => p.sides.filter((side) => !rec[side][p.id]).map((side) => `${side} · ${p.id}`))
+}
+
 interface EvalCase {
   id: string
   got?: string
@@ -94,11 +99,20 @@ function evalAnswer(cases: EvalCase[], preset: Preset): string {
   return `${c.reply}\n\nBạn xác nhận thực hiện: "${summary}"? (Có/Không)`
 }
 
-function parseArgs(argv: string[]): { lm?: string; server?: string; fromEval?: string; deck: string } {
-  const out: { lm?: string; server?: string; fromEval?: string; deck: string } = { deck: 'docs/presentation/gia-do-deck.html' }
+interface CliArgs {
+  lm?: string
+  server?: string
+  fromEval?: string
+  deck: string
+  partial: boolean
+}
+
+function parseArgs(argv: string[]): CliArgs {
+  const out: CliArgs = { deck: 'docs/presentation/gia-do-deck.html', partial: false }
   for (let i = 0; i < argv.length; i++) {
     const v = argv[i + 1]
-    if (argv[i] === '--lm' && v) { out.lm = v; i++ }
+    if (argv[i] === '--partial') out.partial = true
+    else if (argv[i] === '--lm' && v) { out.lm = v; i++ }
     else if (argv[i] === '--server' && v) { out.server = v; i++ }
     else if (argv[i] === '--right-from-eval' && v) { out.fromEval = v; i++ }
     else if (argv[i] === '--deck' && v) { out.deck = v; i++ }
@@ -134,10 +148,17 @@ async function main(): Promise<void> {
   }
 
   const rec = await buildRecordings(cfg, answer, localDate(), evalCases ? 'eval' : 'live')
-  writeFileSync(args.deck, replaceScriptBlock(html, 'demo-recordings', toJsonBlock(rec)))
   for (const side of ['left', 'right'] as const) {
     for (const [id, text] of Object.entries(rec[side])) console.log(`\n=== ${side} · ${id}\n${text}`)
   }
+  // A side that is down would otherwise replace every fallback answer of the last good run.
+  const missing = missingRecordings(cfg, rec)
+  if (missing.length > 0 && !args.partial) {
+    console.error(`\n[deck:record] chưa ghi được: ${missing.join(', ')}. Bản ghi cũ giữ nguyên; chạy lại khi cả hai phía sẵn sàng, hoặc thêm --partial để ghi phần đã có.`)
+    process.exitCode = 1
+    return
+  }
+  writeFileSync(args.deck, replaceScriptBlock(html, 'demo-recordings', toJsonBlock(rec)))
   console.log(`\n[deck:record] ${Object.keys(rec.left).length} left, ${Object.keys(rec.right).length} right (${rec.rightSource}) → ${args.deck}`)
 }
 
