@@ -151,6 +151,14 @@ describe('gia-do deck shell', () => {
     expect(text('s09-embed')).toContain('minh hoạ')
   })
 
+  it('slides 10-13 carry their pinned facts', () => {
+    expect(text('s10-hybrid')).toContain('BM25')
+    expect(text('s10-hybrid')).toContain('6-BAP')
+    expect(text('s11-select')).toContain('MMR')
+    for (const s of ['27–30°C', '22–24°C', 'ĐH Cần Thơ', 'VAAS', 'bản nháp']) expect(text('s12-profile')).toContain(s)
+    expect(text('s13-sources')).toContain('Nguồn tham khảo')
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')

@@ -22,6 +22,8 @@
   --water: #2c7aa3;
   --warn: #b25f17;
   --stop: #c23a2c;
+  --term-bg: #17221a;
+  --term-fg: #eef3e6;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", Consolas, "Segoe UI", monospace;
@@ -43,6 +45,8 @@
     --water: #5cb2de;
     --warn: #e69a4c;
     --stop: #f0695a;
+    --term-bg: #050807;
+    --term-fg: #eef3e6;
     color-scheme: dark;
   }
 }
@@ -61,6 +65,8 @@
   --water: #5cb2de;
   --warn: #e69a4c;
   --stop: #f0695a;
+  --term-bg: #050807;
+  --term-fg: #eef3e6;
   color-scheme: dark;
 }
 
@@ -400,6 +406,78 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 #s09-embed .s09-side .mono { font-size: 20px; color: var(--bean); }
 #s09-embed .s09-note { position: absolute; left: 830px; right: 72px; top: 560px; margin: 0; font-size: 17px; color: var(--ink-soft); }
 
+/* 10 · hybrid */
+#s10-hybrid .s10-q { position: absolute; left: 72px; top: 160px; font-size: 22px; padding: 10px 16px; }
+#s10-hybrid .s10-lists { position: absolute; left: 72px; right: 72px; top: 234px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
+.s10-list h3 { margin: 0; font-family: var(--font-display); font-size: 25px; }
+.s10-list .sub { margin: 2px 0 10px; font-size: 17px; color: var(--ink-soft); }
+.s10-row { display: grid; grid-template-columns: 28px 1fr 64px; align-items: center; gap: 10px; height: 38px; padding: 0 10px; border-bottom: 1px solid var(--line); font-size: 19px; }
+.s10-row .rk, .s10-row .sc { font-family: var(--font-mono); font-size: 16px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.s10-row .sc { text-align: right; }
+.s10-row.low { color: var(--ink-soft); }
+.s10-row.low .sc { color: var(--warn); font-weight: 600; }
+#s10-hybrid .s10-merge { position: absolute; left: 72px; right: 72px; top: 520px; }
+.s10-merge h3 { margin: 0 0 10px; font-family: var(--font-display); font-size: 23px; }
+.s10-chips { display: flex; flex-wrap: wrap; gap: 12px; }
+.s10-chip { padding: 8px 14px; border: 2px solid var(--bean); border-radius: 999px; background: var(--panel); font-size: 19px; font-weight: 600; }
+.s10-chip.rescued { border-color: var(--warn); }
+.s10-chip small { display: block; font-size: 13px; font-weight: 500; color: var(--warn); }
+
+/* 11 · selection */
+#s11-select .s11-pool { position: absolute; left: 72px; right: 72px; top: 170px; height: 330px; }
+.s11-card { position: absolute; width: 250px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 17px; line-height: 1.3; }
+.s11-card .sc { display: block; margin-bottom: 2px; font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--bean); font-variant-numeric: tabular-nums; }
+.s11-card .why { display: block; margin-top: 4px; font-size: 14px; font-weight: 600; color: var(--warn); }
+.s11-card .tick { position: absolute; right: 10px; top: 8px; color: var(--bean); font-weight: 800; font-size: 20px; }
+.s11-cut { position: absolute; left: 0; right: 0; top: 214px; border-top: 3px dashed var(--stop); }
+.s11-cut span { position: absolute; right: 0; top: 8px; font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--stop); }
+#s11-select .s11-rules { position: absolute; left: 72px; right: 72px; top: 540px; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 32px; font-size: 21px; line-height: 1.4; }
+#s11-select .s11-rules b { display: block; font-family: var(--font-display); font-size: 23px; }
+
+/* 12 · profile and the conflict */
+#s12-profile .s12-books { position: absolute; left: 72px; right: 72px; top: 160px; height: 170px; }
+.s12-book { position: absolute; top: 0; width: 470px; height: 170px; display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); border-radius: 6px 6px 14px 14px; background: var(--panel); }
+.s12-book.ct { left: 0; }
+.s12-book.vaas { right: 0; }
+.s12-page { padding: 14px 16px; min-width: 0; }
+.s12-page + .s12-page { border-left: 2px solid var(--line); }
+.s12-src { font-family: var(--font-display); font-size: 21px; font-weight: 700; line-height: 1.2; }
+.s12-src small { display: block; margin-top: 6px; font-family: var(--font-body); font-size: 15px; font-weight: 400; color: var(--ink-soft); }
+.s12-num { font-family: var(--font-display); font-size: 46px; font-weight: 800; line-height: 1; }
+.s12-num + .s12-hum { margin-top: 10px; font-size: 20px; }
+.s12-book.ct .s12-num { color: var(--bean); }
+.s12-book.vaas .s12-num { color: var(--water); }
+.s12-ai { position: absolute; left: 50%; top: 30px; width: 120px; margin-left: -60px; display: grid; justify-items: center; gap: 4px; }
+.s12-ai .arrow { width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent; border-top: 60px solid var(--ink); transform-origin: 50% 0; }
+.s12-ai span { font-family: var(--font-display); font-size: 30px; font-weight: 800; }
+#s12-profile .s12-cap { position: absolute; left: 72px; right: 72px; top: 350px; margin: 0; text-align: center; font-size: 19px; color: var(--ink-soft); }
+.s12-flip { position: absolute; left: 240px; right: 240px; top: 404px; height: 160px; perspective: 900px; }
+.s12-face { position: absolute; inset: 0; padding: 14px 20px; border-radius: 10px; backface-visibility: hidden; }
+.s12-front { border: 2px solid var(--ink); background: var(--panel); display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; }
+.s12-front h3 { margin: 0 0 6px; font-family: var(--font-mono); font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+.s12-front ul { margin: 0; padding: 0; list-style: none; font-size: 21px; line-height: 1.45; }
+.s12-stamp { color: var(--stop); text-transform: uppercase; font-size: 26px; transform: rotate(-8deg); }
+.s12-back { border: 1px solid var(--line); background: var(--term-bg); color: var(--term-fg); font-family: var(--font-mono); font-size: 17px; line-height: 1.5; display: grid; align-content: center; gap: 6px; }
+.s12-back b { color: var(--head); font-weight: 600; }
+#s12-profile .s12-banner { position: absolute; left: 72px; right: 72px; bottom: 40px; margin: 0; padding: 10px 18px; border-radius: 8px; background: var(--stop); color: var(--paper); font-size: 21px; font-weight: 600; text-align: center; }
+
+/* 13 · sources */
+#s13-sources .s13-left { position: absolute; left: 72px; top: 160px; width: 600px; display: grid; gap: 14px; }
+#s13-sources .s13-q { justify-self: start; font-size: 19px; padding: 8px 14px; }
+#s13-sources .s13-reply { max-width: none; font-size: 20px; line-height: 1.5; }
+.s13-hl { --hl-color: color-mix(in srgb, var(--head) 50%, transparent); background: linear-gradient(var(--hl-color), var(--hl-color)) no-repeat 0 0 / var(--hl, 0%) 100%; border-radius: 3px; }
+.s13-line { margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); font-weight: 600; color: var(--bean); }
+#s13-sources .s13-right { position: absolute; left: 712px; right: 72px; top: 160px; }
+.s13-right h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 23px; }
+.s13-right .sub { margin: 0 0 12px; font-size: 16px; color: var(--ink-soft); }
+.s13-row { display: grid; grid-template-columns: 1fr 44px; gap: 4px 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 18px; }
+.s13-row .n { font-family: var(--font-mono); font-size: 18px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.s13-row .bar { grid-column: 1 / -1; height: 10px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.s13-row .bar i { display: block; height: 100%; width: var(--w); background: var(--bean); transform-origin: left; }
+.s13-row .name { grid-column: 1 / -1; font-size: 15px; color: var(--bean); font-weight: 600; }
+.s13-row .name.none { color: var(--ink-soft); font-weight: 400; }
+#s13-sources .s13-rule { position: absolute; left: 72px; right: 72px; bottom: 34px; margin: 0; font-size: 20px; }
+
 @media (prefers-reduced-motion: reduce) {
   .slide, .slide.is-active { transition: none; }
   .s04-caret { animation: none; }
@@ -721,23 +799,133 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 </section>
 
 <section class="slide" id="s10-hybrid" data-part="thu-vien" data-steps="3">
+  <p class="eyebrow">Hybrid search</p>
   <h2 class="slide-title">Tìm theo nghĩa và theo từ khoá</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <div class="bubble user s10-q">Nước kẹo làm giá là gì, có nguy hiểm không?</div>
+  <div class="s10-lists">
+    <div class="s10-list s10-dense">
+      <h3>Theo nghĩa</h3>
+      <p class="sub">So toạ độ ý nghĩa (embedding). Hiểu ý dù chữ khác.</p>
+      <div class="s10-row"><span class="rk"></span><span>Ninh Bình · đoạn 0</span><span class="sc">0,66</span></div>
+      <div class="s10-row"><span class="rk"></span><span>Hồ sơ · an toàn thực phẩm</span><span class="sc">0,61</span></div>
+      <div class="s10-row"><span class="rk"></span><span>Ninh Bình · đoạn 1</span><span class="sc">0,53</span></div>
+      <div class="s10-row low"><span class="rk"></span><span>Hồ sơ · chăm sóc</span><span class="sc">0,46</span></div>
+    </div>
+    <div class="s10-list s10-lex">
+      <h3>Theo từ khoá (BM25)</h3>
+      <p class="sub">Đếm chữ trùng, chữ càng hiếm càng nặng: 6-BAP, nước kẹo.</p>
+      <div class="s10-row"><span class="rk">1</span><span>Ninh Bình · đoạn 0</span><span class="sc"></span></div>
+      <div class="s10-row"><span class="rk">2</span><span>Hồ sơ · an toàn thực phẩm</span><span class="sc"></span></div>
+      <div class="s10-row"><span class="rk">3</span><span>Ninh Bình · đoạn 1</span><span class="sc"></span></div>
+      <div class="s10-row"><span class="rk">4</span><span>Hồ sơ · chăm sóc</span><span class="sc"></span></div>
+      <div class="s10-row"><span class="rk">5</span><span>ĐH Cần Thơ · đoạn 2</span><span class="sc"></span></div>
+    </div>
+  </div>
+  <div class="s10-merge">
+    <h3>Trộn hai bảng xếp hạng → 4 đoạn vào đề bài</h3>
+    <div class="s10-chips">
+      <span class="s10-chip">Ninh Bình · đoạn 0</span>
+      <span class="s10-chip">Hồ sơ · an toàn thực phẩm</span>
+      <span class="s10-chip">Ninh Bình · đoạn 1</span>
+      <span class="s10-chip rescued">Hồ sơ · chăm sóc<small>điểm nghĩa thấp, giữ lại nhờ từ khoá</small></span>
+    </div>
+  </div>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "Chỉ tìm theo nghĩa thì có lúc trượt những chữ hiếm."</p>
+    <p><b>Ý chính:</b> Server tìm hai cách cùng lúc. Theo nghĩa: so toạ độ như slide 9, giỏi khi câu hỏi và tài liệu dùng chữ khác nhau. Theo từ khoá (BM25): đếm chữ trùng, chữ càng hiếm càng được tính nặng, giỏi với tên riêng và mã như 6-BAP. Hai bảng xếp hạng được trộn lại (Reciprocal Rank Fusion): đoạn đứng cao ở cả hai thì lên đầu. Ví dụ thật: với câu hỏi nước kẹo, đoạn hồ sơ "chăm sóc" có điểm nghĩa thấp nhất (0,46), lẽ ra bị loại ở bước lọc của slide sau, nhưng đứng thứ 4 theo từ khoá nên được giữ. Đoạn đó có câu "Không dùng bất kỳ chất kích thích sinh trưởng nào".</p>
+    <p><b>Nguồn:</b> điểm nghĩa (cosine) của 4 đoạn: <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, case <code>bs-kb-banned</code>. Thứ hạng BM25 tính lại bằng <code>src/rag/lexical.ts</code> trên đúng 30 đoạn của kho. Trộn RRF với k = 60, đoạn lọt top 4 từ khoá được miễn bước lọc điểm (<code>src/rag/retrieve.ts</code>). Bên trái chỉ liệt kê 4 đoạn cuối cùng, không phải cả bảng xếp hạng theo nghĩa.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao không chỉ dùng từ khoá?" Từ khoá trượt khi người hỏi dùng chữ khác tài liệu, ví dụ hỏi "ủ" mà sách viết "ươm". Mỗi cách bù chỗ yếu của cách kia.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s11-select" data-part="thu-vien" data-steps="2">
+  <p class="eyebrow">Lọc và MMR</p>
   <h2 class="slide-title">Chọn lọc đoạn đưa vào đề bài</h2>
-  <aside class="notes" data-min="1"><p>TODO: viết notes.</p></aside>
+  <div class="s11-pool">
+    <div class="s11-card" data-k="keep" style="left:0;top:0"><span class="sc">0,69</span>VAAS · ngâm hạt 35°C, 4 giờ<span class="tick">✓</span></div>
+    <div class="s11-card" data-k="keep" style="left:290px;top:0"><span class="sc">0,66</span>VAAS · 22–24°C, ẩm 95%<span class="tick">✓</span></div>
+    <div class="s11-card" data-k="keep" style="left:580px;top:0"><span class="sc">0,66</span>ĐH Cần Thơ · tốt nhất 27–30°C<span class="tick">✓</span></div>
+    <div class="s11-card" data-k="keep" style="left:870px;top:0"><span class="sc">0,66</span>VAAS · quy trình tối ưu, nước tưới 28–30°C<span class="tick">✓</span></div>
+    <div class="s11-card" data-k="dup" style="left:870px;top:110px"><span class="sc">0,64</span>Hồ sơ · tưới, nước 28–30°C<span class="why">gần trùng ý đoạn bên trên</span></div>
+    <div class="s11-card" data-k="cut" style="left:0;top:240px"><span class="sc">0,52</span>Hồ sơ · thu hoạch 48 giờ</div>
+    <div class="s11-card" data-k="cut" style="left:290px;top:240px"><span class="sc">0,50</span>ĐH Cần Thơ · ươm trong tối</div>
+    <div class="s11-card" data-k="cut" style="left:580px;top:240px"><span class="sc">0,47</span>Ninh Bình · nước kẹo</div>
+    <div class="s11-cut"><span>0,69 − 0,15 = 0,54</span></div>
+  </div>
+  <ul class="s11-rules">
+    <li class="r1"><b>1. Bỏ đoạn kém xa</b>Điểm thấp hơn đoạn tốt nhất quá 0,15 thì bỏ, trừ đoạn lọt top 4 theo từ khoá.</li>
+    <li class="r2"><b>2. MMR: chọn 4 đoạn không trùng ý</b>Đoạn gần giống đoạn đã chọn bị trừ điểm (λ = 0,7).</li>
+  </ul>
+  <span class="illus-tag">minh hoạ</span>
+  <aside class="notes" data-min="1">
+    <p><b>Mở:</b> "Tìm ra rồi còn phải chọn: đề bài chỉ có chỗ cho 4 đoạn."</p>
+    <p><b>Ý chính:</b> Hai bước lọc. Một: bỏ đoạn có điểm nghĩa thấp hơn đoạn tốt nhất quá 0,15, trừ đoạn lọt top 4 theo từ khoá (slide trước). Hai: MMR chọn 4 đoạn vừa liên quan vừa khác nhau; đoạn gần trùng ý với đoạn đã chọn bị trừ điểm. λ = 0,7 nghĩa là 70% tính độ liên quan, 30% tính độ khác nhau. Không có bước này, 4 chỗ có thể bị chiếm bởi 4 đoạn cùng nói một câu.</p>
+    <p><b>Nguồn:</b> <code>src/config.ts</code> (<code>RAG_REL_MARGIN</code> 0,15, <code>RAG_TOP_K</code> 4, <code>RAG_MMR_LAMBDA</code> 0,7). MMR chọn trong 12 ứng viên đầu (<code>src/rag/retrieve.ts</code>). Điểm trên slide là minh hoạ; bốn đoạn được chọn trùng với lượt đo thật ở slide 6.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao lại 0,15?" Điểm của bge-m3 trên một kho chỉ nói về giá đỗ rất sát nhau, nên ngưỡng chỉ cắt phần đuôi khi có đoạn nổi hẳn lên. Phần lớn câu hỏi vẫn giữ đủ 4 đoạn.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s12-profile" data-part="thu-vien" data-steps="3">
+  <p class="eyebrow">Hồ sơ cây</p>
   <h2 class="slide-title">Khi hai cuốn sách cãi nhau</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <div class="s12-books">
+    <div class="s12-book ct">
+      <div class="s12-page"><div class="s12-src">ĐH Cần Thơ 2016<small>Đo trên buồng ươm thực nghiệm</small></div></div>
+      <div class="s12-page"><div class="s12-num">27–30°C</div><div class="s12-hum">độ ẩm 60–65%</div></div>
+    </div>
+    <div class="s12-ai"><div class="arrow"></div><span>AI?</span></div>
+    <div class="s12-book vaas">
+      <div class="s12-page"><div class="s12-src">Tạp chí VAAS 2019<small>Trích một tài liệu nước ngoài</small></div></div>
+      <div class="s12-page"><div class="s12-num">22–24°C</div><div class="s12-hum">độ ẩm 95%</div></div>
+    </div>
+  </div>
+  <p class="s12-cap">Cả hai đoạn cùng được chép vào đề bài cho một câu hỏi (slide 6). Model không tự phân xử được.</p>
+  <div class="s12-flip">
+    <div class="s12-face s12-front">
+      <div>
+        <h3>Hồ sơ giá đỗ · bean-sprout.json</h3>
+        <ul><li>Nhiệt độ 27–30°C</li><li>Độ ẩm không khí 60–65%</li><li>Ươm trong tối, 0 giờ chiếu sáng</li></ul>
+      </div>
+      <span class="stamp s12-stamp">bản nháp</span>
+    </div>
+    <div class="s12-face s12-back">
+      <div>Đề bài mỗi lượt có câu:</div>
+      <div><b>Khoảng tối ưu của cây giá đỗ: nhiệt độ 27-30°C; độ ẩm không khí 60-65%; giờ chiếu sáng/ngày 0-0 giờ.</b></div>
+      <div>Sách nói khác thì LUÔN theo khoảng này.</div>
+    </div>
+  </div>
+  <p class="s12-banner">Hồ sơ giá đỗ vẫn là bản nháp. Chọn số nào là việc của người duyệt, không phải của AI.</p>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "Đây là slide quan trọng nhất của bài."</p>
+    <p><b>Ý chính:</b> Ngoài sách, mỗi lượt hỏi server chèn một câu cố định vào đề bài: khoảng tối ưu lấy từ hồ sơ cây, một file JSON. Đề bài có luật: sách mâu thuẫn với khoảng này thì luôn theo khoảng này. Thêm một cây mới là thêm một file hồ sơ. Nhưng với giá đỗ, hai tài liệu nói khác nhau: ĐH Cần Thơ đo trên buồng ươm thực nghiệm được 27–30°C, độ ẩm 60–65%; Tạp chí VAAS trích một tài liệu nước ngoài nói 22–24°C, độ ẩm 95%. Ở slide 6, cả hai đoạn được chép vào đề bài cho cùng một câu hỏi. Model không phân xử được, nó theo con số trong hồ sơ. Mà hồ sơ giá đỗ vẫn là bản nháp: 27–30°C là lựa chọn ban đầu của người soạn, chưa có người duyệt chốt.</p>
+    <p><b>Trả lời câu hỏi ở slide 2:</b> đáp án "đúng" theo hệ thống là 27–30°C, nhưng đó là đáp án của một bản nháp.</p>
+    <p><b>Nguồn:</b> <code>src/domain/knowledge/bean-sprout.json</code> (<code>temperature_range</code>, <code>humidity_range</code>, trường <code>notes</code> ghi "BẢN NHÁP chờ duyệt" và nêu hai nguồn chưa thống nhất). Linh xác nhận hồ sơ chưa duyệt ngày 19/11/2026. Câu chèn vào đề bài do <code>summarizeRanges</code> (<code>src/domain/profiles.ts</code>) sinh ra; luật ưu tiên là luật 10 trong <code>src/llm/prompt.ts</code>.</p>
+    <p><b>Có thể bị hỏi:</b> "Vậy số nào đúng?" Chưa ai chốt. Muốn chốt cần người hiểu nghề, hoặc đo thật trên khay của mình bằng cảm biến rồi so năng suất.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s13-sources" data-part="thu-vien" data-steps="2">
+  <p class="eyebrow">Ghi nguồn</p>
   <h2 class="slide-title">Ghi nguồn cho câu trả lời</h2>
-  <aside class="notes" data-min="1"><p>TODO: viết notes.</p></aside>
+  <div class="s13-left">
+    <div class="bubble user s13-q">Nước kẹo làm giá là gì, có nguy hiểm không?</div>
+    <div class="bubble ai s13-reply">Nước kẹo làm giá đỗ thường chứa <span class="s13-hl">6-Benzylaminopurine (6-BAP)</span>, một <span class="s13-hl">chất kích thích sinh</span> trưởng. Sử dụng lâu dài có thể <span class="s13-hl">gây rối loạn phát triển tế bào</span>, ảnh hưởng đến <span class="s13-hl">hệ thần kinh và thậm chí gây dị tật thai nhi</span>. Bạn nên tránh sử dụng nước kẹo trong quá trình sản xuất giá đỗ để đảm bảo <span class="s13-hl">an toàn thực phẩm</span>.<p class="s13-line">Nguồn tham khảo: s3-cdn.ninhbinh.gov.vn; Tạp chí VAAS; ĐH Cần Thơ.</p></div>
+  </div>
+  <div class="s13-right">
+    <h3>4 đoạn đã tìm</h3>
+    <p class="sub">Số cặp hai chữ hiếm trùng với câu trả lời</p>
+    <div class="s13-row"><span>Ninh Bình · đoạn 1</span><span class="n">23</span><span class="bar"><i style="--w:92%"></i></span><span class="name">→ s3-cdn.ninhbinh.gov.vn</span></div>
+    <div class="s13-row"><span>Hồ sơ · an toàn thực phẩm</span><span class="n">22</span><span class="bar"><i style="--w:88%"></i></span><span class="name none">mục này cố ý không ghi tên nguồn</span></div>
+    <div class="s13-row"><span>Ninh Bình · đoạn 0</span><span class="n">5</span><span class="bar"><i style="--w:20%"></i></span><span class="name">→ s3-cdn.ninhbinh.gov.vn</span></div>
+    <div class="s13-row"><span>Hồ sơ · chăm sóc</span><span class="n">3</span><span class="bar"><i style="--w:12%"></i></span><span class="name">→ Tạp chí VAAS; ĐH Cần Thơ</span></div>
+  </div>
+  <p class="s13-rule">Đoạn nào trùng từ 3 cặp trở lên thì được ghi tên nguồn. Server làm việc này sau khi model trả lời.</p>
+  <aside class="notes" data-min="1">
+    <p><b>Mở:</b> "Câu trả lời có kèm nguồn, và phần đó do server làm chứ không phải model."</p>
+    <p><b>Ý chính:</b> Sau khi model trả lời, server so câu trả lời với 4 đoạn đã tìm và đếm các cặp hai chữ hiếm trùng nhau (cặp chỉ có trong tối đa 3 đoạn của kho, không tính cặp đã nằm trong câu hỏi). Đoạn nào trùng từ 3 cặp trở lên thì được ghi nguồn, tối đa 3 tên. Model nhỏ hay quên hoặc ghi sai nguồn, nên việc này để code làm. Lưu ý: nguồn tính theo đoạn, không theo từng ý. Ở đây "Tạp chí VAAS; ĐH Cần Thơ" đến từ đoạn hồ sơ "chăm sóc", chỉ trùng đúng 3 cặp quanh cụm "chất kích thích sinh"; ý về 6-BAP thì đến từ tài liệu Ninh Bình.</p>
+    <p><b>Nguồn:</b> câu trả lời thật ở <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, case <code>bs-kb-banned</code>. Số cặp trùng tính lại bằng chính quy tắc của <code>sourcesLine</code> (<code>src/agent/replyNotes.ts</code>) và ra đúng dòng nguồn của lượt đo.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao đoạn an toàn thực phẩm trùng 22 cặp mà không có tên?" Mục đó trong hồ sơ hay được dùng để trả lời câu hỏi độ độc với thú cưng, mà tài liệu không có dữ liệu ấy; ghi tên nguồn sẽ làm câu trả lời kiểu đó trông có căn cứ.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s14-fewshot" data-part="cu-xu" data-steps="3">
@@ -1257,6 +1445,98 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     tl.to(side[2], { autoAlpha: 1, duration: 0.4 }, '<')
     tl.to(note, { autoAlpha: 1, duration: 0.4 }, '<+0.2')
     tl.addLabel('step3')
+    return tl
+  })
+
+  Deck.register('s10-hybrid', function (el, gsap) {
+    var dense = $$(el, '.s10-dense .s10-row')
+    var lex = $$(el, '.s10-lex .s10-row')
+    var chips = $$(el, '.s10-chip')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title, .s10-q'), 0, { stagger: 0.1 })
+    tl.fromTo($$(el, '.s10-list, .s10-merge').concat(dense, lex, chips), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(el, '.s10-dense'), { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.fromTo(dense, { x: -30 }, { x: 0, autoAlpha: 1, duration: 0.35, stagger: 0.12 }, 'step0+=0.15')
+    tl.addLabel('step1')
+    tl.to($(el, '.s10-lex'), { autoAlpha: 1, duration: 0.3 }, 'step1')
+    tl.fromTo(lex, { x: 30 }, { x: 0, autoAlpha: 1, duration: 0.35, stagger: 0.12 }, 'step1+=0.15')
+    tl.addLabel('step2')
+    tl.to($(el, '.s10-merge'), { autoAlpha: 1, duration: 0.3 }, 'step2')
+    tl.fromTo(chips, { y: -60, scale: 0.9 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, stagger: 0.15, ease: 'back.out(1.6)' }, 'step2+=0.1')
+    tl.addLabel('step3')
+    return tl
+  })
+
+  Deck.register('s11-select', function (el, gsap) {
+    var cards = $$(el, '.s11-card')
+    var cut = $$(el, '[data-k="cut"]')
+    var dup = $(el, '[data-k="dup"]')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, cards, 0.25, { stagger: 0.05 })
+    tl.fromTo($$(el, '.s11-cut, .s11-rules li, .s11-card .tick, .s11-card .why'), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.fromTo($(el, '.s11-cut'), { scaleX: 0, transformOrigin: '0% 50%' }, { scaleX: 1, autoAlpha: 1, duration: 0.5 }, 'step0')
+    tl.to(cut, { y: 40, autoAlpha: 0.25, duration: 0.5, stagger: 0.08 }, 'step0+=0.4')
+    tl.to($(el, '.s11-rules .r1'), { autoAlpha: 1, duration: 0.4 }, '<')
+    tl.addLabel('step1')
+    tl.to($$(el, '[data-k="keep"] .tick'), { autoAlpha: 1, duration: 0.25, stagger: 0.2 }, 'step1')
+    tl.to($(dup, '.why'), { autoAlpha: 1, duration: 0.3 }, '>')
+    tl.to(dup, { autoAlpha: 0.45, duration: 0.3 }, '<')
+    tl.to($(el, '.s11-rules .r2'), { autoAlpha: 1, duration: 0.4 }, '<')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s12-profile', function (el, gsap) {
+    var arrow = $(el, '.s12-ai .arrow')
+    var front = $(el, '.s12-front')
+    var back = $(el, '.s12-back')
+    var stamp = $(el, '.s12-stamp')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s12-book'), 0.3, { stagger: 0.25 })
+    tl.fromTo($$(el, '.s12-ai, .s12-cap, .s12-flip, .s12-banner').concat(stamp), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo(back, { rotationX: -90 }, { rotationX: -90, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(el, '.s12-ai'), { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.to(arrow, { keyframes: [
+      { rotation: 42, duration: 0.4 }, { rotation: -42, duration: 0.55 }, { rotation: 30, duration: 0.45 },
+      { rotation: -30, duration: 0.45 }, { rotation: 0, duration: 0.35 },
+    ], ease: 'sine.inOut' }, 'step0+=0.2')
+    tl.to($(el, '.s12-cap'), { autoAlpha: 1, duration: 0.4 }, '<+0.6')
+    tl.addLabel('step1')
+    tl.to($(el, '.s12-flip'), { autoAlpha: 1, duration: 0.3 }, 'step1')
+    tl.fromTo(front, { y: 30 }, { y: 0, duration: 0.5, ease: 'power2.out' }, 'step1')
+    tl.fromTo(stamp, { scale: 2.4, rotation: -8 }, { scale: 1, rotation: -8, autoAlpha: 1, duration: 0.35, ease: 'power3.in' }, 'step1+=0.6')
+    tl.addLabel('step2')
+    tl.to(front, { rotationX: 90, duration: 0.4, ease: 'power1.in' }, 'step2')
+    tl.to(back, { rotationX: 0, duration: 0.4, ease: 'power1.out' }, '>')
+    tl.to($(el, '.s12-banner'), { autoAlpha: 1, duration: 0.4 }, '>+0.1')
+    tl.addLabel('step3')
+    return tl
+  })
+
+  Deck.register('s13-sources', function (el, gsap) {
+    var rows = $$(el, '.s13-row')
+    var bars = $$(el, '.s13-row .bar i')
+    var names = $$(el, '.s13-row .name')
+    var nums = $$(el, '.s13-row .n')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title, .s13-q, .s13-reply'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s13-right h3, .s13-right .sub').concat(rows), 0.4, { stagger: 0.06 })
+    tl.fromTo($$(el, '.s13-line, .s13-rule').concat(names, nums), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo(bars, { scaleX: 0 }, { scaleX: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.fromTo($$(el, '.s13-hl'), { '--hl': '0%' }, { '--hl': '100%', duration: 0.35, stagger: 0.18, ease: 'none' }, 'step0')
+    tl.to(bars, { scaleX: 1, duration: 0.6, stagger: 0.12, ease: 'power2.out' }, 'step0+=0.3')
+    tl.to(nums, { autoAlpha: 1, duration: 0.3, stagger: 0.12 }, '<')
+    tl.addLabel('step1')
+    tl.to(names, { autoAlpha: 1, duration: 0.3, stagger: 0.12 }, 'step1')
+    tl.fromTo($(el, '.s13-line'), { y: 10 }, { y: 0, autoAlpha: 1, duration: 0.45 }, '>')
+    tl.to($(el, '.s13-rule'), { autoAlpha: 1, duration: 0.4 }, '<+0.2')
+    tl.addLabel('step2')
     return tl
   })
 })()
