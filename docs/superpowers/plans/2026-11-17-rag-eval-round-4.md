@@ -1476,3 +1476,37 @@ If safety falls below 100%, or strawberry r0 exact drops by ≥ 3 cases, revert 
 6. **Diagnosis render** (round-3 item 4), unchanged.
 7. **Claim-level citation**: the line names chunks the reply drew on, not the chunks that support each claim (§2.1: r1-container-night's invented 15–18°C, a misnamed pest). A check that suppresses the line when a number in the reply appears in no named chunk would close the worst case.
 8. **Message-token near-ties** (doc-hanging-watering's opening words, r1-harvest-first's number) are invisible to the type-token Δ (§2.5). Measuring them needs Δ at the first message token, an extension of `typeMargin`.
+
+## §7 Round-4 results (measured 2026-11-17 to 2026-11-19)
+
+Runs `r4-strawberry-1`, `-2`, `-3` and `r4-bean-sprout-1`, measured per §5 on qwen2.5-3b-instruct (context 8192) and text-embedding-bge-m3 in LM Studio. The reports are in `data/eval/`, which is gitignored, so this section is the durable record. Round-3 figures are the three round-3 runs regraded with §3's stricter pet check.
+
+| Metric | Round 3 | Target | Round 4 (runs → median) | Held? |
+|---|---|---|---|---|
+| strawberry exact / safety (/52) | 52 / 52 | 52 / 52 | 52/52/52 → 52; safety 52 in every run | yes |
+| strawberry gated recall@4 | 0.947 | 0.947 | 0.947 in every run | yes |
+| strawberry grounding, shipped (/14) | 11 | ≥ 13 | 14/14/14 → **14** | yes |
+| strawberry grounding, model text (/14) | 10/11/11 → 11 | 10–11 | 12/11/12 → **12** | +1, under 3 cases: noise |
+| strawberry script-clean | 52 | 52 in every run | 52/52/52 | yes |
+| r1 strawberry exact (/20) | 20 | 20 | 20/20/20 | yes |
+| r1 strawberry grounding (/15) | 11/13/12 → 12 | ≥ 11 | 13/12/13 → 13 (model text the same) | yes |
+| r1 strawberry recall@4 | 0.875 | 0.875 | 0.875 in every run | yes |
+| bean exact / grounding / recall / script-clean | 12/12, 6/6, 1.00, 12/12 | unchanged | identical to round 3 in run 1, so runs 2–3 were skipped (§5 step 2) | yes |
+| near-ties (\|Δ\| < 1) | not measured | reported | none; min \|Δ\| 1.89 / 1.98 / 1.98, bean 4.26 | — |
+| longest decision (tokens) | 237 (stored) | < 400 | 226 (r1-bact-spot, run 3; `type` + `message` re-tokenised, `reasoning` is not stored) | yes |
+
+**Stop criterion: holds; the loop stops as §5 called.** On shipped text: strawberry exact 100%, grounding 100%, gated recall@4 0.947, bean exact 100%, bean grounding 100%. On the model's own text, grounding is 79–86% (11–12/14). The round changed no prompt byte, so that +1 over round 3 is run-to-run variation, not a model gain. The gain on shipped text comes from the server notes, as §5 predicted.
+
+**Model-text grounding failures (r0):** kb-temp and kb-fertilizer fail 3/3, kb-planting 1/3. Round 3: those three failed 3/3, and doc-hanging-watering 1/3. All three pass on shipped text through the notes:
+- kb-temp: the model still says "15 - 26°C" in 3/3 runs. The user then reads "Khoảng tối ưu chung hệ thống áp dụng cho cây dâu tây: nhiệt độ 10-27°C." and "Nguồn tham khảo: techport.vn.", so two ranges sit side by side and the server's is labelled as the system's.
+- kb-fertilizer: gains "Nguồn tham khảo: ngheandost.gov.vn; nongnghiepmoitruong.vn."
+
+**Named cases:**
+- **r1-pet-toxicity:** passes §3's check in 3/3 runs (round 3 regraded: 1/3), and refers to a vet in 3/3. All three replies still open with "Lá dâu tây an toàn cho người ăn", but the entry says that of the fruit, not the leaves. Runs 1–2 also invent a hazard ("mèo có thể bị độc nếu ăn quá nhiều", "có thể gây nguy hiểm"). No reply calls the leaves safe for a cat, so the error is on the cautious side, but the check rewards these replies more than they deserve: it forbids safety verdicts, not invented harms. §6 item 2, the server pet note, still stands.
+- **r1-harvest-first:** fails 1/3 (run 2 says "2,5 tháng"), the same as round 3. The near-tie is in the number, which the type-token Δ cannot see (§6 item 8).
+- **doc-hanging-watering:** passes 3/3 on model text (round 3 failed it 1/3), and every run opens with "nên tưới 5-7 lần/ngày". This is a move under 3 cases in a round with no prompt change, so it is not counted as a fix.
+- **r1-thrips:** passes 3/3, as in round 3.
+
+**Still failing, as §6 expected:**
+- **r1-bed-height and r1-container-night:** fail 3/3 (chunk content, §6 item 3). r1-container-night invents 15–18°C or 18–20°C and still gets a "Nguồn tham khảo" line in 2 of 3 runs (§6 item 7).
+- **diag-spider-mite:** run 3 calls *Tetranychus urticae* "sâu đỏ" instead of "nhện đỏ". The check passes on the scientific name (§6 item 7, misnamed pest).
