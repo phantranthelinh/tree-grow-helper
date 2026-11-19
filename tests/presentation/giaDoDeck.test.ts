@@ -266,6 +266,15 @@ describe('gia-do deck shell', () => {
     expect(text('s19-demo')).toMatch(/ví dụ mẫu/)
   })
 
+  it('notes are complete and the talk runs about 30 minutes', () => {
+    const total = slides.reduce((n, s) => n + s.min, 0)
+    expect(total).toBeGreaterThanOrEqual(27)
+    expect(total).toBeLessThanOrEqual(33)
+    for (const s of slides) expect(s.notes).not.toMatch(/TODO|tạm/i)
+    expect(notes('s19-demo')).toMatch(/DEFAULT_PLANT=bean-sprout/)
+    expect(notes('s19-demo')).toMatch(/Enable CORS/)
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')
