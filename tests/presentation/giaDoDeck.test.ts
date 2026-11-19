@@ -167,6 +167,12 @@ describe('gia-do deck shell', () => {
     for (const s of ['часов', '小时', 'giờ']) expect(text('s17-guardrails')).toContain(s)
   })
 
+  it('slides 18, 20, 21 carry their pinned facts', () => {
+    for (const s of ['12/12', '5/6', '6/6', 'chưa đo', '52/52', 'một lần chạy']) expect(text('s18-eval')).toContain(s)
+    expect(text('s20-still-wrong')).toMatch(/ra chợ/)
+    for (const s of ['sách đúng', 'quản lý dữ liệu', 'Đo, đừng đoán']) expect(text('s21-recap')).toContain(s)
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')

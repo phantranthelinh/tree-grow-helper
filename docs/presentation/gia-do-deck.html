@@ -565,6 +565,50 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 #s17-guardrails .s17-score { position: absolute; left: 72px; top: 600px; font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--bean); }
 .s17-score small { display: block; font-family: var(--font-body); font-size: 15px; font-weight: 400; color: var(--ink-soft); }
 
+/* 18 · eval */
+#s18-eval .s18-table { position: absolute; left: 72px; top: 168px; width: 760px; display: grid; gap: 6px; }
+.s18-row { display: grid; grid-template-columns: 230px 1fr 1fr; align-items: center; gap: 18px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.s18-row.head { min-height: 0; padding-bottom: 6px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.04em; color: var(--ink-soft); }
+.s18-label { font-size: 19px; line-height: 1.25; }
+.s18-label small { display: block; font-size: 13px; color: var(--ink-soft); }
+.s18-cell { display: grid; grid-template-columns: 1fr 64px; align-items: center; gap: 10px; }
+.s18-track { height: 18px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.s18-track i { display: block; height: 100%; width: var(--w); background: var(--ink-soft); transform-origin: left; }
+.s18-cell.new .s18-track i { background: var(--bean); }
+.s18-frac { font-family: var(--font-mono); font-size: 19px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.s18-cell.none { grid-template-columns: 1fr; font-family: var(--font-mono); font-size: 16px; color: var(--warn); }
+#s18-eval .s18-side { position: absolute; left: 872px; right: 72px; top: 168px; display: grid; gap: 14px; }
+.s18-side .card { padding: 14px 16px; }
+.s18-side .card h3 { font-size: 21px; }
+.s18-side .card p { margin: 0; font-size: 17px; line-height: 1.45; }
+.s18-big { font-family: var(--font-mono); font-size: 26px; font-weight: 600; color: var(--bean); }
+#s18-eval .s18-caveat { position: absolute; left: 72px; right: 72px; top: 530px; margin: 0; padding: 10px 16px; border-left: 4px solid var(--warn); font-size: 19px; line-height: 1.4; }
+
+/* 20 · still wrong */
+#s20-still-wrong .s20-list { position: absolute; left: 72px; right: 72px; top: 160px; display: grid; gap: 12px; }
+.s20-card { display: grid; grid-template-columns: 1fr 360px; gap: 22px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.s20-q { margin: 0 0 4px; font-family: var(--font-mono); font-size: 14px; color: var(--ink-soft); }
+.s20-quote { margin: 0; font-size: 18px; line-height: 1.45; }
+.s20-err { padding-bottom: 2px; background: linear-gradient(var(--stop), var(--stop)) no-repeat 0 100% / calc(var(--u, 0) * 100%) 3px; }
+.s20-doc { align-self: center; padding-left: 16px; border-left: 3px solid var(--bean); font-size: 16px; line-height: 1.4; }
+.s20-doc b { display: block; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.04em; color: var(--bean); }
+#s20-still-wrong .s20-demo { position: absolute; left: 72px; right: 72px; bottom: 26px; margin: 0; font-size: 19px; font-weight: 600; color: var(--warn); }
+
+/* 21 · recap */
+#s21-recap .s21-prep, #s21-recap .s21-flow { position: absolute; left: 72px; right: 72px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
+#s21-recap .s21-prep { top: 152px; }
+#s21-recap .s21-flow { top: 238px; }
+.s21-k { width: 100%; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.s21-st { position: relative; padding: 7px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: 17px; font-weight: 600; }
+.s21-st small { font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--ink-soft); }
+.s21-st::after { content: ""; position: absolute; inset: -1px; border: 2px solid var(--bean); border-radius: 8px; opacity: var(--lit, 0); }
+.s21-arrow { color: var(--ink-soft); font-size: 18px; }
+#s21-recap .s21-takes { position: absolute; left: 72px; right: 72px; top: 392px; margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.s21-takes li { padding: 16px 18px; border-top: 4px solid var(--bean); border-radius: 0 0 10px 10px; background: var(--panel); font-size: 19px; line-height: 1.45; }
+.s21-takes .n { display: block; font-family: var(--font-mono); font-size: 14px; color: var(--bean); }
+.s21-takes b { font-family: var(--font-display); }
+#s21-recap .s21-thanks { position: absolute; left: 72px; right: 72px; bottom: 32px; margin: 0; font-family: var(--font-display); font-size: 30px; font-weight: 800; text-align: right; }
+
 @media (prefers-reduced-motion: reduce) {
   .slide, .slide.is-active { transition: none; }
   .s04-caret { animation: none; }
@@ -1166,8 +1210,37 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 </section>
 
 <section class="slide" id="s18-eval" data-part="cham-bai" data-steps="2">
-  <h2 class="slide-title">Chấm bài</h2>
-  <aside class="notes" data-min="2"><p>TODO: viết notes.</p></aside>
+  <p class="eyebrow">Eval</p>
+  <h2 class="slide-title">Chấm bài: 12 câu giá đỗ</h2>
+  <div class="s18-table">
+    <div class="s18-row head"><span>Thước đo</span><span>Vòng đầu · 16/11</span><span>Vòng mới nhất · 19/11</span></div>
+    <div class="s18-row"><span class="s18-label">Chọn đúng hành động<small>trả lời, đọc cảm biến hay điều khiển</small></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span>
+      <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span></div>
+    <div class="s18-row"><span class="s18-label">Đúng mức an toàn<small>lệnh điều khiển phải hỏi trước</small></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span>
+      <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span></div>
+    <div class="s18-row"><span class="s18-label">Trích đúng số liệu<small>câu hỏi kiến thức có số</small></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:83.3%"></i></span><span class="s18-frac">5/6</span></span>
+      <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">6/6</span></span></div>
+    <div class="s18-row"><span class="s18-label">Sạch chữ lạ<small>không chữ Nga, chữ Trung</small></span>
+      <span class="s18-cell old none">chưa đo (slide 17)</span>
+      <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">12/12</span></span></div>
+    <div class="s18-row"><span class="s18-label">Tìm đúng đoạn sách<small>câu có đánh dấu đoạn cần tìm</small></span>
+      <span class="s18-cell old"><span class="s18-track"><i style="--w:71.4%"></i></span><span class="s18-frac">5/7</span></span>
+      <span class="s18-cell new"><span class="s18-track"><i style="--w:100%"></i></span><span class="s18-frac">7/7</span></span></div>
+  </div>
+  <div class="s18-side">
+    <div class="card"><h3>4 câu khó thêm sau</h3><p>Vòng mới nhất: chọn đúng 4/4, trích đúng số liệu 1/1, sạch chữ lạ 4/4.</p></div>
+    <div class="card"><h3>Dâu tây</h3><p><span class="s18-big">52/52</span> câu chọn đúng hành động, trích đúng số liệu 14/14, cả 3 lần chạy ở vòng mới nhất.</p></div>
+  </div>
+  <p class="s18-caveat">Mỗi cột là kết quả một lần chạy, trên ít câu. Model trả lời mỗi lần một khác, nên đây không phải độ chính xác tuyệt đối.</p>
+  <aside class="notes" data-min="2">
+    <p><b>Mở:</b> "Mỗi mẹo nãy giờ được giữ lại vì có số đo, không phải vì nghe hay."</p>
+    <p><b>Ý chính:</b> Bộ chấm bài có 12 câu hỏi giá đỗ, sau thêm 4 câu khó. Các thước đo: chọn đúng hành động (trả lời, đọc cảm biến hay điều khiển), đúng mức an toàn (lệnh điều khiển phải hỏi trước), trích đúng số liệu, sạch chữ lạ, tìm đúng đoạn sách. Vòng đầu 16/11 đã chọn đúng 12/12, nhưng trích số liệu chỉ 5/6 (câu thu hoạch thiếu "48") và có chữ Nga, chữ Trung lọt ra; lúc đó chưa có thước đo chữ lạ, slide 17 là câu thật của vòng ấy. Vòng mới nhất 19/11: 12/12, 12/12, 6/6, 12/12, và tìm đúng đoạn sách 7/7. Dâu tây có bộ 52 câu: 52/52 và 14/14 ở cả 3 lần chạy.</p>
+    <p><b>Nguồn:</b> <code>data/eval/r0-bean-sprout-default-2026-11-16T13-34-06-975Z.json</code> và <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code> (<code>summary</code>, <code>summaryR1</code>); dâu tây <code>data/eval/r4-strawberry-{1,2,3}-….json</code>. Chạy bằng <code>npm run eval</code>, cần LM Studio.</p>
+    <p><b>Có thể bị hỏi:</b> "12/12 nghĩa là AI không sai?" Không. Mỗi thước đo chỉ kiểm vài điều cụ thể. Slide 20 là những lỗi mà các thước đo này chưa bắt được.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s19-demo" data-part="cham-bai" data-steps="0">
@@ -1176,13 +1249,68 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 </section>
 
 <section class="slide" id="s20-still-wrong" data-part="cham-bai" data-steps="2">
+  <p class="eyebrow">Vòng mới nhất · 19/11</p>
   <h2 class="slide-title">Chỗ vẫn sai</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <div class="s20-list">
+    <div class="s20-card">
+      <div><p class="s20-q">Hỏi: Mang giá ra chợ bán có cần che nắng không?</p>
+        <p class="s20-quote">“…bạn nên che chắn khỏi ánh sáng mặt trời để tránh làm thay đổi màu sắc và giảm chất lượng. Bạn cũng nên <span class="s20-err">giữ nhiệt độ 27–30°C và độ ẩm khoảng 60-65% cho giá đỗ trong suốt quá trình vận chuyển</span>.”</p></div>
+      <div class="s20-doc"><b>Tài liệu nói</b>Đem bán thì tránh ánh nắng (ĐH Cần Thơ). 27–30°C và 60–65% là điều kiện buồng ươm, model tự chép sang.</div>
+    </div>
+    <div class="s20-card">
+      <div><p class="s20-q">Hỏi: Giá đỗ có cần chiếu đèn hay phơi nắng không?</p>
+        <p class="s20-quote">“Giá đỗ nên được ươm trong tối, tránh ánh sáng mặt trời. … Bạn chỉ cần tưới gián đoạn theo chu kỳ (<span class="s20-err">khoảng 30 phút mỗi 1-2 giờ</span>) để giữ độ ẩm cho giá đỗ.”</p></div>
+      <div class="s20-doc"><b>Tài liệu nói</b>VAAS: 30 phút tưới một lần, mỗi lần 1 phút. ĐH Cần Thơ: cách nhau 2 giờ, mỗi lần 30 giây. Model trộn hai quy trình.</div>
+    </div>
+    <div class="s20-card">
+      <div><p class="s20-q">Hỏi: Bao lâu thì thu hoạch giá được?</p>
+        <p class="s20-quote">“Giá đỗ đậu xanh thường thu hoạch sau 48 giờ tưới, khi thân đạt khoảng 5–6 cm và <span class="s20-err">rễ dài từ 1–2 cm</span>. … <span class="s20-err">(theo ĐH Cần Thơ)</span>”</p></div>
+      <div class="s20-doc"><b>Tài liệu nói</b>Rễ 1–1,5 cm, theo VAAS. Server gắn nguồn VAAS, model lại ghi ĐH Cần Thơ.</div>
+    </div>
+  </div>
+  <p class="s20-demo">Câu chiếu đèn vừa thấy ở demo cũng có chỗ sai này.</p>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "Điểm cao không có nghĩa là hết sai. Đây là ba lỗi thật ở vòng mới nhất."</p>
+    <p><b>Ý chính:</b> Một: hỏi mang giá ra chợ có cần che nắng, câu đầu đúng, nhưng model tự thêm "giữ 27–30°C và độ ẩm 60–65% trong suốt quá trình vận chuyển"; đó là điều kiện buồng ươm, chép từ đề bài sang chỗ không liên quan. Câu này vẫn được gắn dòng nguồn, vì nguồn tính theo đoạn chứ không theo từng ý. Hai: hỏi chiếu đèn, phần ánh sáng đúng, nhưng "tưới khoảng 30 phút mỗi 1–2 giờ" trộn hai quy trình. Ba: hỏi thu hoạch, model ghi "rễ dài 1–2 cm (theo ĐH Cần Thơ)", trong khi hồ sơ ghi rễ 1–1,5 cm theo VAAS. Các thước đo không bắt được, vì thước "trích đúng số liệu" chỉ kiểm câu trả lời có con số then chốt (như "48", "tối") hay không, không kiểm câu thừa.</p>
+    <p><b>Nguồn:</b> <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, các case <code>r1-bs-sell-light</code>, <code>bs-kb-light</code>, <code>bs-kb-harvest</code>; đối chiếu <code>src/domain/knowledge/bean-sprout.json</code> (<code>watering</code>, <code>harvest</code>, <code>light_description</code>); tiêu chí chấm ở <code>src/eval/dataset.ts</code>. Cả ba lỗi đã có ở vòng 17/11, câu chữ gần như y hệt.</p>
+    <p><b>Có thể bị hỏi:</b> "Vậy sửa thế nào?" Thêm câu vào bộ chấm để đo được lỗi đó, thử sửa đề bài hoặc tài liệu, rồi đo lại. Không sửa mò.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s21-recap" data-part="ket" data-steps="3">
-  <h2 class="slide-title">Toàn cảnh</h2>
-  <aside class="notes" data-min="2"><p>TODO: viết notes.</p></aside>
+  <p class="eyebrow">Toàn cảnh</p>
+  <h2 class="slide-title">Một câu hỏi đi qua cả hệ thống</h2>
+  <div class="s21-prep">
+    <span class="s21-k">Chuẩn bị một lần</span>
+    <span class="s21-st">Người duyệt <small>7</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Cắt đoạn <small>8</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Bản đồ ý nghĩa <small>9</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Thư viện 30 đoạn</span>
+  </div>
+  <div class="s21-flow">
+    <span class="s21-k">Mỗi câu hỏi</span>
+    <span class="s21-st">Câu hỏi</span><span class="s21-arrow">→</span>
+    <span class="s21-st">Tìm hai cách <small>10</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Chọn 4 đoạn <small>11</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Hồ sơ cây <small>12</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">7 ví dụ mẫu <small>14</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Khuôn trả lời <small>15</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Model 3B</span><span class="s21-arrow">→</span>
+    <span class="s21-st">Lan can <small>17</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Ghi nguồn <small>13</small></span><span class="s21-arrow">→</span>
+    <span class="s21-st">Có/Không <small>16</small></span>
+  </div>
+  <ul class="s21-takes">
+    <li><span class="n">1</span>Model nhỏ không cần thông minh hơn. Nó cần <b>sách đúng</b> và <b>lan can chặt</b>.</li>
+    <li><span class="n">2</span>"Dạy" một AI local phần lớn là <b>quản lý dữ liệu</b>: chọn nguồn, duyệt, cắt, ghi nguồn. Hai nguồn nói khác nhau thì người phải chọn.</li>
+    <li><span class="n">3</span><b>Đo, đừng đoán.</b> Mỗi mẹo được giữ lại vì có số đo, và AI vẫn còn sai ở những chỗ đã chỉ ra.</li>
+  </ul>
+  <p class="s21-thanks">Cảm ơn mọi người · Hỏi đáp</p>
+  <aside class="notes" data-min="2">
+    <p><b>Mở:</b> "Gom lại, một câu hỏi đi qua cả hệ thống như thế này."</p>
+    <p><b>Ý chính:</b> Chuẩn bị một lần: người duyệt tài liệu, cắt đoạn, đặt lên bản đồ ý nghĩa, xếp vào thư viện. Mỗi câu hỏi: tìm hai cách, chọn 4 đoạn, thêm hồ sơ cây và 7 ví dụ mẫu, model 3B điền khuôn trả lời, lan can chặn chữ lạ, server ghi nguồn; lệnh điều khiển thì dừng lại hỏi Có/Không. Ba điều mang về: model nhỏ cần sách đúng và lan can chặt; "dạy" AI local phần lớn là quản lý dữ liệu, và khi hai nguồn cãi nhau thì người phải chọn; đo, đừng đoán.</p>
+    <p><b>Có thể bị hỏi:</b> "Dữ liệu ít vậy có đủ không?" Với câu hỏi nằm trong 3 tài liệu thì đủ, như số đo ở slide 18. Hỏi ngoài phạm vi thì model không có sách để đọc và quay về đoán như slide 4; muốn mở rộng thì thêm tài liệu đã duyệt rồi đo lại.</p>
+  </aside>
 </section>
 
 </main>
@@ -1856,6 +1984,66 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     tl.fromTo($(el, '.s17-good'), { y: 14 }, { y: 0, autoAlpha: 1, duration: 0.5 }, '>+0.1')
     tl.to($(el, '.s17-score'), { autoAlpha: 1, duration: 0.4 }, '>')
     tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s18-eval', function (el, gsap) {
+    var oldBars = $$(el, '.s18-cell.old .s18-track i')
+    var newBars = $$(el, '.s18-cell.new .s18-track i')
+    var oldText = $$(el, '.s18-cell.old .s18-frac, .s18-cell.old.none')
+    var newText = $$(el, '.s18-cell.new .s18-frac')
+    var side = $$(el, '.s18-side .card')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s18-row'), 0.25, { stagger: 0.06 })
+    tl.fromTo(oldBars.concat(newBars), { scaleX: 0 }, { scaleX: 0, duration: 0.01 }, 0)
+    tl.fromTo(oldText.concat(newText, side, $(el, '.s18-caveat')), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to(oldBars, { scaleX: 1, duration: 0.7, stagger: 0.1, ease: 'power2.out' }, 'step0')
+    tl.to(oldText, { autoAlpha: 1, duration: 0.3, stagger: 0.1 }, 'step0+=0.3')
+    tl.addLabel('step1')
+    tl.to(newBars, { scaleX: 1, duration: 0.7, stagger: 0.1, ease: 'power2.out' }, 'step1')
+    tl.to(newText, { autoAlpha: 1, duration: 0.3, stagger: 0.1 }, 'step1+=0.3')
+    tl.to(side, { autoAlpha: 1, duration: 0.4, stagger: 0.2 }, '>')
+    tl.to($(el, '.s18-caveat'), { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s20-still-wrong', function (el, gsap) {
+    var errs = $$(el, '.s20-err')
+    var docs = $$(el, '.s20-doc')
+    var demo = $(el, '.s20-demo')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s20-card'), 0.25, { stagger: 0.12 })
+    tl.fromTo(demo ? docs.concat(demo) : docs, { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo(errs, { '--u': 0 }, { '--u': 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to(errs, { '--u': 1, duration: 0.5, stagger: 0.25 }, 'step0')
+    tl.addLabel('step1')
+    tl.fromTo(docs, { x: 20 }, { x: 0, autoAlpha: 1, duration: 0.4, stagger: 0.2 }, 'step1')
+    if (demo) tl.to(demo, { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s21-recap', function (el, gsap) {
+    var stations = $$(el, '.s21-st')
+    var takes = $$(el, '.s21-takes li')
+    var thanks = $(el, '.s21-thanks')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s21-prep, .s21-flow'), 0.25, { stagger: 0.15 })
+    tl.fromTo(stations, { '--lit': 0 }, { '--lit': 0, duration: 0.01 }, 0)
+    tl.fromTo(takes.concat(thanks), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to(stations, { '--lit': 1, duration: 0.25, stagger: 0.22 }, 'step0')
+    tl.addLabel('step1')
+    tl.fromTo(takes, { y: 20 }, { y: 0, autoAlpha: 1, duration: 0.5, stagger: 0.35 }, 'step1')
+    tl.addLabel('step2')
+    tl.fromTo(thanks, { y: 10 }, { y: 0, autoAlpha: 1, duration: 0.5 }, 'step2')
+    tl.addLabel('step3')
     return tl
   })
 })()
