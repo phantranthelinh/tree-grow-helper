@@ -47,6 +47,7 @@ interface DeckLogic {
   reducePanel(p: Panel, a: PanelAction): Panel
   pickRecording(rec: Recordings | null, side: 'left' | 'right', presetId: string | null): { text: string; recordedAt: string } | null
   isOnlineCopy(loc: { protocol: string; hostname: string }): boolean
+  completionReply(json: unknown): { text: string; pending: boolean } | null
 }
 interface SlideInfo {
   id: string
@@ -242,6 +243,14 @@ describe('gia-do deck shell', () => {
     expect(logic.isOnlineCopy({ protocol: 'file:', hostname: '' })).toBe(false)
     expect(logic.isOnlineCopy({ protocol: 'http:', hostname: 'localhost' })).toBe(false)
     expect(logic.isOnlineCopy({ protocol: 'https:', hostname: 'claude.ai' })).toBe(true)
+  })
+
+  it('reads a buffered completion and its pending confirmation', () => {
+    expect(logic.completionReply({ choices: [{ message: { content: 'ok' } }] })).toEqual({ text: 'ok', pending: false })
+    expect(logic.completionReply({ choices: [{ message: { content: 'x? (Có/Không)', tool_calls: [{ id: 'p' }] } }] }))
+      .toEqual({ text: 'x? (Có/Không)', pending: true })
+    expect(logic.completionReply({ choices: [] })).toBeNull()
+    expect(logic.completionReply(null)).toBeNull()
   })
 
   it('demo config and recordings blocks are valid', () => {

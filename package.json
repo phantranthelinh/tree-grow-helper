@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "eval": "tsx src/eval/run.ts",
     "scrape": "tsx src/rag/scrape/run.ts",
-    "mcp:catalog": "tsx scripts/mcp-catalog.ts"
+    "mcp:catalog": "tsx scripts/mcp-catalog.ts",
+    "deck:record": "tsx scripts/record-deck-demo.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

@@ -1,5 +1,32 @@
 import { describe, expect, it } from 'vitest'
 import { extractScriptBlock, replaceScriptBlock, toJsonBlock } from '../../scripts/deck-blocks'
+import { buildRecordings, type DemoConfig } from '../../scripts/record-deck-demo'
+
+describe('demo recordings', () => {
+  it('buildRecordings asks each preset only on its sides and skips failures', async () => {
+    const cfg = {
+      model: 'm',
+      presets: [
+        { id: 'a', question: 'q', sides: ['left', 'right'] },
+        { id: 'w', question: 'q2', sides: ['right'] },
+      ],
+    } as unknown as DemoConfig
+    const asked: string[] = []
+    const rec = await buildRecordings(cfg, async (side, p) => {
+      asked.push(`${side}:${p.id}`)
+      if (side === 'right' && p.id === 'a') throw new Error('down')
+      return `${side}-${p.id}`
+    }, '2026-11-19')
+    expect(asked.sort()).toEqual(['left:a', 'right:a', 'right:w'])
+    expect(rec).toEqual({ recordedAt: '2026-11-19', model: 'm', left: { a: 'left-a' }, right: { w: 'right-w' }, rightSource: 'live' })
+  })
+
+  it('buildRecordings never stores an empty answer', async () => {
+    const cfg = { model: 'm', presets: [{ id: 'a', question: 'q', sides: ['left'] }] } as unknown as DemoConfig
+    const rec = await buildRecordings(cfg, async () => '   ', '2026-11-19')
+    expect(rec.left).toEqual({})
+  })
+})
 
 describe('deck script blocks', () => {
   it('extracts and replaces a block by id', () => {

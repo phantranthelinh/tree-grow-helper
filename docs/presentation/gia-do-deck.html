@@ -628,7 +628,6 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 .s20-err { padding-bottom: 2px; background: linear-gradient(var(--stop), var(--stop)) no-repeat 0 100% / calc(var(--u, 0) * 100%) 3px; }
 .s20-doc { align-self: center; padding-left: 16px; border-left: 3px solid var(--bean); font-size: 16px; line-height: 1.4; }
 .s20-doc b { display: block; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.04em; color: var(--bean); }
-#s20-still-wrong .s20-demo { position: absolute; left: 72px; right: 72px; bottom: 26px; margin: 0; font-size: 19px; font-weight: 600; color: var(--warn); }
 
 /* 21 · recap */
 #s21-recap .s21-prep, #s21-recap .s21-flow { position: absolute; left: 72px; right: 72px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 6px; }
@@ -1090,7 +1089,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
   <aside class="notes" data-min="1">
     <p><b>Mở:</b> "Câu trả lời có kèm nguồn, và phần đó do server làm chứ không phải model."</p>
     <p><b>Ý chính:</b> Sau khi model trả lời, server so câu trả lời với 4 đoạn đã tìm và đếm các cặp hai chữ hiếm trùng nhau (cặp chỉ có trong tối đa 3 đoạn của kho, không tính cặp đã nằm trong câu hỏi). Đoạn nào trùng từ 3 cặp trở lên thì được ghi nguồn, tối đa 3 tên. Model nhỏ hay quên hoặc ghi sai nguồn, nên việc này để code làm. Lưu ý: nguồn tính theo đoạn, không theo từng ý. Ở đây "Tạp chí VAAS; ĐH Cần Thơ" đến từ đoạn hồ sơ "chăm sóc", chỉ trùng đúng 3 cặp quanh cụm "chất kích thích sinh"; ý về 6-BAP thì đến từ tài liệu Ninh Bình.</p>
-    <p><b>Nguồn:</b> câu trả lời thật ở <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, case <code>bs-kb-banned</code>. Số cặp trùng tính lại bằng chính quy tắc của <code>sourcesLine</code> (<code>src/agent/replyNotes.ts</code>) và ra đúng dòng nguồn của lượt đo.</p>
+    <p><b>Nguồn:</b> câu trả lời thật ở <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, case <code>bs-kb-banned</code>. Số cặp trùng tính lại bằng chính quy tắc của <code>sourcesLine</code> (<code>src/agent/replyNotes.ts</code>) và ra đúng dòng nguồn của lượt đo. Bản ghi demo bên phải ngày 20/11 cho câu này giống từng chữ.</p>
     <p><b>Có thể bị hỏi:</b> "Sao đoạn an toàn thực phẩm trùng 22 cặp mà không có tên?" Mục đó trong hồ sơ hay được dùng để trả lời câu hỏi độ độc với thú cưng, mà tài liệu không có dữ liệu ấy; ghi tên nguồn sẽ làm câu trả lời kiểu đó trông có căn cứ.</p>
   </aside>
 </section>
@@ -1313,6 +1312,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     <p><b>Mở:</b> "Giờ hỏi thật. Bên trái là model trần, bên phải là cả hệ thống, cùng một model 3B."</p>
     <p><b>Trình tự:</b> (1) "Ủ giá đỗ cần nhiệt độ bao nhiêu?", câu của slide 2: bên trái tự nói một con số, bên phải ra 27–30°C kèm dòng nguồn. (2) "Nước kẹo…": bên phải nêu 6-BAP, nguồn Ninh Bình. (3) "Giá đỗ có cần chiếu đèn…": để ý câu về tưới, slide 20 quay lại. (4) "Tưới khay giá esp32-01 trong 30 giây." chỉ gửi bên phải: hiện câu hỏi Có/Không. MCP đang chạy thì bấm Có; không thì bấm Không để thấy lệnh bị huỷ.</p>
     <p><b>Khi demo hỏng:</b> một bên không kết nối được hoặc quá 20 giây chưa có chữ đầu tiên thì khung tự phát bản ghi, có nhãn "Bản ghi ngày …". Nút "Phát bản ghi" để chủ động chuyển. Gõ trong ô nhập thì phím mũi tên không chuyển slide; bấm Esc để thoát ô rồi → đi tiếp.</p>
+    <p><b>Bản ghi ngày 20/11 nói gì:</b> bên trái nói ủ ở 20–25°C và nhầm "ủ" với lên men; ngâm 8–12 giờ; nước kẹo là "nước giải nhiệt trong công nghiệp sản xuất kẹo"; giá cần "đủ ánh sáng tự nhiên". Bên phải: 27–30°C; ngâm 35°C trong 4 giờ; 6-BAP kèm nguồn; câu tưới dừng ở Có/Không. Lúc ghi MCP không chạy, nên trả lời "có" sẽ báo lỗi thiết bị.</p>
     <p><b>Chuẩn bị trước buổi nói:</b> (1) Trong <code>.env</code> đổi <code>DEFAULT_PLANT=strawberry</code> thành <code>DEFAULT_PLANT=bean-sprout</code>, khởi động lại server (<code>npm start</code>). (2) Mở LM Studio, nạp qwen2.5-3b-instruct, bật Enable CORS ở Developer → Server. (3) Tuỳ chọn: bật MCP <code>http://localhost:8100/mcp</code> nếu muốn trả lời "có" cho lệnh tưới. (4) Mở <code>gia-do-deck.html</code>, vào slide này, kiểm tra hai đèn xanh và chạy thử một câu. (5) Tuỳ chọn: <code>npm run deck:record</code> để ghi lại bản ghi mới ngay trước buổi nói.</p>
   </aside>
 </section>
@@ -1337,11 +1337,11 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
       <div class="s20-doc"><b>Tài liệu nói</b>Rễ 1–1,5 cm, theo VAAS. Server gắn nguồn VAAS, model lại ghi ĐH Cần Thơ.</div>
     </div>
   </div>
-  <p class="s20-demo">Câu chiếu đèn vừa thấy ở demo cũng có chỗ sai này.</p>
   <aside class="notes" data-min="1.5">
     <p><b>Mở:</b> "Điểm cao không có nghĩa là hết sai. Đây là ba lỗi thật ở vòng mới nhất."</p>
     <p><b>Ý chính:</b> Một: hỏi mang giá ra chợ có cần che nắng, câu đầu đúng, nhưng model tự thêm "giữ 27–30°C và độ ẩm 60–65% trong suốt quá trình vận chuyển"; đó là điều kiện buồng ươm, chép từ đề bài sang chỗ không liên quan. Câu này vẫn được gắn dòng nguồn, vì nguồn tính theo đoạn chứ không theo từng ý. Hai: hỏi chiếu đèn, phần ánh sáng đúng, nhưng "tưới khoảng 30 phút mỗi 1–2 giờ" trộn hai quy trình. Ba: hỏi thu hoạch, model ghi "rễ dài 1–2 cm (theo ĐH Cần Thơ)", trong khi hồ sơ ghi rễ 1–1,5 cm theo VAAS. Các thước đo không bắt được, vì thước "trích đúng số liệu" chỉ kiểm câu trả lời có con số then chốt (như "48", "tối") hay không, không kiểm câu thừa.</p>
     <p><b>Nguồn:</b> <code>data/eval/r4-bean-sprout-1-2026-11-19T13-53-01-529Z.json</code>, các case <code>r1-bs-sell-light</code>, <code>bs-kb-light</code>, <code>bs-kb-harvest</code>; đối chiếu <code>src/domain/knowledge/bean-sprout.json</code> (<code>watering</code>, <code>harvest</code>, <code>light_description</code>); tiêu chí chấm ở <code>src/eval/dataset.ts</code>. Cả ba lỗi đã có ở vòng 17/11, câu chữ gần như y hệt.</p>
+    <p><b>Nối với demo:</b> nếu câu chiếu đèn ở demo vừa rồi có "tưới 30 phút mỗi 1–2 giờ" thì chỉ ra: đó chính là lỗi thứ hai. Bản ghi ngày 20/11 không mắc lỗi này mà mắc lỗi khác: chép câu "thân gầy dài, nhiều rễ sợi…" của ví dụ mẫu số 6 (slide 14) vào một câu hỏi về ánh sáng.</p>
     <p><b>Có thể bị hỏi:</b> "Vậy sửa thế nào?" Thêm câu vào bộ chấm để đo được lỗi đó, thử sửa đề bài hoặc tài liệu, rồi đo lại. Không sửa mò.</p>
   </aside>
 </section>
@@ -1554,6 +1554,13 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     return loc.protocol !== 'file:' && ['localhost', '127.0.0.1', '[::1]'].indexOf(loc.hostname) === -1
   }
 
+  // A buffered /v1/chat/completions answer; a pending control action rides on message.tool_calls.
+  function completionReply(json) {
+    var message = json && json.choices && json.choices[0] && json.choices[0].message
+    if (!message || typeof message.content !== 'string') return null
+    return { text: message.content, pending: Array.isArray(message.tool_calls) && message.tool_calls.length > 0 }
+  }
+
   root.DeckLogic = {
     createNavigator: createNavigator,
     shouldHandleKey: shouldHandleKey,
@@ -1564,6 +1571,7 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     reducePanel: reducePanel,
     pickRecording: pickRecording,
     isOnlineCopy: isOnlineCopy,
+    completionReply: completionReply,
   }
 })(globalThis)
 </script>
@@ -1586,7 +1594,24 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 }
 </script>
 
-<script id="demo-recordings" type="application/json">{"recordedAt":null,"model":null,"left":{},"right":{}}</script>
+<script id="demo-recordings" type="application/json">{
+  "recordedAt": "2026-11-20",
+  "model": "qwen2.5-3b-instruct",
+  "left": {
+    "bs-kb-temp": "Ủ giá đỗ thường được thực hiện ở nhiệt độ phòng (khoảng 20-25°C). Nhiệt độ này giúp tạo ra một môi trường thuận lợi cho quá trình lên men mà không làm hỏng chất lượng của nguyên liệu.",
+    "bs-kb-soak": "Đỗ xanh thường được ngâm trong khoảng 8-12 giờ để nở mềm. Nước dùng để ngâm đỗ nên được giữ ở nhiệt độ phòng (khoảng 20-25 độ C).",
+    "bs-kb-banned": "Nước kẹo làm giá là một loại nước giải nhiệt được sử dụng trong công nghiệp sản xuất kẹo. Nó không phải là một thuật ngữ phổ biến và thường không liên quan đến \"giá\" như nhiệt độ. Sử dụng nó trong quá trình sản xuất có thể gây nguy hiểm nếu không tuân thủ các quy định an toàn nghiêm ngặt.",
+    "bs-kb-light": "Giá đỗ không cần phải chiếu đèn hoặc phơi nắng. Chúng chỉ cần được trồng trong điều kiện đủ ánh sáng tự nhiên và nước ẩm thích hợp."
+  },
+  "right": {
+    "bs-kb-temp": "Để tối ưu phát triển cây giá đỗ, nhiệt độ ngâm và trồng nên nằm trong khoảng 27-30°C. Bạn hãy duy trì nhiệt độ này để đảm bảo cây giá đỗ khỏe mạnh và nảy mầm tốt.",
+    "bs-kb-soak": "Nên ngâm đỗ xanh trong nước với nhiệt độ 35°C trong khoảng 4 giờ. Nhiệt độ nước tưới cho quy trình tự động cần là 28-30°C, chu kỳ tưới ngắn khoảng 30 phút mỗi lần, mỗi lần tưới trong 1 phút. Bạn có thể tham khảo thêm kỹ thuật trồng từ nguồn [https://tapchi.vaas.vn/sites/tapchi.vaas.vn/files/tapchi/2021-05/TC%20so%207-2019-08.pdf] để điều chỉnh phù hợp với hệ thống của mình.\n\nNguồn tham khảo: Tạp chí VAAS; ĐH Cần Thơ.",
+    "bs-kb-banned": "Nước kẹo làm giá đỗ thường chứa 6-Benzylaminopurine (6-BAP), một chất kích thích sinh trưởng. Sử dụng lâu dài có thể gây rối loạn phát triển tế bào, ảnh hưởng đến hệ thần kinh và thậm chí gây dị tật thai nhi. Bạn nên tránh sử dụng nước kẹo trong quá trình sản xuất giá đỗ để đảm bảo an toàn thực phẩm.\n\nNguồn tham khảo: s3-cdn.ninhbinh.gov.vn; Tạp chí VAAS; ĐH Cần Thơ.",
+    "bs-kb-light": "Giá đỗ nên được ươm trong tối để tránh ánh sáng làm mầm đổi màu. Bạn chỉ cần tưới gián đoạn theo chu kỳ, không cần chiếu đèn hoặc phơi nắng. Nếu có bất kỳ triệu chứng khác như thân gầy dài, nhiều rễ sợi, kém giòn khớp với nhiệt độ quá nóng, bạn hãy kiểm tra cảm biến để xác định nguyên nhân và xử lý phù hợp.\n\nNguồn tham khảo: ĐH Cần Thơ; Tạp chí VAAS; UBND Ninh Bình.",
+    "bs-water": "Mình sẽ bật bơm tưới cho khay giá; giá đỗ nên tưới ngắn theo chu kỳ (khoảng 1 phút mỗi 30 phút) để đủ ẩm mà không bị ủng.\n\nBạn xác nhận thực hiện: \"Bật bơm nước thiết bị esp32-01\"? (Có/Không)"
+  },
+  "rightSource": "live"
+}</script>
 
 <script id="deck-runtime">
 (function () {
@@ -2423,7 +2448,56 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     })
   }
 
+  // The server hands /chat/stream to a raw SSE writer that drops the CORS headers, so a page on
+  // another origin (this deck) cannot read it. The first such failure switches the right panel to
+  // the buffered OpenAI endpoint, which keeps them, for the rest of the page's life.
+  var rightBuffered = false
+
+  function revealText(s, id, text) {
+    return new Promise(function (resolve) {
+      if (reduceMotion.matches) { dispatch(s, { type: 'delta', text: text }); resolve(); return }
+      var i = 0
+      var timer = setInterval(function () {
+        if (s.req !== id) { clearInterval(timer); resolve(); return }
+        dispatch(s, { type: 'delta', text: text.slice(i, i + 3) })
+        i += 3
+        if (i >= text.length) { clearInterval(timer); resolve() }
+      }, 40)
+    })
+  }
+
+  function bufferedRight(s, q, id, signal) {
+    dispatch(s, { type: 'chat-frame', frame: { event: 'tool_status', data: JSON.stringify({ note: 'Server trả cả câu một lần (trang này không nhận được luồng chữ).' }) } })
+    return fetch(base(settings.serverUrl) + '/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      signal: signal,
+      body: JSON.stringify({ model: 'plant-assistant', user: 'demo', session_id: sessionId, messages: [{ role: 'user', content: q }] }),
+    }).then(function (res) {
+      if (!res.ok) throw new Error('server trả mã ' + res.status)
+      return res.json()
+    }).then(function (json) {
+      if (s.req !== id) return
+      var r = L.completionReply(json)
+      if (!r) throw new Error('không đọc được câu trả lời')
+      firstToken(s)
+      return revealText(s, id, r.text).then(function () {
+        if (s.req !== id) return
+        dispatch(s, { type: 'chat-frame', frame: { event: 'done', data: JSON.stringify({ reply: r.text, pendingAction: r.pending ? {} : null }) } })
+      })
+    })
+  }
+
   function streamRight(s, q, id, signal) {
+    if (rightBuffered) return bufferedRight(s, q, id, signal)
+    return streamRightSse(s, q, id, signal).catch(function (err) {
+      if (s.req !== id || s.gotFirst || (err && err.name === 'AbortError') || !(err instanceof TypeError)) throw err
+      rightBuffered = true
+      return bufferedRight(s, q, id, signal)
+    })
+  }
+
+  function streamRightSse(s, q, id, signal) {
     return fetch(base(settings.serverUrl) + '/chat/stream', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
