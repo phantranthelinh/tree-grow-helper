@@ -159,6 +159,14 @@ describe('gia-do deck shell', () => {
     expect(text('s13-sources')).toContain('Nguồn tham khảo')
   })
 
+  it('slides 14-17 carry their pinned facts', () => {
+    expect(text('s14-fewshot')).toContain('7 ví dụ')
+    expect(text('s14-fewshot')).toMatch(/bật đèn/)
+    expect(text('s15-structured')).toContain('minh hoạ')
+    expect(text('s16-mcp')).toContain('Có/Không')
+    for (const s of ['часов', '小时', 'giờ']) expect(text('s17-guardrails')).toContain(s)
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')
