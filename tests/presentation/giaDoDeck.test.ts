@@ -244,6 +244,19 @@ describe('gia-do deck shell', () => {
     expect(logic.isOnlineCopy({ protocol: 'https:', hostname: 'claude.ai' })).toBe(true)
   })
 
+  it('demo config and recordings blocks are valid', () => {
+    const cfg = JSON.parse(extractScriptBlock(html, 'demo-config'))
+    expect(cfg.presets.map((p: { id: string }) => p.id)).toEqual(['bs-kb-temp', 'bs-kb-soak', 'bs-kb-banned', 'bs-kb-light', 'bs-water'])
+    expect(cfg.presets.find((p: { id: string }) => p.id === 'bs-water').sides).toEqual(['right'])
+    expect(cfg.bareSystemPrompt).toBe('Bạn là trợ lý nông nghiệp. Trả lời ngắn gọn bằng tiếng Việt.')
+    const rec = JSON.parse(extractScriptBlock(html, 'demo-recordings'))
+    expect(rec).toHaveProperty('left')
+    expect(rec).toHaveProperty('right')
+    expect(text('s19-demo')).toMatch(/RAG/)
+    expect(text('s19-demo')).toMatch(/hồ sơ/)
+    expect(text('s19-demo')).toMatch(/ví dụ mẫu/)
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')

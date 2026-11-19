@@ -71,6 +71,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0;
@@ -583,6 +584,41 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 .s18-side .card p { margin: 0; font-size: 17px; line-height: 1.45; }
 .s18-big { font-family: var(--font-mono); font-size: 26px; font-weight: 600; color: var(--bean); }
 #s18-eval .s18-caveat { position: absolute; left: 72px; right: 72px; top: 530px; margin: 0; padding: 10px 16px; border-left: 4px solid var(--warn); font-size: 19px; line-height: 1.4; }
+
+/* 19 · live demo */
+#s19-demo .s19-online { position: absolute; right: 72px; top: 60px; margin: 0; padding: 4px 10px; border: 1px dashed var(--warn); border-radius: 6px; font-family: var(--font-mono); font-size: 14px; color: var(--warn); }
+#s19-demo .s19-presets { position: absolute; left: 72px; right: 72px; top: 150px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.s19-presets .lbl { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.s19-btn { height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font-family: var(--font-body); font-size: 15px; cursor: pointer; }
+.s19-btn:hover { border-color: var(--bean); }
+.s19-btn small { font-size: 12px; color: var(--ink-soft); }
+.s19-primary { background: var(--bean); border-color: transparent; color: var(--paper); font-weight: 600; }
+#s19-demo .s19-panels { position: absolute; left: 72px; right: 72px; top: 238px; height: 356px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.s19-panel { display: grid; grid-template-rows: auto 1fr; min-width: 0; min-height: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.s19-panel.full { border: 2px solid var(--bean); }
+.s19-head { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.s19-head h3 { margin: 0; font-family: var(--font-display); font-size: 22px; }
+.s19-head .sub { grid-column: 1; font-size: 14px; color: var(--ink-soft); }
+.s19-light { grid-column: 2; grid-row: 1 / span 2; align-self: center; display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+.s19-light i { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.s19-light[data-state="ok"] i { background: var(--bean); }
+.s19-light[data-state="warn"] i { background: var(--warn); }
+.s19-light[data-state="down"] i { background: var(--stop); }
+.s19-body { min-height: 0; overflow: auto; padding: 12px 14px; font-size: 18px; line-height: 1.5; }
+.s19-q { margin: 0 0 8px; font-weight: 600; color: var(--bean); }
+.s19-a { margin: 0; white-space: pre-wrap; }
+.s19-tag { display: inline-block; margin: 0 0 8px; padding: 2px 8px; border-radius: 4px; background: color-mix(in srgb, var(--head) 40%, transparent); font-family: var(--font-mono); font-size: 13px; }
+.s19-status { margin: 6px 0 0; font-size: 15px; font-style: italic; color: var(--ink-soft); }
+.s19-err { margin: 6px 0 0; font-weight: 600; color: var(--stop); }
+.s19-empty { margin: 0; font-size: 16px; color: var(--ink-soft); }
+#s19-demo .s19-bar { position: absolute; left: 72px; right: 72px; top: 606px; display: flex; align-items: center; gap: 8px; }
+.s19-bar input { flex: 1; min-width: 0; height: 42px; padding: 0 12px; border: 2px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font-family: var(--font-body); font-size: 18px; }
+.s19-bar input:focus { border-color: var(--bean); outline: none; }
+.s19-bar .s19-btn { height: 42px; }
+#s19-demo .s19-settings { position: absolute; right: 72px; bottom: 124px; z-index: 2; width: 440px; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: 0 12px 40px rgb(0 0 0 / 0.2); display: grid; gap: 8px; }
+.s19-settings label { display: grid; gap: 4px; font-size: 14px; color: var(--ink-soft); }
+.s19-settings input { height: 34px; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); font-family: var(--font-mono); font-size: 14px; }
+.s19-settings .row { display: flex; gap: 8px; }
 
 /* 20 · still wrong */
 #s20-still-wrong .s20-list { position: absolute; left: 72px; right: 72px; top: 160px; display: grid; gap: 12px; }
@@ -1244,8 +1280,41 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 </section>
 
 <section class="slide" id="s19-demo" data-part="cham-bai" data-steps="0">
+  <p class="eyebrow">Demo trực tiếp</p>
   <h2 class="slide-title">Hỏi thật hai bộ não</h2>
-  <aside class="notes" data-min="4"><p>TODO: viết notes.</p></aside>
+  <p class="s19-online" id="s19-online" hidden>Bản online: phát câu trả lời đã ghi</p>
+  <div class="s19-presets" id="s19-presets"><span class="lbl">Câu soạn sẵn</span></div>
+  <div class="s19-panels">
+    <div class="s19-panel bare" id="s19-left">
+      <div class="s19-head"><h3>Bộ não trần</h3><span class="sub">Cùng model 3B, chỉ một câu dặn, không sách</span><span class="s19-light" data-state="idle"><i></i><span class="txt">LM Studio</span></span></div>
+      <div class="s19-body" aria-live="polite"><p class="s19-empty">Chọn một câu soạn sẵn hoặc gõ câu hỏi.</p></div>
+    </div>
+    <div class="s19-panel full" id="s19-right">
+      <div class="s19-head"><h3>Bộ não đầy đủ</h3><span class="sub">RAG + hồ sơ cây + ví dụ mẫu + lan can</span><span class="s19-light" data-state="idle"><i></i><span class="txt">AI server</span></span></div>
+      <div class="s19-body" aria-live="polite"><p class="s19-empty">Chọn một câu soạn sẵn hoặc gõ câu hỏi.</p></div>
+    </div>
+  </div>
+  <form class="s19-bar" id="s19-form">
+    <input id="s19-input" type="text" autocomplete="off" placeholder="Gõ câu hỏi rồi Enter · Esc để thoát ô nhập">
+    <button class="s19-btn s19-primary" type="submit">Gửi</button>
+    <button class="s19-btn" type="button" id="s19-yes" hidden>Có</button>
+    <button class="s19-btn" type="button" id="s19-no" hidden>Không</button>
+    <button class="s19-btn" type="button" id="s19-replay">Phát bản ghi</button>
+    <button class="s19-btn" type="button" id="s19-new">Phiên mới</button>
+    <button class="s19-btn" type="button" id="s19-gear" aria-expanded="false">Cài đặt</button>
+  </form>
+  <div class="s19-settings" id="s19-settings" hidden>
+    <label>LM Studio<input id="s19-lm" type="text" spellcheck="false"></label>
+    <label>AI server<input id="s19-server" type="text" spellcheck="false"></label>
+    <label>Model<input id="s19-model" type="text" spellcheck="false"></label>
+    <div class="row"><button class="s19-btn s19-primary" type="button" id="s19-save">Lưu và kiểm tra</button><button class="s19-btn" type="button" id="s19-defaults">Về mặc định</button></div>
+  </div>
+  <aside class="notes" data-min="4">
+    <p><b>Mở:</b> "Giờ hỏi thật. Bên trái là model trần, bên phải là cả hệ thống, cùng một model 3B."</p>
+    <p><b>Trình tự:</b> (1) "Ủ giá đỗ cần nhiệt độ bao nhiêu?", câu của slide 2: bên trái tự nói một con số, bên phải ra 27–30°C kèm dòng nguồn. (2) "Nước kẹo…": bên phải nêu 6-BAP, nguồn Ninh Bình. (3) "Giá đỗ có cần chiếu đèn…": để ý câu về tưới, slide 20 quay lại. (4) "Tưới khay giá esp32-01 trong 30 giây." chỉ gửi bên phải: hiện câu hỏi Có/Không. MCP đang chạy thì bấm Có; không thì bấm Không để thấy lệnh bị huỷ.</p>
+    <p><b>Khi demo hỏng:</b> một bên không kết nối được hoặc quá 20 giây chưa có chữ đầu tiên thì khung tự phát bản ghi, có nhãn "Bản ghi ngày …". Nút "Phát bản ghi" để chủ động chuyển. Gõ trong ô nhập thì phím mũi tên không chuyển slide; bấm Esc để thoát ô rồi → đi tiếp.</p>
+    <p><b>Chuẩn bị trước buổi nói:</b> (1) Trong <code>.env</code> đổi <code>DEFAULT_PLANT=strawberry</code> thành <code>DEFAULT_PLANT=bean-sprout</code>, khởi động lại server (<code>npm start</code>). (2) Mở LM Studio, nạp qwen2.5-3b-instruct, bật Enable CORS ở Developer → Server. (3) Tuỳ chọn: bật MCP <code>http://localhost:8100/mcp</code> nếu muốn trả lời "có" cho lệnh tưới. (4) Mở <code>gia-do-deck.html</code>, vào slide này, kiểm tra hai đèn xanh và chạy thử một câu. (5) Tuỳ chọn: <code>npm run deck:record</code> để ghi lại bản ghi mới ngay trước buổi nói.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s20-still-wrong" data-part="cham-bai" data-steps="2">
@@ -1498,6 +1567,26 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
   }
 })(globalThis)
 </script>
+
+<script id="demo-config" type="application/json">
+{
+  "lmUrl": "http://localhost:1234",
+  "serverUrl": "http://localhost:8787",
+  "model": "qwen2.5-3b-instruct",
+  "bareSystemPrompt": "Bạn là trợ lý nông nghiệp. Trả lời ngắn gọn bằng tiếng Việt.",
+  "temperature": 0.1,
+  "maxTokens": 400,
+  "presets": [
+    { "id": "bs-kb-temp",   "question": "Ủ giá đỗ cần nhiệt độ bao nhiêu?",                    "sides": ["left", "right"] },
+    { "id": "bs-kb-soak",   "question": "Ngâm đỗ xanh làm giá bao lâu, nước bao nhiêu độ?",    "sides": ["left", "right"] },
+    { "id": "bs-kb-banned", "question": "Nước kẹo làm giá là gì, có nguy hiểm không?",         "sides": ["left", "right"] },
+    { "id": "bs-kb-light",  "question": "Giá đỗ có cần chiếu đèn hay phơi nắng không?",        "sides": ["left", "right"] },
+    { "id": "bs-water",     "question": "Tưới khay giá esp32-01 trong 30 giây.",               "sides": ["right"] }
+  ]
+}
+</script>
+
+<script id="demo-recordings" type="application/json">{"recordedAt":null,"model":null,"left":{},"right":{}}</script>
 
 <script id="deck-runtime">
 (function () {
@@ -2168,6 +2257,338 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     tl.addLabel('step3')
     return tl
   })
+})()
+</script>
+
+<script id="deck-demo">
+(function () {
+  'use strict'
+  var L = window.DeckLogic
+  var slide = document.getElementById('s19-demo')
+  if (!slide) return
+
+  function readJson(id) {
+    try { return JSON.parse(document.getElementById(id).textContent) } catch (e) { return null }
+  }
+  var cfg = readJson('demo-config')
+  var rec = readJson('demo-recordings')
+  if (!cfg) return
+  var STORE_KEY = 'gia-do-deck-demo'
+  var online = L.isOnlineCopy(location)
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
+  var settings = loadSettings()
+  var sessionId = newSessionId()
+  var lastPreset = null
+
+  function newSessionId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID()
+    return 'demo-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2)
+  }
+  function loadSettings() {
+    var s = { lmUrl: cfg.lmUrl, serverUrl: cfg.serverUrl, model: cfg.model }
+    try {
+      var saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null')
+      if (saved) ['lmUrl', 'serverUrl', 'model'].forEach(function (k) { if (typeof saved[k] === 'string' && saved[k]) s[k] = saved[k] })
+    } catch (e) { /* storage blocked: defaults */ }
+    return s
+  }
+  function saveSettings() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)) } catch (e) { /* storage blocked */ }
+  }
+  function base(url) { return String(url).replace(/\/+$/, '') }
+
+  function node(tag, cls, text) {
+    var n = document.createElement(tag)
+    if (cls) n.className = cls
+    if (text != null) n.textContent = text
+    return n
+  }
+  function formatDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '')
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : (iso || '')
+  }
+
+  function makeSide(name, el) {
+    return {
+      name: name, el: el, body: el.querySelector('.s19-body'), light: el.querySelector('.s19-light'),
+      panel: L.initialPanel(), question: null, presetId: null, req: 0, ctrl: null, timer: null, typing: null, shown: 0, gotFirst: false,
+    }
+  }
+  var sides = { left: makeSide('left', document.getElementById('s19-left')), right: makeSide('right', document.getElementById('s19-right')) }
+
+  function render(s) {
+    var p = s.panel
+    s.body.textContent = ''
+    if (!s.question) {
+      s.body.appendChild(node('p', 's19-empty', 'Chọn một câu soạn sẵn hoặc gõ câu hỏi.'))
+    } else {
+      s.body.appendChild(node('p', 's19-q', s.question))
+      if (p.mode === 'recording') s.body.appendChild(node('span', 's19-tag', 'Bản ghi ngày ' + formatDate(p.recordedAt)))
+      var text = p.mode === 'recording' ? p.text.slice(0, s.shown) : p.text
+      if (text) s.body.appendChild(node('p', 's19-a', text))
+      else if (p.mode === 'live' && !p.done) s.body.appendChild(node('p', 's19-status', 'Đang chờ chữ đầu tiên…'))
+      if (p.status) s.body.appendChild(node('p', 's19-status', p.status))
+      if (p.mode === 'error' && p.error) s.body.appendChild(node('p', 's19-err', p.error))
+    }
+    s.body.scrollTop = s.body.scrollHeight
+    var waiting = sides.right.panel.mode === 'live' && sides.right.panel.pending
+    document.getElementById('s19-yes').hidden = !waiting
+    document.getElementById('s19-no').hidden = !waiting
+  }
+  function dispatch(s, action) {
+    s.panel = L.reducePanel(s.panel, action)
+    render(s)
+  }
+
+  function stop(s) {
+    s.req++
+    clearTimeout(s.timer)
+    clearInterval(s.typing)
+    if (s.ctrl) { s.ctrl.abort(); s.ctrl = null }
+  }
+
+  function typeOut(s) {
+    clearInterval(s.typing)
+    var full = s.panel.text.length
+    if (reduceMotion.matches) { s.shown = full; render(s); return }
+    s.shown = 0
+    s.typing = setInterval(function () {
+      s.shown = Math.min(full, s.shown + 3)
+      render(s)
+      if (s.shown >= full) clearInterval(s.typing)
+    }, 40)
+  }
+
+  function fallback(s, id, reason) {
+    if (s.req !== id) return
+    clearTimeout(s.timer)
+    if (s.ctrl) { s.ctrl.abort(); s.ctrl = null }
+    var r = L.pickRecording(rec, s.name, s.presetId)
+    if (r) {
+      dispatch(s, { type: 'fallback', text: r.text, recordedAt: r.recordedAt })
+      typeOut(s)
+      return
+    }
+    var msg
+    if (online) msg = s.presetId ? 'Câu này chưa ghi.' : 'Bản online chỉ phát câu trả lời đã ghi của các câu soạn sẵn.'
+    else msg = (reason || 'Không kết nối được.') + (s.presetId ? ' Câu này chưa ghi sẵn.' : '')
+    dispatch(s, { type: 'fail', message: msg })
+  }
+
+  function firstToken(s) {
+    if (s.gotFirst) return
+    s.gotFirst = true
+    clearTimeout(s.timer)
+  }
+
+  // Reads an SSE body and hands frames to onFrame until it returns false or the stream ends.
+  function readSse(body, onFrame) {
+    var reader = body.getReader()
+    var text = new TextDecoder('utf-8')
+    var sse = L.createSseDecoder()
+    function feed(frames) {
+      for (var i = 0; i < frames.length; i++) if (onFrame(frames[i]) === false) return false
+      return true
+    }
+    function pump() {
+      return reader.read().then(function (r) {
+        if (r.done) { feed(sse.push(text.decode())); feed(sse.flush()); return }
+        if (!feed(sse.push(text.decode(r.value, { stream: true })))) { reader.cancel().catch(function () {}); return }
+        return pump()
+      })
+    }
+    return pump()
+  }
+
+  function streamLeft(s, q, id, signal) {
+    return fetch(base(settings.lmUrl) + '/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      signal: signal,
+      body: JSON.stringify({
+        model: settings.model,
+        messages: [{ role: 'system', content: cfg.bareSystemPrompt }, { role: 'user', content: q }],
+        temperature: cfg.temperature,
+        max_tokens: cfg.maxTokens,
+        stream: true,
+      }),
+    }).then(function (res) {
+      if (!res.ok || !res.body) throw new Error('LM Studio trả mã ' + res.status)
+      return readSse(res.body, function (frame) {
+        if (s.req !== id) return false
+        var t = L.openAiDeltaText(frame)
+        if (t === null) return false
+        if (t) { firstToken(s); dispatch(s, { type: 'delta', text: t }) }
+      })
+    })
+  }
+
+  function streamRight(s, q, id, signal) {
+    return fetch(base(settings.serverUrl) + '/chat/stream', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      signal: signal,
+      body: JSON.stringify({ userId: 'demo', sessionId: sessionId, message: q }),
+    }).then(function (res) {
+      var type = res.headers.get('content-type') || ''
+      if (!res.ok || !res.body || type.indexOf('text/event-stream') === -1) throw new Error('server trả mã ' + res.status)
+      return readSse(res.body, function (frame) {
+        if (s.req !== id) return false
+        if (frame.event === 'error' && !s.gotFirst) {
+          var why = 'Server báo lỗi.'
+          try { why = 'Server báo lỗi: ' + JSON.parse(frame.data).message } catch (e) { /* keep the generic text */ }
+          fallback(s, id, why)
+          return false
+        }
+        if (frame.event === 'token' || frame.event === 'tool_status' || frame.event === 'done') firstToken(s)
+        dispatch(s, { type: 'chat-frame', frame: frame })
+        if (frame.event === 'done' || frame.event === 'error') return false
+      })
+    })
+  }
+
+  function start(s, q, presetId) {
+    stop(s)
+    var id = s.req
+    s.question = q
+    s.presetId = presetId
+    s.shown = 0
+    s.gotFirst = false
+    dispatch(s, { type: 'start' })
+    if (online) { fallback(s, id, null); return }
+    var ctrl = new AbortController()
+    s.ctrl = ctrl
+    s.timer = setTimeout(function () { fallback(s, id, 'Quá 20 giây chưa có chữ đầu tiên.') }, L.FIRST_TOKEN_TIMEOUT_MS)
+    var run = s.name === 'left' ? streamLeft : streamRight
+    run(s, q, id, ctrl.signal).then(function () {
+      if (s.req !== id) return
+      clearTimeout(s.timer)
+      if (!s.gotFirst) { fallback(s, id, 'Không nhận được chữ nào.'); return }
+      if (s.panel.mode === 'live' && !s.panel.done) dispatch(s, { type: 'end' })
+      s.ctrl = null
+    }).catch(function (err) {
+      if (s.req !== id) return
+      var why = 'Không kết nối được' + (err && err.message ? ' (' + err.message + ').' : '.')
+      if (s.gotFirst) dispatch(s, { type: 'fail', message: 'Mất kết nối giữa chừng.' })
+      else fallback(s, id, why)
+    })
+  }
+
+  function ask(q, presetId, which) {
+    q = String(q || '').trim()
+    if (!q) return
+    which.forEach(function (name) { start(sides[name], q, presetId) })
+  }
+
+  var input = document.getElementById('s19-input')
+  var presetBox = document.getElementById('s19-presets')
+  cfg.presets.forEach(function (p) {
+    var b = node('button', 's19-btn', p.question)
+    b.type = 'button'
+    if (p.sides.length === 1) b.appendChild(node('small', null, ' · chỉ bên phải'))
+    b.addEventListener('click', function () {
+      lastPreset = p
+      input.value = p.question
+      ask(p.question, p.id, p.sides)
+    })
+    presetBox.appendChild(b)
+  })
+
+  document.getElementById('s19-form').addEventListener('submit', function (e) {
+    e.preventDefault()
+    var q = input.value
+    var preset = cfg.presets.filter(function (p) { return p.question === q.trim() })[0] || null
+    var waiting = sides.right.panel.mode === 'live' && sides.right.panel.pending
+    lastPreset = preset
+    ask(q, preset ? preset.id : null, waiting ? ['right'] : preset ? preset.sides : ['left', 'right'])
+  })
+  input.addEventListener('keydown', function (e) { if (e.key === 'Escape') input.blur() })
+  document.getElementById('s19-yes').addEventListener('click', function () { ask('có', null, ['right']) })
+  document.getElementById('s19-no').addEventListener('click', function () { ask('không', null, ['right']) })
+
+  function playRecording(s, preset) {
+    stop(s)
+    s.question = preset.question
+    s.presetId = preset.id
+    s.gotFirst = false
+    dispatch(s, { type: 'start' })
+    fallback(s, s.req, null)
+  }
+  document.getElementById('s19-replay').addEventListener('click', function () {
+    if (!lastPreset) return
+    lastPreset.sides.forEach(function (name) { playRecording(sides[name], lastPreset) })
+  })
+
+  document.getElementById('s19-new').addEventListener('click', function () {
+    sessionId = newSessionId()
+    lastPreset = null
+    input.value = ''
+    Object.keys(sides).forEach(function (k) {
+      var s = sides[k]
+      stop(s)
+      s.panel = L.initialPanel()
+      s.question = null
+      s.presetId = null
+      render(s)
+    })
+  })
+
+  function setLight(s, state, label) {
+    s.light.dataset.state = state
+    s.light.querySelector('.txt').textContent = label
+  }
+  function getJson(url, ms) {
+    var ctrl = new AbortController()
+    var t = setTimeout(function () { ctrl.abort() }, ms)
+    return fetch(url, { signal: ctrl.signal }).then(function (r) {
+      clearTimeout(t)
+      if (!r.ok) throw new Error('HTTP ' + r.status)
+      return r.json()
+    })
+  }
+  function checkLights() {
+    if (online) return
+    setLight(sides.left, 'idle', 'đang kiểm tra')
+    setLight(sides.right, 'idle', 'đang kiểm tra')
+    getJson(base(settings.lmUrl) + '/v1/models', 4000).then(function (j) {
+      var ids = (j && j.data ? j.data : []).map(function (m) { return m.id })
+      if (ids.indexOf(settings.model) !== -1) setLight(sides.left, 'ok', 'LM Studio sẵn sàng')
+      else setLight(sides.left, 'warn', 'chưa nạp ' + settings.model)
+    }).catch(function () { setLight(sides.left, 'down', 'LM Studio không trả lời') })
+    getJson(base(settings.serverUrl) + '/health', 4000).then(function (j) {
+      if (j && j.phase === 'ready') setLight(sides.right, 'ok', 'server sẵn sàng')
+      else setLight(sides.right, 'warn', 'server: ' + (j && j.phase ? j.phase : 'chưa sẵn sàng'))
+    }).catch(function () { setLight(sides.right, 'down', 'server không trả lời') })
+  }
+
+  var panel = document.getElementById('s19-settings')
+  var gear = document.getElementById('s19-gear')
+  var fields = { lmUrl: document.getElementById('s19-lm'), serverUrl: document.getElementById('s19-server'), model: document.getElementById('s19-model') }
+  function fillFields() { Object.keys(fields).forEach(function (k) { fields[k].value = settings[k] }) }
+  gear.addEventListener('click', function () {
+    panel.hidden = !panel.hidden
+    gear.setAttribute('aria-expanded', String(!panel.hidden))
+    fillFields()
+  })
+  document.getElementById('s19-save').addEventListener('click', function () {
+    Object.keys(fields).forEach(function (k) { if (fields[k].value.trim()) settings[k] = fields[k].value.trim() })
+    saveSettings()
+    panel.hidden = true
+    gear.setAttribute('aria-expanded', 'false')
+    checkLights()
+  })
+  document.getElementById('s19-defaults').addEventListener('click', function () {
+    settings = { lmUrl: cfg.lmUrl, serverUrl: cfg.serverUrl, model: cfg.model }
+    fillFields()
+  })
+
+  if (online) {
+    document.getElementById('s19-online').hidden = false
+    sides.left.light.hidden = true
+    sides.right.light.hidden = true
+    gear.hidden = true
+  }
+  document.addEventListener('deck:slide', function (e) { if (e.detail && e.detail.id === 's19-demo') checkLights() })
 })()
 </script>
 
