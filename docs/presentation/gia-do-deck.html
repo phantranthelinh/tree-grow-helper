@@ -17,6 +17,7 @@
   --bean: #3d7a34;
   --bean-deep: #285320;
   --sprout: #efe7c4;
+  --head: #d8b83a;
   --root: #b9a777;
   --water: #2c7aa3;
   --warn: #b25f17;
@@ -37,6 +38,7 @@
     --bean: #7cc36c;
     --bean-deep: #a7dc98;
     --sprout: #ebe2bb;
+    --head: #e6c95b;
     --root: #cdbb88;
     --water: #5cb2de;
     --warn: #e69a4c;
@@ -54,6 +56,7 @@
   --bean: #7cc36c;
   --bean-deep: #a7dc98;
   --sprout: #ebe2bb;
+  --head: #e6c95b;
   --root: #cdbb88;
   --water: #5cb2de;
   --warn: #e69a4c;
@@ -171,8 +174,160 @@ button { font: inherit; color: inherit; }
 .notes-panel h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
 .notes-panel p, .notes-panel ul { margin: 0 0 8px; }
 
+/* Shared slide parts */
+.eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bean);
+}
+.lead { margin: 14px 0 0; max-width: 900px; font-size: 26px; line-height: 1.4; color: var(--ink-soft); }
+.illus-tag {
+  position: absolute;
+  right: 72px;
+  bottom: 22px;
+  padding: 3px 8px;
+  border: 1px dashed var(--ink-soft);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.bubble {
+  display: inline-block;
+  max-width: 680px;
+  padding: 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  font-size: 26px;
+  line-height: 1.35;
+}
+.bubble.user { background: var(--bean); border-color: transparent; color: var(--paper); border-bottom-right-radius: 4px; }
+.bubble.ai { border-bottom-left-radius: 4px; }
+.card { padding: 20px 24px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.card h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 28px; font-weight: 700; }
+.card ul { margin: 10px 0 0; padding-left: 22px; font-size: 21px; line-height: 1.45; }
+.stamp {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--warn);
+  transform: rotate(-2deg);
+}
+.mono { font-family: var(--font-mono); }
+svg text { font-family: var(--font-body); fill: var(--ink); }
+
+/* 1 · title */
+#s01-title .s01-text { position: absolute; left: 72px; top: 150px; width: 640px; }
+.s01-h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 76px;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+#s01-title .lead { font-size: 25px; }
+#s01-title .s01-meta { position: absolute; left: 72px; bottom: 56px; font-family: var(--font-mono); font-size: 15px; color: var(--ink-soft); }
+#s01-title .s01-art { position: absolute; right: 70px; top: 52px; width: 500px; height: 620px; }
+.s01-edge { stroke: var(--line); stroke-width: 2; }
+.s01-edge-lit { stroke: var(--bean); stroke-width: 3; opacity: 0; }
+.s01-node { fill: var(--panel); stroke: var(--line); stroke-width: 2; }
+.s01-node-lit { fill: var(--bean); opacity: 0; }
+.s01-stem-edge { fill: none; stroke: var(--root); stroke-width: 19; stroke-linecap: round; }
+.s01-stem { fill: none; stroke: var(--sprout); stroke-width: 12; stroke-linecap: round; }
+.s01-root { fill: none; stroke: var(--root); stroke-width: 4; stroke-linecap: round; }
+.s01-head ellipse { fill: var(--head); stroke: var(--root); stroke-width: 2; }
+.s01-seed ellipse { fill: var(--bean); }
+.s01-seed path { fill: none; stroke: var(--paper); stroke-opacity: 0.55; stroke-width: 3; stroke-linecap: round; }
+
+/* 2 · question */
+#s02-question .s02-chat { position: absolute; left: 72px; right: 72px; top: 180px; display: grid; gap: 26px; }
+#s02-question .s02-q { justify-self: end; font-size: 34px; font-weight: 600; }
+.s02-answers { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.s02-who { display: block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.s02-ans .bubble { position: relative; display: block; max-width: none; height: 150px; overflow: hidden; }
+.ghost-line { height: 16px; margin: 10px 0; border-radius: 8px; background: var(--line); }
+.s02-cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: repeating-linear-gradient(-45deg, var(--panel) 0 12px, var(--paper) 12px 24px);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+#s02-question .s02-seed { position: absolute; left: 72px; right: 72px; top: 520px; display: flex; align-items: center; gap: 22px; }
+#s02-question .s02-seed p { margin: 0; font-size: 23px; line-height: 1.4; }
+
+/* 3 · local */
+#s03-local .s03-art { position: absolute; left: 72px; top: 140px; width: 1136px; height: 500px; }
+.s03-screen { fill: var(--panel); stroke: var(--ink); stroke-width: 4; }
+.s03-base { fill: var(--line); stroke: var(--ink); stroke-width: 4; stroke-linejoin: round; }
+.s03-lobe { fill: var(--sprout); stroke: var(--root); stroke-width: 3; }
+.s03-fold { fill: none; stroke: var(--root); stroke-width: 3; stroke-linecap: round; }
+.s03-glow { fill: var(--head); opacity: 0; }
+.s03-cloud { fill: var(--panel); stroke: var(--ink-soft); stroke-width: 3; }
+.s03-route { fill: none; stroke: var(--ink-soft); stroke-width: 3; stroke-dasharray: 8 10; }
+.s03-q rect { fill: var(--bean); }
+.s03-q text { fill: var(--paper); font-family: var(--font-display); font-weight: 800; font-size: 28px; }
+.s03-cross line { stroke: var(--stop); stroke-width: 9; stroke-linecap: round; }
+.s03-cost { font-size: 21px; fill: var(--stop); }
+.s03-label { font-family: var(--font-mono); font-size: 15px; letter-spacing: 0.08em; fill: var(--ink-soft); }
+#s03-local .s03-gains { position: absolute; left: 650px; top: 440px; width: 560px; margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; font-size: 25px; }
+#s03-local .s03-gains li { display: flex; gap: 12px; align-items: baseline; }
+#s03-local .s03-gains li::before { content: "✓"; color: var(--bean); font-weight: 800; }
+#s03-local .s03-gains li.trade::before { content: "↔"; color: var(--warn); }
+#s03-local .s03-gains li.trade { color: var(--ink-soft); font-size: 22px; }
+
+/* 4 · next word */
+#s04-next-word .s04-sentence { position: absolute; left: 72px; top: 172px; margin: 0; font-family: var(--font-display); font-size: 46px; font-weight: 600; }
+.s04-slot { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: top; color: var(--bean); }
+.s04-mark { position: relative; }
+.s04-mark::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 5px; border-radius: 3px; background: var(--warn); transform: scaleX(var(--u, 0)); transform-origin: left; }
+.s04-caret { display: inline-block; width: 4px; height: 0.95em; margin-left: 6px; vertical-align: -0.1em; background: var(--ink); animation: s04-blink 1s steps(1) infinite; }
+@keyframes s04-blink { 50% { opacity: 0; } }
+#s04-next-word .s04-bars { position: absolute; left: 72px; top: 284px; width: 720px; height: 340px; }
+.s04-set { position: absolute; inset: 0; display: grid; align-content: start; gap: 14px; }
+.s04-set h3 { margin: 0 0 4px; font-size: 18px; font-weight: 600; color: var(--ink-soft); }
+.bar-row { position: relative; display: grid; grid-template-columns: 96px 1fr 72px; align-items: center; gap: 16px; font-family: var(--font-mono); font-size: 26px; font-variant-numeric: tabular-nums; }
+.bar-row .ring { position: absolute; inset: -6px -10px; border: 2px solid var(--bean); border-radius: 8px; opacity: 0; }
+.bar-row .track { position: relative; height: 30px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar-row .fill { display: block; height: 100%; width: var(--p); background: var(--ink-soft); transform-origin: left; }
+.bar-row .fill.hi { position: absolute; left: 0; top: 0; background: var(--bean); opacity: 0; }
+.bar-row .pct { text-align: right; color: var(--ink-soft); font-size: 22px; }
+#s04-next-word .s04-steps { position: absolute; left: 850px; top: 290px; width: 360px; margin: 0; padding: 0; list-style: none; display: grid; gap: 18px; font-size: 21px; line-height: 1.4; }
+#s04-next-word .s04-steps .mono { color: var(--bean); }
+#s04-next-word .s04-stamp { position: absolute; left: 850px; top: 556px; }
+
+/* 5 · train or read */
+#s05-train-or-read .s05-fork { position: absolute; inset: 0; width: 1280px; height: 720px; pointer-events: none; }
+.s05-path { fill: none; stroke: var(--line); stroke-width: 5; stroke-linecap: round; }
+.s05-path.read { stroke: var(--bean); }
+.s05-pill rect { fill: var(--ink); }
+.s05-pill text { fill: var(--paper); font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
+#s05-train-or-read .s05-card { position: absolute; top: 310px; width: 500px; }
+#s05-train-or-read .s05-card.train { left: 80px; }
+#s05-train-or-read .s05-card.read { left: 700px; border-color: var(--bean); }
+.s05-card .sub { margin: 0; font-size: 19px; color: var(--ink-soft); }
+.s05-strike { position: absolute; left: 16px; right: 16px; top: 38px; height: 4px; background: var(--stop); transform: scaleX(0); transform-origin: left; }
+#s05-train-or-read .s05-verdict { position: absolute; left: 80px; right: 80px; bottom: 34px; margin: 0; padding: 14px 20px; border-radius: 8px; background: var(--bean); color: var(--paper); font-size: 25px; font-weight: 600; text-align: center; }
+
 @media (prefers-reduced-motion: reduce) {
   .slide, .slide.is-active { transition: none; }
+  .s04-caret { animation: none; }
 }
 </style>
 </head>
@@ -181,28 +336,177 @@ button { font: inherit; color: inherit; }
 <main class="stage" id="stage">
 
 <section class="slide" id="s01-title" data-part="mo-dau" data-steps="1">
-  <h2 class="slide-title">Nuôi một bộ não biết nghề ươm giá</h2>
-  <aside class="notes" data-min="0.5"><p>TODO: viết notes.</p></aside>
+  <div class="s01-text">
+    <p class="eyebrow">AI chạy trên máy · RAG · cây giá đỗ</p>
+    <h1 class="s01-h">Nuôi một bộ não biết nghề ươm giá</h1>
+    <p class="lead">Một model nhỏ chạy ngay trên laptop học nghề ươm giá đỗ bằng cách đọc tài liệu, không phải train.</p>
+  </div>
+  <p class="s01-meta">Tháng 11/2026 · dự án ai-server</p>
+  <svg class="s01-art" viewBox="0 0 500 620" aria-hidden="true">
+    <g class="s01-net"></g>
+    <path class="s01-root" d="M252 556 C 242 578, 262 594, 254 616"/>
+    <path class="s01-stem-edge" d="M252 528 C 204 428, 312 338, 262 176"/>
+    <path class="s01-stem" d="M252 528 C 204 428, 312 338, 262 176"/>
+    <g class="s01-head">
+      <ellipse cx="250" cy="150" rx="19" ry="31" transform="rotate(-16 250 150)"/>
+      <ellipse cx="276" cy="150" rx="19" ry="31" transform="rotate(16 276 150)"/>
+    </g>
+    <g class="s01-seed">
+      <ellipse cx="252" cy="538" rx="46" ry="31"/>
+      <path d="M220 528 Q 252 512 284 528"/>
+    </g>
+  </svg>
+  <aside class="notes" data-min="0.5">
+    <p><b>Mở:</b> "Hôm nay mình kể chuyện nuôi một bộ não AI chạy ngay trên laptop, và dạy nó nghề ươm giá đỗ."</p>
+    <p><b>Ý chính:</b> Cả bài trả lời một câu: model nhỏ chạy local thông minh được đến đâu, và dự án đã dùng những kỹ thuật nào để nó trả lời đúng. Bấm → cho hạt nảy mầm.</p>
+    <p><b>Nguồn:</b> dự án ai-server; dữ liệu ví dụ là hồ sơ giá đỗ <code>src/domain/knowledge/bean-sprout.json</code>.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s02-question" data-part="mo-dau" data-steps="2">
-  <h2 class="slide-title">Ủ giá đỗ cần nhiệt độ bao nhiêu?</h2>
-  <aside class="notes" data-min="1"><p>TODO: viết notes.</p></aside>
+  <p class="eyebrow">Câu hỏi mở bài</p>
+  <h2 class="slide-title">Một câu hỏi theo suốt buổi nói</h2>
+  <div class="s02-chat">
+    <div class="bubble user s02-q"><span class="s02-qtext">Ủ giá đỗ cần nhiệt độ bao nhiêu?</span></div>
+    <div class="s02-answers">
+      <div class="s02-ans">
+        <span class="s02-who">Bộ não trần</span>
+        <div class="bubble ai"><div class="ghost-line" style="width:92%"></div><div class="ghost-line" style="width:78%"></div><div class="ghost-line" style="width:60%"></div><div class="s02-cover">Đáp án ở slide 19</div></div>
+      </div>
+      <div class="s02-ans">
+        <span class="s02-who">Bộ não đầy đủ</span>
+        <div class="bubble ai"><div class="ghost-line" style="width:88%"></div><div class="ghost-line" style="width:95%"></div><div class="ghost-line" style="width:52%"></div><div class="s02-cover">Đáp án ở slide 19</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card s02-seed">
+    <span class="stamp">?</span>
+    <p>Gieo trước một điều: đáp án "đúng" cũng chưa chắc chắn. Giữ câu hỏi này, slide 12 sẽ nói vì sao.</p>
+  </div>
+  <aside class="notes" data-min="1">
+    <p><b>Mở:</b> "Mình bắt đầu bằng một câu hỏi rất đời thường: ủ giá đỗ cần nhiệt độ bao nhiêu?"</p>
+    <p><b>Ý chính:</b> Hai bộ não sẽ cùng trả lời câu này. Bộ não trần là model không có gì thêm. Bộ não đầy đủ có thư viện tài liệu, hồ sơ cây và ví dụ mẫu. Đến slide 19 mình hỏi thật cả hai trước mặt mọi người. Gieo trước: chính đáp án "đúng" cũng chưa chắc chắn, slide 12 nói vì sao.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao lại chọn giá đỗ?" Giá đỗ là cây thứ hai của dự án, sau dâu tây. Quy trình ngắn (máy làm giá tự động thu hoạch sau khoảng 48 giờ) và có tài liệu tiếng Việt rõ ràng.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s03-local" data-part="mo-dau" data-steps="2">
+  <p class="eyebrow">AI local</p>
   <h2 class="slide-title">Vì sao chạy AI ngay trên máy</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <svg class="s03-art" viewBox="0 0 1136 500" aria-hidden="true">
+    <path class="s03-route" d="M330 175 C 420 30, 560 20, 640 110"/>
+    <g class="s03-laptop">
+      <text class="s03-label" x="40" y="164">MÁY CỦA MÌNH</text>
+      <rect class="s03-screen" x="40" y="180" width="340" height="210" rx="12"/>
+      <ellipse class="s03-glow" cx="212" cy="280" rx="112" ry="84"/>
+      <path class="s03-lobe" d="M150 312 C 128 310 124 282 142 272 C 132 250 150 230 172 236 C 178 214 210 208 224 224 C 240 208 272 214 274 236 C 296 240 302 268 284 280 C 300 296 286 320 264 316 C 256 332 228 334 220 320 C 206 330 180 332 172 318 C 164 322 154 320 150 312 Z"/>
+      <path class="s03-fold" d="M172 236 C 178 252 166 262 176 276 M224 224 C 218 244 234 254 226 272 M274 236 C 262 246 270 262 258 268 M152 292 C 172 286 186 298 204 290 M226 300 C 240 290 256 300 270 292 M222 322 C 224 334 230 342 236 352"/>
+      <path class="s03-base" d="M0 392 H420 L398 420 H22 Z"/>
+    </g>
+    <g class="s03-cloudg">
+      <path class="s03-cloud" d="M650 150 C 610 150, 606 98, 652 94 C 656 48, 724 36, 750 72 C 776 30, 856 42, 852 96 C 896 100, 896 150, 852 150 Z"/>
+      <text class="s03-label" x="676" y="186">AI TRÊN CLOUD</text>
+    </g>
+    <g class="s03-cross">
+      <line x1="478" y1="34" x2="522" y2="78"/>
+      <line x1="522" y1="34" x2="478" y2="78"/>
+    </g>
+    <text class="s03-cost" x="890" y="76">Câu hỏi rời khỏi máy</text>
+    <text class="s03-cost" x="890" y="112">Trả phí theo lượt gọi</text>
+    <text class="s03-cost" x="890" y="148">Mất mạng là dừng</text>
+    <g class="s03-q">
+      <rect width="56" height="44" rx="14"/>
+      <text x="28" y="33" text-anchor="middle">?</text>
+    </g>
+  </svg>
+  <ul class="s03-gains">
+    <li>Dữ liệu ở lại trên máy</li>
+    <li>Không trả phí theo lượt hỏi</li>
+    <li>Chạy được khi mất mạng</li>
+    <li class="trade">Đổi lại: model phải đủ nhỏ để chạy trên laptop</li>
+  </ul>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "Trước khi vào kỹ thuật: sao không gọi một AI trên cloud cho nhanh?"</p>
+    <p><b>Ý chính:</b> Gửi lên cloud thì câu hỏi, số liệu cảm biến và tài liệu nội bộ rời khỏi máy; mỗi lượt gọi tốn tiền; mất mạng là dừng. Chạy local thì ngược lại. Cái giá: model phải đủ nhỏ để chạy trên laptop, nên nó biết ít và dễ sai. Phần còn lại của bài là cách bù cho chỗ yếu đó.</p>
+    <p><b>Nguồn:</b> model chạy qua LM Studio, nói chuyện theo chuẩn OpenAI-compatible (CLAUDE.md, mục LLM provider).</p>
+    <p><b>Có thể bị hỏi:</b> "Model lớn trên cloud có tốt hơn không?" Về hiểu biết chung thì có. Nhưng câu hỏi nghề vẫn cần đúng số liệu của tài liệu mình chọn, nên model lớn cũng cần cùng một thư viện. Server dùng một lớp giao tiếp chung, đổi nhà cung cấp chỉ là đổi cấu hình ở trang /setup.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s04-next-word" data-part="bo-nao" data-steps="3">
+  <p class="eyebrow">Large Language Model</p>
   <h2 class="slide-title">LLM là máy đoán chữ tiếp theo</h2>
-  <aside class="notes" data-min="2"><p>TODO: viết notes.</p></aside>
+  <p class="s04-sentence">Ủ giá đỗ cần nhiệt độ khoảng <span class="s04-mark"><span class="s04-slot s04-w1">25</span><span class="s04-slot s04-w2">°C</span></span><span class="s04-caret"></span></p>
+  <div class="s04-bars">
+    <div class="s04-set s04-a">
+      <h3>Chữ tiếp theo có thể là…</h3>
+      <div class="bar-row" data-pick><span class="ring"></span><span class="word">25</span><span class="track"><span class="fill" style="--p:34%"></span><span class="fill hi" style="--p:34%"></span></span><span class="pct">34%</span></div>
+      <div class="bar-row"><span class="word">30</span><span class="track"><span class="fill" style="--p:26%"></span></span><span class="pct">26%</span></div>
+      <div class="bar-row"><span class="word">20</span><span class="track"><span class="fill" style="--p:17%"></span></span><span class="pct">17%</span></div>
+      <div class="bar-row"><span class="word">28</span><span class="track"><span class="fill" style="--p:13%"></span></span><span class="pct">13%</span></div>
+      <div class="bar-row"><span class="word">từ</span><span class="track"><span class="fill" style="--p:6%"></span></span><span class="pct">6%</span></div>
+    </div>
+    <div class="s04-set s04-b">
+      <h3>Sau "25", chữ tiếp theo có thể là…</h3>
+      <div class="bar-row" data-pick><span class="ring"></span><span class="word">°C</span><span class="track"><span class="fill" style="--p:71%"></span><span class="fill hi" style="--p:71%"></span></span><span class="pct">71%</span></div>
+      <div class="bar-row"><span class="word">độ</span><span class="track"><span class="fill" style="--p:18%"></span></span><span class="pct">18%</span></div>
+      <div class="bar-row"><span class="word">–</span><span class="track"><span class="fill" style="--p:6%"></span></span><span class="pct">6%</span></div>
+      <div class="bar-row"><span class="word">đến</span><span class="track"><span class="fill" style="--p:3%"></span></span><span class="pct">3%</span></div>
+    </div>
+  </div>
+  <ol class="s04-steps">
+    <li><span class="mono">1 ·</span> Chấm xác suất cho mọi chữ có thể đứng tiếp.</li>
+    <li><span class="mono">2 ·</span> Chọn một chữ, nối vào câu.</li>
+    <li><span class="mono">3 ·</span> Lặp lại tới hết câu.</li>
+  </ol>
+  <div class="stamp s04-stamp">Nghe hợp lý ≠ đúng</div>
+  <span class="illus-tag">minh hoạ</span>
+  <aside class="notes" data-min="2">
+    <p><b>Mở:</b> "Bên trong, một LLM chỉ làm đúng một việc: đoán chữ tiếp theo."</p>
+    <p><b>Ý chính:</b> Mỗi bước model chấm xác suất cho mọi chữ có thể đứng tiếp, chọn một chữ, nối vào câu rồi đoán tiếp. Câu ra rất trôi chảy. Nhưng con số 25°C ở đây là đoán, không phải đọc từ tài liệu nào. Nghe hợp lý không có nghĩa là đúng, và đó là lý do cả phần sau tồn tại.</p>
+    <p><b>Nguồn:</b> hình minh hoạ, không phải số đo. Các xác suất chỉ để thấy cơ chế.</p>
+    <p><b>Có thể bị hỏi:</b> "Vậy model có hiểu không?" Nó học được rất nhiều quy luật của ngôn ngữ, nhưng kiến thức hẹp như nghề ươm giá thì một model 3B nhớ rất ít.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s05-train-or-read" data-part="bo-nao" data-steps="2">
-  <h2 class="slide-title">"Train" hay cho đọc sách?</h2>
-  <aside class="notes" data-min="2"><p>TODO: viết notes.</p></aside>
+  <p class="eyebrow">Fine-tune hay RAG</p>
+  <h2 class="slide-title">“Train” hay cho đọc sách?</h2>
+  <p class="lead">qwen2.5 3B nói tiếng Việt trôi chảy, nhưng biết rất ít về nghề ươm giá. Muốn nó biết nghề thì có hai đường.</p>
+  <svg class="s05-fork" viewBox="0 0 1280 720" aria-hidden="true">
+    <path class="s05-path" d="M600 288 C 560 318, 380 290, 330 320"/>
+    <path class="s05-path read" d="M680 288 C 720 318, 900 290, 950 320"/>
+    <g class="s05-pill">
+      <rect x="530" y="240" width="220" height="48" rx="24"/>
+      <text x="640" y="271" text-anchor="middle">qwen2.5 3B</text>
+    </g>
+  </svg>
+  <div class="card s05-card train">
+    <span class="s05-strike"></span>
+    <h3>Train (fine-tune)</h3>
+    <p class="sub">Sửa chính bộ não</p>
+    <ul>
+      <li>Thay đổi trọng số bên trong model</li>
+      <li>Cần GPU mạnh và hàng giờ chạy</li>
+      <li>Dạy sai thì rất khó gỡ ra</li>
+    </ul>
+  </div>
+  <div class="card s05-card read">
+    <h3>Cho đọc sách (RAG)</h3>
+    <p class="sub">Đưa tài liệu vào lúc hỏi</p>
+    <ul>
+      <li>Model giữ nguyên, không đổi trọng số</li>
+      <li>Mỗi câu hỏi kèm vài đoạn tài liệu liên quan</li>
+      <li>Tài liệu sai thì sửa file rồi nạp lại</li>
+    </ul>
+  </div>
+  <p class="s05-verdict">Dự án này không train. Nó cho model đọc sách, kèm hồ sơ cây và vài ví dụ mẫu.</p>
+  <aside class="notes" data-min="2">
+    <p><b>Mở:</b> "Mọi người hay nói 'train AI'. Dự án này không train."</p>
+    <p><b>Ý chính:</b> Model là qwen2.5-3b-instruct, khoảng 3 tỷ tham số, chạy qua LM Studio. Muốn nó biết nghề có hai đường. Fine-tune sửa trọng số: cần dữ liệu huấn luyện, GPU, hàng giờ chạy, và dạy sai thì khó gỡ. RAG để model nguyên, mỗi lần hỏi đưa kèm vài đoạn tài liệu. Dự án đi đường thứ hai, thêm hồ sơ cây và ví dụ mẫu. Nên "train bộ não" trong bài này thật ra là chọn sách, duyệt sách và đưa đúng trang.</p>
+    <p><b>Nguồn:</b> tên model trong <code>data/eval/*bean*.json</code> (trường <code>model</code>). Tài liệu sửa xong nạp lại bằng <code>POST /api/setup/rag/rebuild</code>, không cần khởi động lại server.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao không fine-tune?" Tài liệu giá đỗ chỉ có 3 bản PDF, quá ít để train. Fine-tune còn khó kiểm chứng: model nói sai thì không biết nó lấy từ đâu. Với RAG, mỗi câu trả lời truy về được đoạn tài liệu nguồn (slide 13).</p>
+  </aside>
 </section>
 
 <section class="slide" id="s06-rag" data-part="thu-vien" data-steps="3">
@@ -484,6 +788,174 @@ button { font: inherit; color: inherit; }
   }
 
   document.addEventListener('DOMContentLoaded', init)
+})()
+</script>
+
+<script id="deck-slides">
+(function () {
+  'use strict'
+  var SVG_NS = 'http://www.w3.org/2000/svg'
+  function $(el, sel) { return el.querySelector(sel) }
+  function $$(el, sel) { return Array.prototype.slice.call(el.querySelectorAll(sel)) }
+  function svgEl(tag, attrs, parent) {
+    var n = document.createElementNS(SVG_NS, tag)
+    Object.keys(attrs).forEach(function (k) { n.setAttribute(k, attrs[k]) })
+    if (parent) parent.appendChild(n)
+    return n
+  }
+  // One span per character, so typing is a stagger of opacity tweens and seeking lands on an exact frame.
+  function chars(node) {
+    var text = node.textContent.normalize('NFC')
+    node.textContent = ''
+    return Array.from(text).map(function (ch) {
+      var s = document.createElement('span')
+      s.textContent = ch
+      node.appendChild(s)
+      return s
+    })
+  }
+  function draw(tl, paths, vars, at) {
+    paths.forEach(function (p) { var len = p.getTotalLength(); p.style.strokeDasharray = len + ' ' + len })
+    return tl.fromTo(paths,
+      { strokeDashoffset: function (i, p) { return p.getTotalLength() } },
+      Object.assign({ strokeDashoffset: 0, duration: 1, ease: 'power1.inOut' }, vars), at)
+  }
+  function reveal(tl, targets, at, vars) {
+    return tl.fromTo(targets, { autoAlpha: 0, y: 14 },
+      Object.assign({ autoAlpha: 1, y: 0, duration: 0.5, ease: 'power2.out' }, vars), at)
+  }
+  function typeIn(tl, node, at, perChar) {
+    return tl.fromTo(chars(node), { opacity: 0 }, { opacity: 1, duration: 0.01, stagger: perChar || 0.035, ease: 'none' }, at)
+  }
+  function popIn(tl, target, at) {
+    return tl.fromTo(target, { autoAlpha: 0, scale: 1.7 }, { autoAlpha: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, at)
+  }
+  window.DeckKit = { $: $, $$: $$, svgEl: svgEl, chars: chars, draw: draw, reveal: reveal, typeIn: typeIn, popIn: popIn }
+
+  Deck.register('s01-title', function (el, gsap) {
+    var art = $(el, '.s01-art')
+    var net = $(art, '.s01-net')
+    var NODES = [[96, 470], [430, 455], [70, 350], [452, 335], [130, 245], [400, 225], [92, 140], [440, 120], [190, 62], [360, 52]]
+    var EDGES = [[0, 2], [0, 3], [2, 4], [3, 1], [2, 5], [4, 6], [5, 3], [4, 7], [6, 8], [7, 5], [8, 9], [9, 7]]
+    var gEdges = svgEl('g', {}, net)
+    var gLit = svgEl('g', {}, net)
+    var gNodes = svgEl('g', {}, net)
+    var litEdges = EDGES.map(function (e) {
+      var a = NODES[e[0]], b = NODES[e[1]]
+      var at = { x1: a[0], y1: a[1], x2: b[0], y2: b[1] }
+      svgEl('line', Object.assign({ class: 's01-edge' }, at), gEdges)
+      return svgEl('line', Object.assign({ class: 's01-edge-lit' }, at), gLit)
+    })
+    var litNodes = NODES.map(function (n) {
+      svgEl('circle', { cx: n[0], cy: n[1], r: 12, class: 's01-node' }, gNodes)
+      return svgEl('circle', { cx: n[0], cy: n[1], r: 12, class: 's01-node-lit' }, gNodes)
+    })
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.s01-text > *'), 0, { stagger: 0.12 })
+    reveal(tl, $(el, '.s01-meta'), 0.4)
+    tl.fromTo($(art, '.s01-seed'), { autoAlpha: 0, scale: 0.4, transformOrigin: '50% 50%' },
+      { autoAlpha: 1, scale: 1, duration: 0.6, ease: 'back.out(2)' }, 0.2)
+    draw(tl, $$(art, '.s01-stem-edge, .s01-stem'), { duration: 0.01 }, 0)
+    draw(tl, [$(art, '.s01-root')], { duration: 0.01 }, 0)
+    tl.fromTo($(art, '.s01-head'), { scale: 0, transformOrigin: '50% 90%' }, { scale: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    draw(tl, [$(art, '.s01-root')], { duration: 0.8 }, 'step0')
+    draw(tl, $$(art, '.s01-stem-edge, .s01-stem'), { duration: 2.2 }, 'step0+=0.2')
+    tl.to($(art, '.s01-head'), { scale: 1, duration: 0.6, ease: 'back.out(2)' }, 'step0+=2.2')
+    tl.to(litNodes, { opacity: 1, duration: 0.35, stagger: 0.2 }, 'step0+=0.4')
+    tl.to(litEdges, { opacity: 0.6, duration: 0.35, stagger: 0.16 }, 'step0+=0.6')
+    tl.addLabel('step1')
+    return tl
+  })
+
+  Deck.register('s02-question', function (el, gsap) {
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    var q = $(el, '.s02-q')
+    tl.fromTo(q, { autoAlpha: 0, scale: 0.92, transformOrigin: '100% 100%' }, { autoAlpha: 1, scale: 1, duration: 0.3 }, 0.3)
+    typeIn(tl, $(q, '.s02-qtext'), 0.45, 0.045)
+    tl.addLabel('step0')
+    reveal(tl, $$(el, '.s02-ans'), 'step0', { stagger: 0.25 })
+    tl.addLabel('step1')
+    reveal(tl, $(el, '.s02-seed'), 'step1')
+    popIn(tl, $(el, '.s02-seed .stamp'), 'step1+=0.25')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s03-local', function (el, gsap) {
+    var art = $(el, '.s03-art')
+    var q = $(art, '.s03-q')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(art, '.s03-laptop, .s03-cloudg'), 0.25, { stagger: 0.2 })
+    tl.fromTo(q, { autoAlpha: 0, x: 300, y: 128 }, { autoAlpha: 1, x: 300, y: 128, duration: 0.3 }, 0.7)
+    tl.fromTo($(art, '.s03-route'), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo($$(art, '.s03-cross line'), { scale: 0, transformOrigin: '50% 50%' }, { scale: 0, duration: 0.01 }, 0)
+    tl.fromTo($$(art, '.s03-cost'), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(art, '.s03-route'), { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.to(q, { keyframes: [{ x: 470, y: 22, duration: 0.6, ease: 'none' }, { x: 592, y: 84, duration: 0.5, ease: 'power1.out' }] }, 'step0+=0.2')
+    tl.to($$(art, '.s03-cross line'), { scale: 1, duration: 0.3, stagger: 0.12, ease: 'back.out(2)' })
+    tl.to($$(art, '.s03-cost'), { autoAlpha: 1, duration: 0.4, stagger: 0.15 }, '<')
+    tl.addLabel('step1')
+    tl.to($$(art, '.s03-cross, .s03-cost, .s03-route, .s03-cloudg'), { autoAlpha: 0.25, duration: 0.4 }, 'step1')
+    tl.to(q, { keyframes: [{ x: 420, y: 50, duration: 0.5, ease: 'none' }, { x: 183, y: 263, duration: 0.6, ease: 'power2.in' }] }, 'step1')
+    tl.to(q, { autoAlpha: 0, scale: 0.4, transformOrigin: '50% 50%', duration: 0.25 }, '>-0.1')
+    tl.to($(art, '.s03-glow'), { opacity: 0.55, duration: 0.5 }, '<')
+    reveal(tl, $$(el, '.s03-gains li'), '>', { stagger: 0.18 })
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s04-next-word', function (el, gsap) {
+    var A = $(el, '.s04-a')
+    var B = $(el, '.s04-b')
+    var steps = $$(el, '.s04-steps li')
+    var pickA = $(A, '[data-pick]')
+    var pickB = $(B, '[data-pick]')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title, .s04-sentence'), 0, { stagger: 0.1 })
+    tl.fromTo($$(el, '.s04-slot'), { width: 0, autoAlpha: 0 }, { width: 0, autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo([A, B, $(el, '.s04-stamp')].concat(steps), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to(A, { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.fromTo($$(A, '.fill'), { scaleX: 0 }, { scaleX: 1, duration: 0.7, stagger: 0.08, ease: 'power2.out' }, 'step0+=0.15')
+    tl.to(steps[0], { autoAlpha: 1, duration: 0.4 }, 'step0+=0.3')
+    tl.addLabel('step1')
+    tl.to([$(pickA, '.ring'), $(pickA, '.hi')], { opacity: 1, duration: 0.3 }, 'step1')
+    tl.to($(el, '.s04-w1'), { width: 'auto', autoAlpha: 1, duration: 0.5, ease: 'power2.out' }, 'step1+=0.4')
+    tl.to(A, { autoAlpha: 0, duration: 0.3 }, 'step1+=1')
+    tl.to(B, { autoAlpha: 1, duration: 0.3 }, '>')
+    tl.fromTo($$(B, '.fill'), { scaleX: 0 }, { scaleX: 1, duration: 0.6, stagger: 0.08, ease: 'power2.out' }, '>')
+    tl.to(steps[1], { autoAlpha: 1, duration: 0.4 }, '<')
+    tl.addLabel('step2')
+    tl.to([$(pickB, '.ring'), $(pickB, '.hi')], { opacity: 1, duration: 0.3 }, 'step2')
+    tl.to($(el, '.s04-w2'), { width: 'auto', autoAlpha: 1, duration: 0.4, ease: 'power2.out' }, 'step2+=0.4')
+    tl.to(steps[2], { autoAlpha: 1, duration: 0.4 }, 'step2+=0.5')
+    tl.fromTo($(el, '.s04-mark'), { '--u': 0 }, { '--u': 1, duration: 0.5 }, 'step2+=1')
+    popIn(tl, $(el, '.s04-stamp'), '<+0.2')
+    tl.addLabel('step3')
+    return tl
+  })
+
+  Deck.register('s05-train-or-read', function (el, gsap) {
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title, .lead'), 0, { stagger: 0.1 })
+    reveal(tl, $(el, '.s05-pill'), 0.35)
+    draw(tl, $$(el, '.s05-path'), { duration: 0.01 }, 0)
+    tl.fromTo($$(el, '.s05-card, .s05-verdict'), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($$(el, '.s05-path'), { strokeDashoffset: 0, duration: 0.7, ease: 'power1.inOut' }, 'step0')
+    tl.fromTo($$(el, '.s05-card'), { y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.2 }, 'step0+=0.5')
+    tl.addLabel('step1')
+    tl.to($(el, '.s05-card.train'), { autoAlpha: 0.45, duration: 0.4 }, 'step1')
+    tl.to($(el, '.s05-strike'), { scaleX: 1, duration: 0.4 }, 'step1')
+    tl.to($(el, '.s05-card.read'), { scale: 1.03, duration: 0.4 }, 'step1+=0.2')
+    tl.fromTo($(el, '.s05-verdict'), { y: 14 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 'step1+=0.5')
+    tl.addLabel('step2')
+    return tl
+  })
 })()
 </script>
 

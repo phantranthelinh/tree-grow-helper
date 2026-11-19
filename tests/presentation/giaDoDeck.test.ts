@@ -136,6 +136,12 @@ describe('gia-do deck shell', () => {
     for (const u of urls) expect(u).toMatch(/^https:\/\/fonts\.(googleapis|gstatic)\.com\//)
   })
 
+  it('slides 1-5 carry their pinned facts', () => {
+    expect(text('s04-next-word')).toContain('minh hoạ')
+    expect(text('s05-train-or-read')).toMatch(/không train/i)
+    expect(text('s05-train-or-read')).toContain('3B')
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')
