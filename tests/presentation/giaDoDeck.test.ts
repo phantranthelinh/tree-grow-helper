@@ -142,6 +142,15 @@ describe('gia-do deck shell', () => {
     expect(text('s05-train-or-read')).toContain('3B')
   })
 
+  it('slides 6-9 carry their pinned facts', () => {
+    expect(text('s07-ingest')).toMatch(/người duyệt/)
+    expect(text('s08-chunk')).toMatch(/600/)
+    expect(text('s08-chunk')).toMatch(/80/)
+    expect(text('s09-embed')).toContain('bge-m3')
+    expect(text('s09-embed')).toContain('1024')
+    expect(text('s09-embed')).toContain('minh hoạ')
+  })
+
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {
     expect(extractScriptBlock(html, 'gsap')).toContain('3.13.0')
     expect(html).toContain('prefers-reduced-motion')

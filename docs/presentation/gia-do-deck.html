@@ -325,6 +325,81 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 .s05-strike { position: absolute; left: 16px; right: 16px; top: 38px; height: 4px; background: var(--stop); transform: scaleX(0); transform-origin: left; }
 #s05-train-or-read .s05-verdict { position: absolute; left: 80px; right: 80px; bottom: 34px; margin: 0; padding: 14px 20px; border-radius: 8px; background: var(--bean); color: var(--paper); font-size: 25px; font-weight: 600; text-align: center; }
 
+/* 6 · RAG overview */
+#s06-rag .s06-cols { position: absolute; left: 72px; right: 72px; top: 170px; display: grid; grid-template-columns: 340px 1fr 340px; gap: 36px; }
+.s06-col { display: grid; align-content: start; gap: 14px; min-width: 0; }
+.s06-head { display: flex; align-items: baseline; gap: 10px; font-family: var(--font-display); font-size: 26px; font-weight: 700; }
+.s06-head .n { font-family: var(--font-mono); font-size: 18px; color: var(--bean); }
+#s06-rag .s06-q { font-size: 20px; padding: 10px 14px; justify-self: start; }
+.s06-store-label { font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.s06-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 7px; }
+.s06-tile { position: relative; height: 34px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel); }
+.s06-tile .hit { position: absolute; inset: -1px; display: grid; place-items: center; border-radius: 4px; background: var(--bean); color: var(--paper); font-family: var(--font-mono); font-size: 11px; font-weight: 600; opacity: 0; }
+.s06-sheet { padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); display: grid; gap: 10px; font-size: 18px; }
+.s06-sheet h4 { margin: 0; font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.s06-slot { display: flex; gap: 10px; align-items: center; padding: 6px 10px; border-radius: 6px; background: var(--paper); border: 1px dashed var(--line); font-size: 17px; }
+.s06-slot b { font-family: var(--font-mono); font-size: 13px; color: var(--bean); }
+.s06-ask { padding-top: 8px; border-top: 1px solid var(--line); }
+#s06-rag .s06-answer { font-size: 19px; line-height: 1.45; max-width: none; }
+.s06-cap { font-size: 15px; color: var(--ink-soft); }
+
+/* 7 · ingest */
+#s07-ingest .s07-flow { position: absolute; left: 72px; right: 72px; top: 190px; height: 360px; }
+.s07-box { position: absolute; top: 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.s07-box h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 24px; }
+.s07-box .path { margin: 0 0 10px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); }
+.s07-pdfs { left: 0; width: 250px; display: grid; gap: 10px; }
+.s07-pdf { display: flex; gap: 10px; align-items: center; font-size: 16px; line-height: 1.25; }
+.s07-pdf i { flex: 0 0 26px; height: 32px; border: 2px solid var(--ink-soft); border-radius: 3px 10px 3px 3px; font-style: normal; font-family: var(--font-mono); font-size: 8px; display: grid; place-items: end center; padding-bottom: 2px; color: var(--ink-soft); }
+.s07-staging { left: 300px; width: 250px; height: 260px; }
+.s07-gate { position: absolute; left: 590px; top: -10px; width: 120px; height: 290px; display: grid; justify-items: center; align-content: start; gap: 6px; }
+.s07-gate .bar { width: 12px; height: 220px; border-radius: 6px; background: var(--ink); }
+.s07-gate span { font-family: var(--font-display); font-size: 21px; font-weight: 700; text-align: center; }
+.s07-gate .who { position: absolute; top: 70px; width: 64px; height: 64px; border-radius: 50%; background: var(--head); display: grid; place-items: center; font-size: 30px; border: 3px solid var(--ink); }
+.s07-library { left: 750px; width: 386px; height: 260px; }
+.s07-count { font-family: var(--font-mono); font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.s07-count small { display: block; font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+.s07-strip { height: 14px; margin: 8px 0; border-radius: 3px; background: var(--ink-soft); opacity: 0.35; }
+.s07-strip.keep { background: var(--bean); opacity: 0.9; }
+.s07-bin { position: absolute; left: 470px; top: 300px; width: 380px; padding: 10px 14px; border: 2px dashed var(--stop); border-radius: 8px; color: var(--stop); font-size: 17px; line-height: 1.4; }
+.s07-bin b { display: block; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; }
+#s07-ingest .s07-rule { position: absolute; left: 72px; right: 72px; bottom: 44px; margin: 0; font-size: 23px; font-weight: 600; }
+
+/* 8 · chunking */
+#s08-chunk .lead { font-size: 22px; max-width: 1100px; }
+#s08-chunk .s08-page { position: absolute; left: 72px; right: 72px; top: 250px; }
+.s08-src { margin: 0 0 8px; font-family: var(--font-mono); font-size: 13px; color: var(--ink-soft); }
+.s08-text { margin: 0; font-size: 17px; line-height: 1.55; }
+#s08-chunk .s08-chunks { position: absolute; left: 72px; right: 72px; top: 250px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.s08-chunk { min-width: 0; }
+.s08-chunk h4 { margin: 0 0 8px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.04em; color: var(--bean); }
+.s08-ov {
+  --hl-color: color-mix(in srgb, var(--head) 45%, transparent);
+  border-radius: 3px;
+  background: linear-gradient(var(--hl-color), var(--hl-color)) no-repeat 0 0 / var(--hl, 0%) 100%;
+}
+.s08-key { font-weight: 700; color: var(--bean); }
+#s08-chunk .s08-why { position: absolute; left: 72px; right: 72px; bottom: 36px; margin: 0; font-size: 21px; line-height: 1.4; }
+
+/* 9 · embedding map */
+#s09-embed .s09-map { position: absolute; left: 72px; top: 160px; width: 720px; height: 480px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
+.s09-grid line { stroke: var(--line); stroke-width: 1; }
+.s09-dot { fill: var(--ink-soft); }
+.s09-dot.c-temp { fill: var(--warn); }
+.s09-dot.c-water { fill: var(--water); }
+.s09-dot.c-harvest { fill: var(--bean); }
+.s09-dot.c-safety { fill: var(--stop); }
+.s09-dot.c-other { fill: var(--ink-soft); }
+.s09-tag { font-size: 18px; font-weight: 700; }
+.s09-tag.c-temp { fill: var(--warn); } .s09-tag.c-water { fill: var(--water); } .s09-tag.c-harvest { fill: var(--bean); } .s09-tag.c-safety { fill: var(--stop); }
+.s09-q circle { fill: var(--ink); }
+.s09-q .ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 5; }
+.s09-q text { font-size: 16px; font-weight: 700; }
+.s09-link { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 5; }
+#s09-embed .s09-side { position: absolute; left: 830px; right: 72px; top: 170px; margin: 0; padding: 0; list-style: none; display: grid; gap: 20px; font-size: 22px; line-height: 1.4; }
+#s09-embed .s09-side .mono { font-size: 20px; color: var(--bean); }
+#s09-embed .s09-note { position: absolute; left: 830px; right: 72px; top: 560px; margin: 0; font-size: 17px; color: var(--ink-soft); }
+
 @media (prefers-reduced-motion: reduce) {
   .slide, .slide.is-active { transition: none; }
   .s04-caret { animation: none; }
@@ -510,23 +585,139 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
 </section>
 
 <section class="slide" id="s06-rag" data-part="thu-vien" data-steps="3">
+  <p class="eyebrow">Retrieval-Augmented Generation</p>
   <h2 class="slide-title">RAG là thi mở sách</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <div class="s06-cols">
+    <div class="s06-col s06-c1">
+      <div class="s06-head"><span class="n">1</span>Tìm</div>
+      <div class="bubble user s06-q">Ủ giá đỗ cần nhiệt độ bao nhiêu?</div>
+      <div class="s06-store-label">Kho giá đỗ · 30 đoạn</div>
+      <div class="s06-tiles">
+        <span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"><span class="hit">VAAS</span></span><span class="s06-tile"></span><span class="s06-tile"></span>
+        <span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"><span class="hit">VAAS</span></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span>
+        <span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"><span class="hit">CT</span></span><span class="s06-tile"></span>
+        <span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span>
+        <span class="s06-tile"></span><span class="s06-tile"><span class="hit">VAAS</span></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span><span class="s06-tile"></span>
+      </div>
+    </div>
+    <div class="s06-col s06-c2">
+      <div class="s06-head"><span class="n">2</span>Chép vào đề bài</div>
+      <div class="s06-sheet">
+        <h4>Đề bài gửi model</h4>
+        <div class="s06-slot"><b>VAAS·4</b> …ngâm trong nước với nhiệt độ 35°C…</div>
+        <div class="s06-slot"><b>VAAS·0</b> …nhiệt độ từ 22 nhiệt 24°C và độ ẩm cao (95%)…</div>
+        <div class="s06-slot"><b>CT·3</b> …tốt nhất trong khoảng nhiệt độ 27 – 30°C…</div>
+        <div class="s06-slot"><b>VAAS·8</b> …nhiệt độ nước tưới 28 - 30°C…</div>
+        <div class="s06-ask"><b>Câu hỏi:</b> Ủ giá đỗ cần nhiệt độ bao nhiêu?</div>
+      </div>
+    </div>
+    <div class="s06-col s06-c3">
+      <div class="s06-head"><span class="n">3</span>Trả lời</div>
+      <div class="bubble ai s06-answer">Để tối ưu hóa phát triển của cây giá đỗ, nhiệt độ ngâm và ủ nên nằm trong khoảng 27-30°C. Đây là khoảng nhiệt độ phù hợp cho quá trình nảy mầm và sinh trưởng của giá đỗ.</div>
+      <div class="s06-cap">Câu trả lời thật của model, lượt đo ngày 17/11/2026. VAAS: Tạp chí KHCN Nông nghiệp VN; CT: Tạp chí Khoa học ĐH Cần Thơ.</div>
+    </div>
+  </div>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "RAG nghe to tát nhưng giống y như thi mở sách."</p>
+    <p><b>Ý chính:</b> Ba bước: tìm vài đoạn tài liệu liên quan tới câu hỏi, chép chúng vào đề bài, rồi model trả lời dựa trên đề bài đó. Model không cần nhớ, nó đọc ngay lúc trả lời. Slide này là một lượt chạy thật: câu hỏi nhiệt độ lấy về 4 đoạn, 3 của Tạp chí VAAS và 1 của ĐH Cần Thơ, và câu trả lời chốt 27–30°C. Để ý đoạn VAAS·0 nói 22–24°C: hai nguồn đang nói khác nhau, slide 12 quay lại chuyện này.</p>
+    <p><b>Nguồn:</b> <code>data/eval/r3-bean-sprout-1-2026-11-17T07-01-19-417Z.json</code>, case <code>bs-kb-temp</code> (trường <code>retrieved</code> và <code>reply</code>). Các mẩu trích là nguyên văn đoạn tương ứng trong <code>data/docs/bean-sprout.jsonl</code> ("22 nhiệt 24°C" là lỗi đọc PDF, bản gốc là 22–24°C). Kho giá đỗ 30 đoạn (<code>storeSize</code>).</p>
+    <p><b>Có thể bị hỏi:</b> "Model có đọc cả kho không?" Không, chỉ 4 đoạn được chọn. Đưa ít mà đúng thì model nhỏ trả lời tốt hơn đưa nhiều.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s07-ingest" data-part="thu-vien" data-steps="2">
+  <p class="eyebrow">Nạp dữ liệu</p>
   <h2 class="slide-title">Nhập sách có người duyệt</h2>
-  <aside class="notes" data-min="1"><p>TODO: viết notes.</p></aside>
+  <div class="s07-flow">
+    <div class="s07-box s07-pdfs">
+      <h3>3 tài liệu PDF</h3>
+      <div class="s07-pdf"><i>PDF</i>Tạp chí VAAS số 7/2019, máy làm giá tự động</div>
+      <div class="s07-pdf"><i>PDF</i>Tạp chí Khoa học ĐH Cần Thơ 2016, hệ thống ươm rau mầm</div>
+      <div class="s07-pdf"><i>PDF</i>Tài liệu an toàn thực phẩm, UBND Ninh Bình</div>
+    </div>
+    <div class="s07-box s07-staging">
+      <h3>Khu chờ</h3>
+      <p class="path">data/staging · máy đọc PDF ra chữ</p>
+      <div class="s07-count">46.414<small>ký tự thô</small></div>
+      <div class="s07-strip"></div><div class="s07-strip"></div><div class="s07-strip"></div><div class="s07-strip"></div><div class="s07-strip"></div>
+    </div>
+    <div class="s07-gate"><span>Người duyệt</span><div class="bar"></div><div class="who" aria-hidden="true">✎</div></div>
+    <div class="s07-box s07-library">
+      <h3>Thư viện</h3>
+      <p class="path">data/docs · chỉ bản đã duyệt</p>
+      <div class="s07-count">9.952<small>ký tự được giữ</small></div>
+      <div class="s07-strip keep"></div><div class="s07-strip keep"></div>
+    </div>
+    <div class="s07-bin"><b>Người duyệt cắt bỏ</b>danh sách tác giả, tóm tắt tiếng Anh, tài liệu tham khảo, số liệu thừa</div>
+  </div>
+  <p class="s07-rule">Không có gì từ khu chờ tự đi vào thư viện.</p>
+  <aside class="notes" data-min="1">
+    <p><b>Mở:</b> "Sách vào thư viện phải qua tay người."</p>
+    <p><b>Ý chính:</b> 3 tài liệu PDF tiếng Việt: Tạp chí VAAS số 7/2019 về máy làm giá tự động, Tạp chí Khoa học ĐH Cần Thơ 2016 về hệ thống ươm rau mầm, và tài liệu tuyên truyền an toàn thực phẩm của UBND Ninh Bình. Máy đọc PDF ra chữ và để ở khu chờ. Người duyệt cắt bỏ danh sách tác giả, tóm tắt tiếng Anh, tài liệu tham khảo, số liệu thừa: 46.414 ký tự còn 9.952. Chỉ bản đã duyệt mới vào thư viện.</p>
+    <p><b>Nguồn:</b> đếm trường <code>text</code> của <code>data/staging/bean-sprout-docs.raw.jsonl</code> và <code>data/docs/bean-sprout.jsonl</code>. Commit <code>f23bf40</code> ghi lại lượt duyệt: chỉ xoá, không viết thêm; tính cả dâu tây thì 12 trên 14 bản được giữ.</p>
+    <p><b>Có thể bị hỏi:</b> "Sao không để máy tự lọc?" Rác vào thì rác ra. Một tóm tắt tiếng Anh hay danh sách tài liệu tham khảo lọt vào kho sẽ được tìm ra và chép vào đề bài như thật.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s08-chunk" data-part="thu-vien" data-steps="2">
+  <p class="eyebrow">Chunking</p>
   <h2 class="slide-title">Cắt sách thành đoạn</h2>
-  <aside class="notes" data-min="1"><p>TODO: viết notes.</p></aside>
+  <p class="lead">Cắt theo câu, mỗi đoạn khoảng 600 ký tự. Câu cuối của đoạn trước, tối đa 80 ký tự, được chép sang đầu đoạn sau.</p>
+  <div class="s08-page">
+    <p class="s08-src">Tạp chí Khoa học ĐH Cần Thơ 2016 · bản đã duyệt</p>
+    <p class="s08-text">Điều đáng chú ý là sau khi đậu nảy mầm, lượng nước quá nhiều hay thời gian ngâm trong nước quá lâu sẽ thiếu oxy, ảnh hưởng đến sự sinh trưởng của giá đậu, có thể làm giá đậu bị chết. Nhiệt độ: Sự sinh trưởng của mầm đậu xanh cần nhiệt độ ấm, nóng. Trong đó, nhiệt độ thấp nhất để giá đậu nảy mầm là 10°C, cao nhất là 28 – 30°C, không vượt quá 32°C. Nếu như nhiệt độ quá thấp, giá đậu sẽ sinh trưởng chậm, thời gian thu hoạch lâu, năng suất giảm. Còn nếu nhiệt độ quá cao, giá đậu sinh trưởng nhanh, sợi nhiều, chất lượng kém. Do đó, sản xuất giá đậu xanh có kết quả tốt nhất trong khoảng nhiệt độ 27 – 30°C. Khi nhiệt độ cao, các mầm phát triển nhanh hơn nhưng mầm đậu xanh sẽ ốm hơn. Không khí: Khí oxy có tác dụng thúc đẩy quá trình hô hấp của mầm, giúp giải phóng nhiệt lượng, cung cấp cho hoạt động sinh trưởng của các loại mầm. Đồng thời, oxy lại có thể thúc đẩy hoạt tính của men tinh bột và các dưỡng chất khác.</p>
+  </div>
+  <div class="s08-chunks">
+    <div class="s08-chunk">
+      <h4>Đoạn 2 · 525 ký tự</h4>
+      <p class="s08-text">Điều đáng chú ý là sau khi đậu nảy mầm, lượng nước quá nhiều hay thời gian ngâm trong nước quá lâu sẽ thiếu oxy, ảnh hưởng đến sự sinh trưởng của giá đậu, có thể làm giá đậu bị chết. Nhiệt độ: Sự sinh trưởng của mầm đậu xanh cần nhiệt độ ấm, nóng. Trong đó, nhiệt độ thấp nhất để giá đậu nảy mầm là 10°C, cao nhất là 28 – 30°C, không vượt quá 32°C. Nếu như nhiệt độ quá thấp, giá đậu sẽ sinh trưởng chậm, thời gian thu hoạch lâu, năng suất giảm. <span class="s08-ov">Còn nếu nhiệt độ quá cao, giá đậu sinh trưởng nhanh, sợi nhiều, chất lượng kém.</span></p>
+    </div>
+    <div class="s08-chunk">
+      <h4>Đoạn 3 · 472 ký tự</h4>
+      <p class="s08-text"><span class="s08-ov">Còn nếu nhiệt độ quá cao, giá đậu sinh trưởng nhanh, sợi nhiều, chất lượng kém.</span> <span class="s08-key">Do đó</span>, sản xuất giá đậu xanh có kết quả tốt nhất trong khoảng nhiệt độ 27 – 30°C. Khi nhiệt độ cao, các mầm phát triển nhanh hơn nhưng mầm đậu xanh sẽ ốm hơn. Không khí: Khí oxy có tác dụng thúc đẩy quá trình hô hấp của mầm, giúp giải phóng nhiệt lượng, cung cấp cho hoạt động sinh trưởng của các loại mầm. Đồng thời, oxy lại có thể thúc đẩy hoạt tính của men tinh bột và các dưỡng chất khác.</p>
+    </div>
+  </div>
+  <p class="s08-why">Nhờ phần gối, đoạn 3 vẫn biết chữ <span class="s08-key">"Do đó"</span> nói về cái gì.</p>
+  <aside class="notes" data-min="1">
+    <p><b>Mở:</b> "Model không đọc nguyên cuốn sách, nó đọc từng mảnh."</p>
+    <p><b>Ý chính:</b> Tài liệu được cắt theo câu thành đoạn khoảng 600 ký tự. Câu cuối của đoạn trước, nếu không dài quá 80 ký tự, được chép sang đầu đoạn sau. Ví dụ thật trên slide: đoạn 3 có câu "Do đó, … tốt nhất trong khoảng 27–30°C". Không có phần gối thì "Do đó" đứng trơ trọi, không biết "do" cái gì. Nhờ gối, đoạn 3 mang theo câu "nhiệt độ quá cao thì giá sợi nhiều, chất lượng kém".</p>
+    <p><b>Nguồn:</b> <code>src/config.ts</code> (<code>RAG_CHUNK_SIZE</code> 600, <code>RAG_CHUNK_OVERLAP</code> 80), bộ cắt <code>src/rag/textChunk.ts</code>. Hai đoạn trên slide là kết quả cắt thật tài liệu ĐH Cần Thơ trong <code>data/docs/bean-sprout.jsonl</code> (đoạn số 2 và 3, gối 79 ký tự).</p>
+    <p><b>Có thể bị hỏi:</b> "Sao lại 600?" Đủ dài để chứa trọn một ý, đủ ngắn để mỗi đoạn chỉ nói một chuyện và 4 đoạn vừa đề bài.</p>
+  </aside>
 </section>
 
 <section class="slide" id="s09-embed" data-part="thu-vien" data-steps="3">
+  <p class="eyebrow">Embedding</p>
   <h2 class="slide-title">Embedding là bản đồ ý nghĩa</h2>
-  <aside class="notes" data-min="1.5"><p>TODO: viết notes.</p></aside>
+  <svg class="s09-map" viewBox="0 0 720 480" aria-hidden="true">
+    <g class="s09-grid"></g>
+    <g class="s09-links"></g>
+    <g class="s09-dots"></g>
+    <g class="s09-tags">
+      <text class="s09-tag c-temp" x="120" y="78">nhiệt độ</text>
+      <text class="s09-tag c-water" x="468" y="58">tưới nước</text>
+      <text class="s09-tag c-harvest" x="452" y="446">thu hoạch</text>
+      <text class="s09-tag c-safety" x="70" y="456">an toàn thực phẩm</text>
+    </g>
+    <g class="s09-q">
+      <circle class="ring" cx="0" cy="0" r="78"/>
+      <circle cx="0" cy="0" r="10"/>
+      <text x="16" y="-14">câu hỏi</text>
+    </g>
+  </svg>
+  <ul class="s09-side">
+    <li><span class="mono">bge-m3</span> biến mỗi đoạn thành một dãy 1024 con số, tức một toạ độ.</li>
+    <li>Đoạn cùng ý nằm gần nhau, dù dùng chữ khác nhau.</li>
+    <li>Câu hỏi cũng thành một chấm. Tìm là lấy các chấm gần nhất.</li>
+  </ul>
+  <p class="s09-note">Bản đồ vẽ 2 chiều cho dễ nhìn; thật ra mỗi toạ độ có 1024 chiều.</p>
+  <span class="illus-tag">minh hoạ</span>
+  <aside class="notes" data-min="1.5">
+    <p><b>Mở:</b> "Làm sao máy biết đoạn nào liên quan? Nó vẽ một bản đồ ý nghĩa."</p>
+    <p><b>Ý chính:</b> Model embedding bge-m3 biến mỗi đoạn thành một dãy 1024 con số, tức một toạ độ. Đoạn nói cùng một ý nằm gần nhau, kể cả khi dùng chữ khác nhau. Câu hỏi cũng được biến thành toạ độ, và tìm kiếm là lấy các đoạn nằm gần câu hỏi nhất. bge-m3 xử lý tiếng Việt tốt, nên câu hỏi tiếng Việt tìm đúng tài liệu tiếng Việt.</p>
+    <p><b>Nguồn:</b> model embedding <code>text-embedding-bge-m3</code> (trường <code>embedModel</code> trong <code>data/eval</code>); bge-m3 cho vector 1024 chiều. Bản đồ là minh hoạ, vị trí các chấm không phải số đo.</p>
+    <p><b>Có thể bị hỏi:</b> "Toạ độ lưu ở đâu?" Trong bộ nhớ, so từng cái một. Kho vài trăm đoạn thì vẫn nhanh, không cần database riêng (<code>src/rag/store.ts</code>).</p>
+  </aside>
 </section>
 
 <section class="slide" id="s10-hybrid" data-part="thu-vien" data-steps="3">
@@ -954,6 +1145,118 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     tl.to($(el, '.s05-card.read'), { scale: 1.03, duration: 0.4 }, 'step1+=0.2')
     tl.fromTo($(el, '.s05-verdict'), { y: 14 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 'step1+=0.5')
     tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s06-rag', function (el, gsap) {
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $$(el, '.s06-head'), 0.25, { stagger: 0.12 })
+    reveal(tl, $(el, '.s06-q'), 0.5)
+    tl.fromTo($$(el, '.s06-store-label, .s06-tile, .s06-sheet, .s06-slot, .s06-ask, .s06-answer, .s06-cap'),
+      { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    var answerChars = chars($(el, '.s06-answer'))
+    tl.fromTo(answerChars, { opacity: 0 }, { opacity: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(el, '.s06-store-label'), { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.to($$(el, '.s06-tile'), { autoAlpha: 1, duration: 0.2, stagger: 0.015 }, 'step0')
+    tl.to($$(el, '.s06-tile .hit'), { opacity: 1, duration: 0.3, stagger: 0.15 }, '>')
+    tl.addLabel('step1')
+    tl.to($(el, '.s06-sheet'), { autoAlpha: 1, duration: 0.3 }, 'step1')
+    tl.fromTo($$(el, '.s06-slot'), { x: -80 }, { x: 0, autoAlpha: 1, duration: 0.45, stagger: 0.15, ease: 'power2.out' }, 'step1+=0.2')
+    tl.to($(el, '.s06-ask'), { autoAlpha: 1, duration: 0.3 }, '>')
+    tl.addLabel('step2')
+    tl.to($(el, '.s06-answer'), { autoAlpha: 1, duration: 0.2 }, 'step2')
+    tl.to(answerChars, { opacity: 1, duration: 0.01, stagger: 0.016, ease: 'none' }, 'step2+=0.1')
+    tl.to($(el, '.s06-cap'), { autoAlpha: 1, duration: 0.3 }, '>')
+    tl.addLabel('step3')
+    return tl
+  })
+
+  Deck.register('s07-ingest', function (el, gsap) {
+    var raw = $$(el, '.s07-staging .s07-strip')
+    var kept = $$(el, '.s07-library .s07-strip')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, $(el, '.s07-pdfs'), 0.25)
+    tl.fromTo($$(el, '.s07-staging, .s07-gate, .s07-library, .s07-bin, .s07-rule, .s07-strip, .s07-count'),
+      { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(el, '.s07-staging'), { autoAlpha: 1, duration: 0.3 }, 'step0')
+    tl.fromTo(raw, { x: -260 }, { x: 0, autoAlpha: 0.35, duration: 0.5, stagger: 0.1, ease: 'power2.out' }, 'step0+=0.2')
+    tl.to($(el, '.s07-staging .s07-count'), { autoAlpha: 1, duration: 0.3 }, '>-0.1')
+    tl.addLabel('step1')
+    tl.to($$(el, '.s07-gate, .s07-library'), { autoAlpha: 1, duration: 0.3, stagger: 0.1 }, 'step1')
+    tl.to([raw[1], raw[2], raw[4]], { x: 220, y: 150, autoAlpha: 0, duration: 0.6, stagger: 0.1, ease: 'power1.in' }, 'step1+=0.4')
+    tl.to($(el, '.s07-bin'), { autoAlpha: 1, duration: 0.3 }, '<+0.3')
+    tl.fromTo(kept, { x: -420 }, { x: 0, autoAlpha: 0.9, duration: 0.6, stagger: 0.12, ease: 'power2.out' }, '<')
+    tl.to($(el, '.s07-library .s07-count'), { autoAlpha: 1, duration: 0.3 }, '>')
+    tl.to($(el, '.s07-rule'), { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s08-chunk', function (el, gsap) {
+    var chunks = $$(el, '.s08-chunk')
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title, .lead'), 0, { stagger: 0.1 })
+    reveal(tl, $(el, '.s08-page'), 0.35)
+    tl.fromTo(chunks.concat($(el, '.s08-why')), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.addLabel('step0')
+    tl.to($(el, '.s08-page'), { autoAlpha: 0, duration: 0.3 }, 'step0')
+    tl.fromTo(chunks[0], { x: 140 }, { x: 0, autoAlpha: 1, duration: 0.6, ease: 'power2.out' }, 'step0+=0.2')
+    tl.fromTo(chunks[1], { x: -140 }, { x: 0, autoAlpha: 1, duration: 0.6, ease: 'power2.out' }, '<')
+    tl.addLabel('step1')
+    tl.fromTo($$(el, '.s08-ov'), { '--hl': '0%' }, { '--hl': '100%', duration: 0.7, stagger: 0.35, ease: 'none' }, 'step1')
+    tl.to($(el, '.s08-why'), { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.addLabel('step2')
+    return tl
+  })
+
+  Deck.register('s09-embed', function (el, gsap) {
+    var map = $(el, '.s09-map')
+    var grid = $(map, '.s09-grid')
+    var dotsG = $(map, '.s09-dots')
+    var linksG = $(map, '.s09-links')
+    var tags = $(map, '.s09-tags')
+    var q = $(map, '.s09-q')
+    var side = $$(el, '.s09-side li')
+    var note = $(el, '.s09-note')
+    for (var gx = 60; gx < 720; gx += 60) svgEl('line', { x1: gx, y1: 0, x2: gx, y2: 480 }, grid)
+    for (var gy = 60; gy < 480; gy += 60) svgEl('line', { x1: 0, y1: gy, x2: 720, y2: gy }, grid)
+    var CLUSTERS = [['c-temp', 170, 150], ['c-water', 520, 140], ['c-harvest', 520, 360], ['c-safety', 170, 370]]
+    var OFFSETS = [[-34, -18], [22, -30], [40, 10], [-8, 28], [-46, 22], [12, 0]]
+    var OTHERS = [[350, 250], [380, 90], [650, 250], [70, 250], [320, 430], [660, 430]]
+    var dots = []
+    CLUSTERS.forEach(function (k) { OFFSETS.forEach(function (o) { dots.push({ x: k[1] + o[0], y: k[2] + o[1], c: k[0] }) }) })
+    OTHERS.forEach(function (p) { dots.push({ x: p[0], y: p[1], c: 'c-other' }) })
+    var grey = dots.map(function () { return svgEl('circle', { cx: 0, cy: 0, r: 9, class: 's09-dot' }, dotsG) })
+    var colored = dots.map(function (d) { return svgEl('circle', { cx: d.x, cy: d.y, r: 9, class: 's09-dot ' + d.c }, dotsG) })
+    var Q = [228, 188]
+    dots.map(function (d, i) { return [Math.hypot(d.x - Q[0], d.y - Q[1]), i] })
+      .sort(function (a, b) { return a[0] - b[0] }).slice(0, 4)
+      .forEach(function (n) { var d = dots[n[1]]; svgEl('line', { x1: Q[0], y1: Q[1], x2: d.x, y2: d.y, class: 's09-link' }, linksG) })
+    function pileX(i) { return 26 + (i % 2) * 22 }
+    function pileY(i) { return 28 + Math.floor(i / 2) * 29 }
+
+    var tl = gsap.timeline()
+    reveal(tl, $$(el, '.eyebrow, .slide-title'), 0, { stagger: 0.1 })
+    reveal(tl, map, 0.25)
+    tl.fromTo([tags, linksG, q, note].concat(side, colored), { autoAlpha: 0 }, { autoAlpha: 0, duration: 0.01 }, 0)
+    tl.fromTo(grey, { x: pileX, y: pileY, autoAlpha: 0 }, { x: pileX, y: pileY, autoAlpha: 1, duration: 0.2, stagger: 0.012 }, 0.45)
+    tl.addLabel('step0')
+    tl.to(grey, { x: function (i) { return dots[i].x }, y: function (i) { return dots[i].y }, duration: 0.9, stagger: 0.02, ease: 'power2.inOut' }, 'step0')
+    tl.to(side[0], { autoAlpha: 1, duration: 0.4 }, 'step0+=0.3')
+    tl.addLabel('step1')
+    tl.to(colored, { autoAlpha: 1, duration: 0.4, stagger: 0.01 }, 'step1')
+    tl.to(tags, { autoAlpha: 1, duration: 0.4 }, 'step1+=0.25')
+    tl.to(side[1], { autoAlpha: 1, duration: 0.4 }, '<')
+    tl.addLabel('step2')
+    tl.fromTo(q, { x: Q[0], y: -40 }, { x: Q[0], y: Q[1], autoAlpha: 1, duration: 0.8, ease: 'bounce.out' }, 'step2')
+    tl.to(linksG, { autoAlpha: 1, duration: 0.4 }, '>')
+    tl.to(side[2], { autoAlpha: 1, duration: 0.4 }, '<')
+    tl.to(note, { autoAlpha: 1, duration: 0.4 }, '<+0.2')
+    tl.addLabel('step3')
     return tl
   })
 })()
