@@ -14,6 +14,24 @@ type KeyEventLike = {
   altKey: boolean
   target: { tagName?: string; isContentEditable?: boolean } | null
 }
+type SseFrame = { event: string; data: string }
+type Panel = {
+  mode: 'idle' | 'live' | 'recording' | 'error'
+  text: string
+  status: string | null
+  pending: boolean
+  done: boolean
+  error: string | null
+  recordedAt: string | null
+}
+type PanelAction =
+  | { type: 'start' }
+  | { type: 'delta'; text: string }
+  | { type: 'chat-frame'; frame: SseFrame }
+  | { type: 'end' }
+  | { type: 'fallback'; text: string; recordedAt: string }
+  | { type: 'fail'; message: string }
+type Recordings = { recordedAt: string | null; model: string | null; left: Record<string, string>; right: Record<string, string> }
 interface DeckLogic {
   createNavigator(steps: number[]): {
     state(): { slide: number; step: number }
@@ -22,6 +40,13 @@ interface DeckLogic {
     goto(slide: number): Move
   }
   shouldHandleKey(e: KeyEventLike): boolean
+  FIRST_TOKEN_TIMEOUT_MS: number
+  createSseDecoder(): { push(chunk: string): SseFrame[]; flush(): SseFrame[] }
+  openAiDeltaText(frame: SseFrame): string | null
+  initialPanel(): Panel
+  reducePanel(p: Panel, a: PanelAction): Panel
+  pickRecording(rec: Recordings | null, side: 'left' | 'right', presetId: string | null): { text: string; recordedAt: string } | null
+  isOnlineCopy(loc: { protocol: string; hostname: string }): boolean
 }
 interface SlideInfo {
   id: string
@@ -171,6 +196,52 @@ describe('gia-do deck shell', () => {
     for (const s of ['12/12', '5/6', '6/6', 'chưa đo', '52/52', 'một lần chạy']) expect(text('s18-eval')).toContain(s)
     expect(text('s20-still-wrong')).toMatch(/ra chợ/)
     for (const s of ['sách đúng', 'quản lý dữ liệu', 'Đo, đừng đoán']) expect(text('s21-recap')).toContain(s)
+  })
+
+  it('waits 20 seconds for the first token', () => {
+    expect(logic.FIRST_TOKEN_TIMEOUT_MS).toBe(20000)
+  })
+
+  it('decodes frames across every split point', () => {
+    const raw = ': ping\r\nevent: token\r\ndata: {"text":"Giá 🌱 ủ"}\r\n\r\nevent: done\ndata: {"reply":"x","pendingAction":null}\n\n'
+    for (let i = 0; i <= raw.length; i++) {
+      const d = logic.createSseDecoder()
+      const frames = [...d.push(raw.slice(0, i)), ...d.push(raw.slice(i)), ...d.flush()]
+      expect(frames).toEqual([{ event: 'token', data: '{"text":"Giá 🌱 ủ"}' }, { event: 'done', data: '{"reply":"x","pendingAction":null}' }])
+    }
+  })
+
+  it('reads OpenAI deltas and the DONE sentinel', () => {
+    expect(logic.openAiDeltaText({ event: 'message', data: '{"choices":[{"delta":{"content":"27"}}]}' })).toBe('27')
+    expect(logic.openAiDeltaText({ event: 'message', data: '{"choices":[{"delta":{}}]}' })).toBe('')
+    expect(logic.openAiDeltaText({ event: 'message', data: '[DONE]' })).toBeNull()
+  })
+
+  it('reduces /chat/stream frames', () => {
+    const f = (event: string, data: object): PanelAction => ({ type: 'chat-frame', frame: { event, data: JSON.stringify(data) } })
+    let p = logic.reducePanel(logic.initialPanel(), { type: 'start' })
+    p = [f('token', { text: 'Sai ' }), f('reset', {}), f('tool_status', { tool: 't', note: 'đang đọc' }), f('token', { text: 'Đúng' })]
+      .reduce((acc, a) => logic.reducePanel(acc, a), p)
+    expect([p.text, p.status]).toEqual(['Đúng', 'đang đọc'])
+    p = logic.reducePanel(p, f('done', { reply: 'Bạn xác nhận thực hiện: "x"? (Có/Không)', pendingAction: { id: '1' } }))
+    expect([p.done, p.pending, p.status]).toEqual([true, true, null])
+  })
+
+  it('ignores live frames after fallback', () => {
+    let p = logic.reducePanel(logic.initialPanel(), { type: 'start' })
+    p = logic.reducePanel(p, { type: 'fallback', text: 'bản ghi', recordedAt: '2026-11-19' })
+    p = logic.reducePanel(p, { type: 'delta', text: ' muộn' })
+    expect([p.mode, p.text]).toEqual(['recording', 'bản ghi'])
+  })
+
+  it('picks recordings and detects the online copy', () => {
+    const rec = { recordedAt: '2026-11-19', model: 'm', left: { a: 'L' }, right: {} }
+    expect(logic.pickRecording(rec, 'left', 'a')).toEqual({ text: 'L', recordedAt: '2026-11-19' })
+    expect(logic.pickRecording(rec, 'right', 'a')).toBeNull()
+    expect(logic.pickRecording(rec, 'left', null)).toBeNull()
+    expect(logic.isOnlineCopy({ protocol: 'file:', hostname: '' })).toBe(false)
+    expect(logic.isOnlineCopy({ protocol: 'http:', hostname: 'localhost' })).toBe(false)
+    expect(logic.isOnlineCopy({ protocol: 'https:', hostname: 'claude.ai' })).toBe(true)
   })
 
   it('embeds GSAP 3.13.0 and honours reduced motion', () => {

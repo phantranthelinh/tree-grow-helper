@@ -1373,7 +1373,129 @@ svg text { font-family: var(--font-body); fill: var(--ink); }
     return DECK_KEYS.indexOf(e.key) !== -1
   }
 
-  root.DeckLogic = { createNavigator: createNavigator, shouldHandleKey: shouldHandleKey }
+  var FIRST_TOKEN_TIMEOUT_MS = 20000
+
+  // SSE per the HTML spec, fed decoded text in arbitrary pieces. A trailing "\r" is held back
+  // until the next piece, since it may be the first half of "\r\n" and splitting there would
+  // dispatch an event early and lose its "event:" line.
+  function createSseDecoder() {
+    var buf = ''
+    var event = ''
+    var data = []
+    function line(text, out) {
+      if (text === '') {
+        if (data.length) out.push({ event: event || 'message', data: data.join('\n') })
+        event = ''
+        data = []
+        return
+      }
+      if (text.charAt(0) === ':') return
+      var i = text.indexOf(':')
+      var field = i === -1 ? text : text.slice(0, i)
+      var value = i === -1 ? '' : text.slice(i + 1)
+      if (value.charAt(0) === ' ') value = value.slice(1)
+      if (field === 'event') event = value
+      else if (field === 'data') data.push(value)
+    }
+    function drain(final) {
+      var out = []
+      for (;;) {
+        var m = /\r\n|\r|\n/.exec(buf)
+        if (!m) break
+        if (!final && m[0] === '\r' && m.index === buf.length - 1) break
+        line(buf.slice(0, m.index), out)
+        buf = buf.slice(m.index + m[0].length)
+      }
+      return out
+    }
+    return {
+      push: function (chunk) { buf += chunk; return drain(false) },
+      flush: function () {
+        var out = drain(true)
+        if (buf) { line(buf, out); buf = '' }
+        line('', out)
+        return out
+      },
+    }
+  }
+
+  function openAiDeltaText(frame) {
+    if (frame.data === '[DONE]') return null
+    try {
+      var choice = JSON.parse(frame.data).choices[0]
+      var content = choice && choice.delta && choice.delta.content
+      return typeof content === 'string' ? content : ''
+    } catch (e) {
+      return ''
+    }
+  }
+
+  function initialPanel() {
+    return { mode: 'idle', text: '', status: null, pending: false, done: false, error: null, recordedAt: null }
+  }
+
+  function assign(p, patch) {
+    var next = {}
+    Object.keys(p).forEach(function (k) { next[k] = p[k] })
+    Object.keys(patch).forEach(function (k) { next[k] = patch[k] })
+    return next
+  }
+
+  function chatFrame(p, frame) {
+    var d
+    try { d = JSON.parse(frame.data) } catch (e) { return p }
+    switch (frame.event) {
+      case 'token': return assign(p, { text: p.text + (d.text || '') })
+      case 'tool_status': return assign(p, { status: d.note || d.tool || null })
+      case 'reset': return assign(p, { text: '' })
+      case 'done': return assign(p, { text: typeof d.reply === 'string' ? d.reply : p.text, pending: d.pendingAction != null, done: true, status: null })
+      case 'error': return assign(p, { mode: 'error', error: d.message || 'Lỗi không rõ', status: null })
+      default: return p
+    }
+  }
+
+  // Once a panel falls back to a recording, a late live frame must not leak into it;
+  // stream actions only apply while the panel is live.
+  function reducePanel(p, a) {
+    if (a.type === 'start') return assign(initialPanel(), { mode: 'live' })
+    if (p.mode === 'recording') return p
+    switch (a.type) {
+      case 'fallback':
+        return assign(p, { mode: 'recording', text: a.text, recordedAt: a.recordedAt, status: null, pending: false, done: true, error: null })
+      case 'fail':
+        return assign(p, { mode: 'error', error: a.message, status: null })
+      case 'delta':
+        return p.mode === 'live' ? assign(p, { text: p.text + a.text }) : p
+      case 'chat-frame':
+        return p.mode === 'live' ? chatFrame(p, a.frame) : p
+      case 'end':
+        return p.mode === 'live' ? assign(p, { done: true, status: null }) : p
+      default:
+        return p
+    }
+  }
+
+  function pickRecording(rec, side, presetId) {
+    if (!rec || !presetId || !rec[side]) return null
+    var text = rec[side][presetId]
+    return typeof text === 'string' && text ? { text: text, recordedAt: rec.recordedAt } : null
+  }
+
+  function isOnlineCopy(loc) {
+    return loc.protocol !== 'file:' && ['localhost', '127.0.0.1', '[::1]'].indexOf(loc.hostname) === -1
+  }
+
+  root.DeckLogic = {
+    createNavigator: createNavigator,
+    shouldHandleKey: shouldHandleKey,
+    FIRST_TOKEN_TIMEOUT_MS: FIRST_TOKEN_TIMEOUT_MS,
+    createSseDecoder: createSseDecoder,
+    openAiDeltaText: openAiDeltaText,
+    initialPanel: initialPanel,
+    reducePanel: reducePanel,
+    pickRecording: pickRecording,
+    isOnlineCopy: isOnlineCopy,
+  }
 })(globalThis)
 </script>
 
